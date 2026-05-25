@@ -54,9 +54,9 @@ Current institutional portals fail to deliver personalized recommendations or au
 | Role | Full Name | Student ID |
 | :--- | :--- | :--- |
 | **Team Leader** | Md. Nazmus Shakib | 11220320852 |
-| **Member 02** | Samira Akter Mitu | 11220320858 |
-| **Member 03** | Tanvin Sadik Dhrubo | 11220320860 |
-| **Member 04** | Khan Waziur Rahman | 11220320861 |
+| **Ai 02** | Samira Akter Mitu | 11220320858 |
+| **Frontend 03** | Tanvin Sadik Dhrubo | 11220320860 |
+| **Backend 04** | Khan Waziur Rahman | 11220320861 |
 
 ---
 *Developed as part of the semester project requirements for the Department of Computer Science and Engineering, NUBT Khulna.*

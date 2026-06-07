@@ -58,5 +58,10 @@ Current institutional portals fail to deliver personalized recommendations or au
 | **Frontend 03** | Tanvin Sadik Dhrubo | 11220320860 |
 | **Backend 04** | Khan Waziur Rahman | 11220320861 |
 
+## Repository Structure
+
+- `/frontend` - React UI components and layouts
+- `/backend` - Laravel API, Controllers, and Database Migrations
+- `/docs` - Project Proposals, SRS, and System Diagrams
 ---
 *Developed as part of the semester project requirements for the Department of Computer Science and Engineering, NUBT Khulna.*

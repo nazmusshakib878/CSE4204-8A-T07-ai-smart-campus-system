@@ -64,4 +64,19 @@ Current institutional portals fail to deliver personalized recommendations or au
 - `/backend` - Laravel API, Controllers, and Database Migrations
 - `/docs` - Project Proposals, SRS, and System Diagrams
 ---
+## 🚀 Getting Started
+
+### Prerequisites
+* [Node.js](https://nodejs.org/) (for React)
+* [PHP & Composer](https://getcomposer.org/) (for Laravel)
+* [XAMPP/MySQL](https://www.apachefriends.org/)
+
+### Installation
+1. Clone the repository: `git clone [your-repo-link]`
+2. **For Backend:** - `cd backend`
+   - `composer install`
+   - `php artisan serve`
+3. **For Frontend:** - `cd frontend`
+   - `npm install`
+   - `npm start`
 *Developed as part of the semester project requirements for the Department of Computer Science and Engineering, NUBT Khulna.*

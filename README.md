@@ -63,7 +63,7 @@ Current institutional portals fail to deliver personalized recommendations or au
 - `/frontend` - React UI components and layouts
 - `/backend` - Laravel API, Controllers, and Database Migrations
 - `/docs` - Project Proposals, SRS, and System Diagrams
----
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -79,4 +79,5 @@ Current institutional portals fail to deliver personalized recommendations or au
 3. **For Frontend:** - `cd frontend`
    - `npm install`
    - `npm start`
+   ---
 *Developed as part of the semester project requirements for the Department of Computer Science and Engineering, NUBT Khulna.*

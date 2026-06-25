@@ -72,7 +72,7 @@ Current institutional portals fail to deliver personalized recommendations or au
 * [XAMPP/MySQL](https://www.apachefriends.org/)
 
 ### Installation
-1. Clone the repository: `git clone [your-repo-link]`
+1. Clone the repository: `git clone 
 2. **For Backend:** - `cd backend`
    - `composer install`
    - `php artisan serve`

@@ -114,10 +114,10 @@ Current institutional portals fail to deliver personalized recommendations or au
 
 | Role | Full Name | Student ID |
 | :--- | :--- | :--- |
-| **Team Leader** | Md. Nazmus Shakib | 11220320852 |
-| **Ai ** | Samira Akter Mitu | 11220320858 |
-| **Frontend ** | Tanvin Sadik Dhrubo | 11220320860 |
-| **Backend ** | Khan Waziur Rahman | 11220320861 |
+| Team Leader| Md. Nazmus Shakib | 11220320852 |
+| Ai  | Samira Akter Mitu | 11220320858 |
+| Frontend | Tanvin Sadik Dhrubo | 11220320860 |
+| Backend  | Khan Waziur Rahman | 11220320861 |
 
 ## Repository Structure
 

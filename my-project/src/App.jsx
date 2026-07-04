@@ -1,5 +1,6 @@
 import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import campusImg from './assets/IMG_2045.JPG.jpeg';
 
 function App() {
   const features = [
@@ -50,7 +51,7 @@ function App() {
           
           {/* Hero Image */}
           <div className="col-md-6 mt-5 mt-md-0 position-relative">
-            <img src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Campus" className="img-fluid rounded-4 shadow" />
+           <img src={campusImg} alt="Campus" className="img-fluid rounded-4 shadow" />
             <div className="position-absolute bottom-0 start-0 m-4 bg-white p-3 rounded-3 shadow">
               <small className="text-secondary d-block">Avg. CGPA</small>
               <h5 className="fw-bold mb-0">3.74</h5>

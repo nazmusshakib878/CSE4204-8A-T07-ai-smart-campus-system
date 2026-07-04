@@ -13,12 +13,12 @@ return new class extends Migration
             // Foreign Keys
             $table->foreignId('student_id')->constrained('students')->cascadeOnDelete();
             $table->foreignId('course_id')->constrained('courses')->cascadeOnDelete();
-            
+
             // Assessment Marks
             $table->float('quiz_marks')->default(0);
             $table->float('assignment_marks')->default(0);
             $table->float('mid_marks')->default(0);
-            
+
             $table->timestamps();
         });
     }

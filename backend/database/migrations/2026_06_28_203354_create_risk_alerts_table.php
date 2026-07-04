@@ -13,15 +13,15 @@ return new class extends Migration
     {
         Schema::create('risk_alerts', function (Blueprint $table) {
             $table->id();
-            
+
             // Foreign Key
             $table->foreignId('student_id')->constrained('students')->cascadeOnDelete();
-            
+
             // Columns
             $table->enum('risk_level', ['low', 'medium', 'high'])->default('low');
             $table->string('prediction', 255);
             $table->text('advice')->nullable();
-            
+
             $table->timestamps();
         });
     }

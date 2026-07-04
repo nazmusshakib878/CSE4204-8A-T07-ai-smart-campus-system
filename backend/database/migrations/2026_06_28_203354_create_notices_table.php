@@ -13,14 +13,14 @@ return new class extends Migration
     {
         Schema::create('notices', function (Blueprint $table) {
             $table->id();
-            
+
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            
+
             // Columns
             $table->string('title', 255);
             $table->text('description');
             $table->timestamp('publish_date')->nullable();
-            
+
             $table->timestamps();
         });
     }

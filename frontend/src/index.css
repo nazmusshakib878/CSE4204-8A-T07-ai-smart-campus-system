@@ -124,6 +124,77 @@ body {
   font-size: clamp(1.65rem, 4vw, 2rem);
 }
 
+.status-alert {
+  border: 0;
+  border-left: 4px solid currentColor;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+
+.status-alert .btn-link {
+  min-height: auto;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.status-alert .btn-close {
+  width: 44px;
+  height: 44px;
+  padding: 0.75rem;
+}
+
+.loading-state {
+  min-height: 240px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.loading-state-full-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fbff 0%, #eef4ff 100%);
+}
+
+.empty-state {
+  border: 1px dashed #cbd5e1;
+  background: #f8fafc;
+}
+
+.empty-state-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 50%;
+  color: #64748b;
+  background: #e2e8f0;
+}
+
+.empty-state-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+.task-item {
+  min-width: 0;
+}
+
+.min-w-0 {
+  min-width: 0;
+}
+
+.modal-content {
+  overflow: hidden;
+}
+
+.modal-footer .btn {
+  min-width: 120px;
+}
+
+.not-found-state {
+  max-width: 680px;
+}
+
 .card {
   min-width: 0;
   overflow-wrap: anywhere;
@@ -274,6 +345,22 @@ body {
   }
 
   .section-card-header {
+    align-items: flex-start !important;
+  }
+
+  .modal-dialog {
+    margin: 0.75rem;
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .modal-footer .btn {
+    width: 100%;
+  }
+
+  .status-alert {
     align-items: flex-start !important;
   }
 

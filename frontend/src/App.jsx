@@ -9,6 +9,7 @@ import ProfilePage from './pages/ProfilePage';
 import FunctionsPage from './pages/FunctionsPage';
 import AiAssistantPage from './pages/AiAssistantPage';
 import AdminPage from './pages/AdminPage';
+import NotFoundPage from './pages/NotFoundPage';
 import { AuthProvider } from './auth/AuthContext';
 import ProtectedRoute from './auth/ProtectedRoute';
 
@@ -28,6 +29,8 @@ function App() {
             <Route path="/ai-assistant" element={<AiAssistantPage />} />
             <Route path="/admin" element={<AdminPage />} />
           </Route>
+
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AuthProvider>
     </Router>

@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useAuth } from '../auth/auth-context';
 import { validateRegistrationForm } from '../utils/validation';
+import { StatusAlert } from '../components/Feedback';
 
 function RegisterPage() {
   const navigate = useNavigate();
@@ -64,8 +65,16 @@ function RegisterPage() {
     setLoading(true);
 
     try {
-      await register(normalizedForm);
-      navigate('/dashboard', { replace: true });
+      const registeredUser = await register(normalizedForm);
+      navigate('/dashboard', {
+        replace: true,
+        state: {
+          flash: {
+            variant: 'success',
+            message: `Welcome, ${registeredUser.name}. Your account is ready.`,
+          },
+        },
+      });
     } catch (err) {
       if (Object.keys(err.fields || {}).length > 0) {
         setErrors(err.fields);
@@ -88,7 +97,13 @@ function RegisterPage() {
             <h4 className="fw-bold text-dark mb-3">Register as a new user</h4>
             <p className="text-secondary mb-4">Choose your role and set up your profile.</p>
 
-            {error && <div className="alert alert-danger" role="alert">{error}</div>}
+            {error && (
+              <StatusAlert
+                variant="danger"
+                message={error}
+                onDismiss={() => setError('')}
+              />
+            )}
 
             <form onSubmit={handleSubmit} noValidate>
               <div className="row g-3">
@@ -194,6 +209,7 @@ function RegisterPage() {
               </div>
 
               <button type="submit" className="btn btn-primary rounded-pill w-100 py-2 mt-4" disabled={loading} aria-busy={loading}>
+                {loading && <span className="spinner-border spinner-border-sm me-2" aria-hidden="true" />}
                 {loading ? 'Creating account...' : 'Create Account'}
               </button>
             </form>

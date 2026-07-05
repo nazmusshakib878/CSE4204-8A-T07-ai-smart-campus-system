@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/auth-context';
+import { StatusAlert } from './Feedback';
 
 function Layout({ children, title, subtitle }) {
   const location = useLocation();
@@ -8,12 +9,15 @@ function Layout({ children, title, subtitle }) {
   const { isAuthenticated, logout, user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [flash, setFlash] = useState(null);
   const navItems = [
     { to: '/', label: 'Home' },
-    { to: '/dashboard', label: 'Dashboard' },
-    { to: '/functions', label: 'Functions' },
-    { to: '/ai-assistant', label: 'AI Assistant' },
-    { to: '/admin', label: 'Admin' }
+    ...(isAuthenticated ? [
+      { to: '/dashboard', label: 'Dashboard' },
+      { to: '/functions', label: 'Functions' },
+      { to: '/ai-assistant', label: 'AI Assistant' },
+    ] : []),
+    ...(isAuthenticated && user?.role === 'admin' ? [{ to: '/admin', label: 'Admin' }] : []),
   ];
 
   useEffect(() => {
@@ -31,12 +35,41 @@ function Layout({ children, title, subtitle }) {
     return () => window.removeEventListener('keydown', closeOnEscape);
   }, [menuOpen]);
 
+  useEffect(() => {
+    const incomingFlash = location.state?.flash;
+    if (!incomingFlash) return;
+
+    setFlash(incomingFlash);
+
+    const nextState = { ...location.state };
+    delete nextState.flash;
+    navigate(`${location.pathname}${location.search}${location.hash}`, {
+      replace: true,
+      state: nextState,
+    });
+  }, [location.hash, location.pathname, location.search, location.state, navigate]);
+
+  useEffect(() => {
+    if (!flash) return undefined;
+
+    const timeout = window.setTimeout(() => setFlash(null), 6000);
+    return () => window.clearTimeout(timeout);
+  }, [flash]);
+
   const handleLogout = async () => {
     setLoggingOut(true);
 
     try {
       await logout();
-      navigate('/login', { replace: true });
+      navigate('/login', {
+        replace: true,
+        state: {
+          flash: {
+            variant: 'success',
+            message: 'You have been logged out successfully.',
+          },
+        },
+      });
     } finally {
       setLoggingOut(false);
     }
@@ -91,6 +124,7 @@ function Layout({ children, title, subtitle }) {
                   disabled={loggingOut}
                   aria-busy={loggingOut}
                 >
+                  {loggingOut && <span className="spinner-border spinner-border-sm me-2" aria-hidden="true" />}
                   {loggingOut ? 'Logging out...' : 'Logout'}
                 </button>
               </div>
@@ -110,6 +144,13 @@ function Layout({ children, title, subtitle }) {
             {title && <h2 className="page-title fw-bold text-dark mb-2">{title}</h2>}
             {subtitle && <p className="text-secondary mb-0">{subtitle}</p>}
           </div>
+        )}
+        {flash && (
+          <StatusAlert
+            variant={flash.variant}
+            message={flash.message}
+            onDismiss={() => setFlash(null)}
+          />
         )}
         {children}
       </main>

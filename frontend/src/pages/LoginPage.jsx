@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useAuth } from '../auth/auth-context';
 import { validateLoginForm } from '../utils/validation';
+import { StatusAlert } from '../components/Feedback';
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -55,8 +56,16 @@ function LoginPage() {
     setLoading(true);
 
     try {
-      await login(normalizedForm);
-      navigate(location.state?.from || '/dashboard', { replace: true });
+      const authenticatedUser = await login(normalizedForm);
+      navigate(location.state?.from || '/dashboard', {
+        replace: true,
+        state: {
+          flash: {
+            variant: 'success',
+            message: `Welcome back, ${authenticatedUser.name}.`,
+          },
+        },
+      });
     } catch (err) {
       if (Object.keys(err.fields || {}).length > 0) {
         setErrors(err.fields);
@@ -79,7 +88,13 @@ function LoginPage() {
             <h4 className="fw-bold text-dark mb-3">Welcome back</h4>
             <p className="text-secondary mb-4">Enter your credentials to continue.</p>
 
-            {error && <div className="alert alert-danger" role="alert">{error}</div>}
+            {error && (
+              <StatusAlert
+                variant="danger"
+                message={error}
+                onDismiss={() => setError('')}
+              />
+            )}
 
             <form onSubmit={handleSubmit} noValidate>
               <div className="mb-3">
@@ -119,6 +134,7 @@ function LoginPage() {
                 {errors.password && <div id="login-password-error" className="invalid-feedback">{errors.password}</div>}
               </div>
               <button type="submit" className="btn btn-primary rounded-pill w-100 py-2 mb-3" disabled={loading} aria-busy={loading}>
+                {loading && <span className="spinner-border spinner-border-sm me-2" aria-hidden="true" />}
                 {loading ? 'Signing in...' : 'Sign In'}
               </button>
             </form>

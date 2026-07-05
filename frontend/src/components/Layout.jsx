@@ -14,7 +14,12 @@ const iconPaths = {
   dashboard: 'M4 4h6v6H4V4Zm10 0h6v10h-6V4ZM4 14h6v6H4v-6Zm10 4h6v2h-6v-2Z',
   functions: 'M4 5h16M4 12h16M4 19h16M7 3v4m10 3v4M9 17v4',
   assistant: 'M12 3 10.7 7.1a5 5 0 0 1-3.2 3.2L3.5 12l4 1.7a5 5 0 0 1 3.2 3.2L12 21l1.7-4.1a5 5 0 0 1 3.2-3.2L21 12l-4.1-1.7a5 5 0 0 1-3.2-3.2L12 3Z',
+  recommendations: 'M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H7a3 3 0 0 0-3 3V5.5Zm0 0V21m4-13h8m-8 4h8m-8 4h5',
+  monitoring: 'M4 19V9m5 10V5m5 14v-7m5 7V3',
+  risk: 'M12 3 22 20H2L12 3Zm0 6v5m0 3h.01',
   admin: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87m0-7.26a4 4 0 0 1 0 7.75',
+  users: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm11 10v-2a3 3 0 0 0-2-2.83M16 3.13a4 4 0 0 1 0 7.75',
+  notices: 'M7 3h8l4 4v14H7V3Zm8 0v5h5M9 13h8M9 17h8M9 9h3',
   profile: 'M20 21a8 8 0 0 0-16 0m8-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
 };
 
@@ -53,22 +58,35 @@ function Layout({ children, title, subtitle }) {
   const [loggingOut, setLoggingOut] = useState(false);
   const [flash, setFlash] = useState(null);
   const [profilePhoto, setProfilePhoto] = useState('');
+  const isFacultyUser = user?.role === 'faculty';
+  const isAdminUser = user?.role === 'admin';
   const publicNavItems = [
     { to: '/', label: 'Home' },
-    ...(isAuthenticated ? [{ to: '/dashboard', label: 'Dashboard' }] : []),
+    ...(isAuthenticated ? [{ to: isAdminUser ? '/admin' : isFacultyUser ? '/faculty-dashboard' : '/dashboard', label: 'Dashboard' }] : []),
   ];
-  const appNavItems = [
+  const studentNavItems = [
     { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
     { to: '/functions', label: 'Campus Tools', icon: 'functions' },
     { to: '/ai-assistant', label: 'AI Assistant', icon: 'assistant' },
-    ...(user?.role === 'admin' ? [{ to: '/admin', label: 'Administration', icon: 'admin' }] : []),
+    { to: '/course-recommendations', label: 'Course Recommendations', icon: 'recommendations' },
   ];
-  const internalRoutes = ['/dashboard', '/profile', '/functions', '/ai-assistant', '/admin'];
+  const facultyNavItems = [
+    { to: '/faculty-dashboard', label: 'Faculty Dashboard', icon: 'dashboard' },
+    { to: '/student-monitoring', label: 'Student Monitoring', icon: 'monitoring' },
+    { to: '/risk-alerts', label: 'Risk Alerts', icon: 'risk' },
+  ];
+  const adminNavItems = [
+    { to: '/admin', label: 'Dashboard', icon: 'dashboard' },
+    { to: '/admin/users', label: 'Manage Users', icon: 'users' },
+    { to: '/admin/notices', label: 'Manage Notices', icon: 'notices' },
+  ];
+  const appNavItems = isAdminUser ? adminNavItems : isFacultyUser ? facultyNavItems : studentNavItems;
+  const internalRoutes = ['/dashboard', '/profile', '/functions', '/ai-assistant', '/course-recommendations', '/faculty-dashboard', '/student-monitoring', '/risk-alerts', '/admin'];
   const useInternalLayout = isAuthenticated
     && internalRoutes.some((route) => location.pathname.startsWith(route));
   const currentSection = location.pathname === '/profile'
     ? 'My Profile'
-    : appNavItems.find((item) => location.pathname.startsWith(item.to))?.label || 'Workspace';
+    : [...appNavItems].sort((a, b) => b.to.length - a.to.length).find((item) => location.pathname.startsWith(item.to))?.label || 'Workspace';
   const userInitials = user?.name
     ?.split(' ')
     .map((part) => part[0])

@@ -8,11 +8,23 @@ import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 import FunctionsPage from './pages/FunctionsPage';
 import AiAssistantPage from './pages/AiAssistantPage';
+import CourseRecommendationsPage from './pages/CourseRecommendationsPage';
+import FacultyDashboardPage from './pages/FacultyDashboardPage';
+import StudentMonitoringPage from './pages/StudentMonitoringPage';
+import RiskAlertsPage from './pages/RiskAlertsPage';
 import AdminPage from './pages/AdminPage';
+import ManageUsersPage from './pages/ManageUsersPage';
+import ManageNoticesPage from './pages/ManageNoticesPage';
 import NotFoundPage from './pages/NotFoundPage';
 import { AuthProvider } from './auth/AuthContext';
 import ProtectedRoute from './auth/ProtectedRoute';
+import { useAuth } from './auth/auth-context';
 
+function DashboardEntry() {
+  const { user } = useAuth();
+  if (user?.role === 'admin') return <AdminPage />;
+  return user?.role === 'faculty' ? <FacultyDashboardPage /> : <DashboardPage />;
+}
 function App() {
   return (
     <Router>
@@ -23,11 +35,17 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
 
           <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/dashboard" element={<DashboardEntry />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/functions" element={<FunctionsPage />} />
             <Route path="/ai-assistant" element={<AiAssistantPage />} />
+            <Route path="/course-recommendations" element={<CourseRecommendationsPage />} />
+            <Route path="/faculty-dashboard" element={<FacultyDashboardPage />} />
+            <Route path="/student-monitoring" element={<StudentMonitoringPage />} />
+            <Route path="/risk-alerts" element={<RiskAlertsPage />} />
             <Route path="/admin" element={<AdminPage />} />
+            <Route path="/admin/users" element={<ManageUsersPage />} />
+            <Route path="/admin/notices" element={<ManageNoticesPage />} />
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />

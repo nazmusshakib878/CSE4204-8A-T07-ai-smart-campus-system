@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\LearningResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Throwable;
 
@@ -35,6 +36,13 @@ class LearningResourceController extends Controller
 
         try {
             $validatedData = $validator->validated();
+
+            if ($request->hasFile('resource_file')) {
+                $path = $request->file('resource_file')->store('learning-resources', 'public');
+                $validatedData['resource_url'] = Storage::disk('public')->url($path);
+            }
+
+            unset($validatedData['resource_file']);
 
             $learningResource = new LearningResource;
             $learningResource->fill($validatedData);
@@ -82,7 +90,16 @@ class LearningResourceController extends Controller
                 return $this->notFound('Learning resource not found.');
             }
 
-            $learningResource->update($validator->validated());
+            $validatedData = $validator->validated();
+
+            if ($request->hasFile('resource_file')) {
+                $path = $request->file('resource_file')->store('learning-resources', 'public');
+                $validatedData['resource_url'] = Storage::disk('public')->url($path);
+            }
+
+            unset($validatedData['resource_file']);
+
+            $learningResource->update($validatedData);
 
             return response()->json([
                 'message' => 'Learning resource updated successfully.',
@@ -119,7 +136,8 @@ class LearningResourceController extends Controller
             'description' => ['nullable', 'string'],
             'category' => ['required', 'string', 'max:255'],
             'resource_type' => ['required', 'string', 'max:255'],
-            'resource_url' => ['nullable', 'string', 'max:2048'],
+            'resource_url' => ['nullable', 'required_without:resource_file', 'string', 'max:2048'],
+            'resource_file' => ['nullable', 'required_without:resource_url', 'file', 'mimes:pdf,doc,docx,ppt,pptx,txt,jpg,jpeg,png', 'max:10240'],
             'uploaded_by' => ['nullable', 'string', 'max:255'],
         ];
     }

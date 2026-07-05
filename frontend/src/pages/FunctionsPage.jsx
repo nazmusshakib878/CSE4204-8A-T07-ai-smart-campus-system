@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Layout from '../components/Layout';
+import { useAuth } from '../auth/auth-context';
 import { ConfirmDialog, EmptyState, LoadingState, StatusAlert } from '../components/Feedback';
-import { createTask, deleteTask, getLearningResources, getTasks } from '../services/api';
+import { createLearningResource, createTask, deleteTask, getLearningResources, getTasks } from '../services/api';
 
 const toolCards = [
   {
@@ -47,15 +48,27 @@ const emptyTaskForm = {
   priority: 'medium',
 };
 
+const emptyResourceForm = {
+  title: '',
+  description: '',
+  category: 'Assignment',
+  resource_type: 'PDF',
+  resource_url: '',
+  resource_file: null,
+};
+
 function FunctionsPage() {
+  const { user } = useAuth();
   const [activeTool, setActiveTool] = useState('tasks');
   const [tasks, setTasks] = useState([]);
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savingTask, setSavingTask] = useState(false);
+  const [uploadingResource, setUploadingResource] = useState(false);
   const [deletingTask, setDeletingTask] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [taskForm, setTaskForm] = useState(emptyTaskForm);
+  const [resourceForm, setResourceForm] = useState(emptyResourceForm);
   const [error, setError] = useState('');
   const [feedback, setFeedback] = useState(null);
 
@@ -93,6 +106,53 @@ function FunctionsPage() {
       ...currentForm,
       [name]: value,
     }));
+  };
+
+  const handleResourceFieldChange = (event) => {
+    const { files, name, value } = event.target;
+    setResourceForm((currentForm) => ({
+      ...currentForm,
+      [name]: files ? files[0] || null : value,
+    }));
+  };
+
+  const handleCreateResource = async (event) => {
+    event.preventDefault();
+    setUploadingResource(true);
+    setFeedback(null);
+
+    try {
+      const payload = new FormData();
+      payload.append('title', resourceForm.title.trim());
+      payload.append('description', resourceForm.description.trim());
+      payload.append('category', resourceForm.category.trim());
+      payload.append('resource_type', resourceForm.resource_type.trim());
+      payload.append('uploaded_by', user?.name || 'Campus user');
+
+      if (resourceForm.resource_url.trim()) {
+        payload.append('resource_url', resourceForm.resource_url.trim());
+      }
+
+      if (resourceForm.resource_file) {
+        payload.append('resource_file', resourceForm.resource_file);
+      }
+
+      const response = await createLearningResource(payload);
+      setResources((currentResources) => [response.data.data, ...currentResources]);
+      setResourceForm(emptyResourceForm);
+      event.target.reset();
+      setFeedback({
+        variant: 'success',
+        message: 'Assignment/resource uploaded successfully.',
+      });
+    } catch (requestError) {
+      setFeedback({
+        variant: 'danger',
+        message: requestError.message || 'The resource could not be uploaded.',
+      });
+    } finally {
+      setUploadingResource(false);
+    }
   };
 
   const handleCreateTask = async (event) => {
@@ -293,56 +353,160 @@ function FunctionsPage() {
   );
 
   const renderResourcesTool = () => (
-    <div className="card border-0 shadow-sm rounded-4 p-4">
-      <div className="section-card-header d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-        <div>
-          <span className="eyebrow-label">Study materials</span>
-          <h5 className="fw-bold text-dark mb-0">Learning resources</h5>
-        </div>
-        <span className="badge rounded-pill text-bg-primary">{resources.length} resources</span>
+    <div className="row g-4">
+      <div className="col-xl-5">
+        <form className="card border-0 shadow-sm rounded-4 p-4 h-100" onSubmit={handleCreateResource}>
+          <div className="section-card-header mb-3">
+            <span className="eyebrow-label">Assignment upload</span>
+            <h5 className="fw-bold text-dark mb-0">Add file or PDF</h5>
+          </div>
+
+          <div className="mb-3">
+            <label className="form-label fw-semibold" htmlFor="resource-title">Title</label>
+            <input
+              id="resource-title"
+              name="title"
+              type="text"
+              className="form-control"
+              value={resourceForm.title}
+              onChange={handleResourceFieldChange}
+              maxLength={255}
+              required
+            />
+          </div>
+
+          <div className="mb-3">
+            <label className="form-label fw-semibold" htmlFor="resource-description">Description</label>
+            <textarea
+              id="resource-description"
+              name="description"
+              className="form-control"
+              rows="3"
+              value={resourceForm.description}
+              onChange={handleResourceFieldChange}
+            />
+          </div>
+
+          <div className="row g-3">
+            <div className="col-md-6">
+              <label className="form-label fw-semibold" htmlFor="resource-category">Category</label>
+              <select
+                id="resource-category"
+                name="category"
+                className="form-select"
+                value={resourceForm.category}
+                onChange={handleResourceFieldChange}
+              >
+                <option value="Assignment">Assignment</option>
+                <option value="Lecture Note">Lecture Note</option>
+                <option value="Question Paper">Question Paper</option>
+                <option value="Reference">Reference</option>
+              </select>
+            </div>
+            <div className="col-md-6">
+              <label className="form-label fw-semibold" htmlFor="resource-type">Type</label>
+              <select
+                id="resource-type"
+                name="resource_type"
+                className="form-select"
+                value={resourceForm.resource_type}
+                onChange={handleResourceFieldChange}
+              >
+                <option value="PDF">PDF</option>
+                <option value="Document">Document</option>
+                <option value="Presentation">Presentation</option>
+                <option value="Image">Image</option>
+                <option value="Link">Link</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="mb-3 mt-3">
+            <label className="form-label fw-semibold" htmlFor="resource-file">File or PDF</label>
+            <input
+              id="resource-file"
+              name="resource_file"
+              type="file"
+              className="form-control"
+              accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.jpeg,.png"
+              onChange={handleResourceFieldChange}
+            />
+            <small className="text-secondary">PDF, document, presentation, text, or image up to 10 MB.</small>
+          </div>
+
+          <div className="mb-3">
+            <label className="form-label fw-semibold" htmlFor="resource-url">Optional link</label>
+            <input
+              id="resource-url"
+              name="resource_url"
+              type="url"
+              className="form-control"
+              value={resourceForm.resource_url}
+              onChange={handleResourceFieldChange}
+              placeholder="https://example.com/file.pdf"
+              maxLength={2048}
+            />
+          </div>
+
+          <button type="submit" className="btn btn-primary w-100" disabled={uploadingResource} aria-busy={uploadingResource}>
+            {uploadingResource && <span className="spinner-border spinner-border-sm me-2" aria-hidden="true" />}
+            {uploadingResource ? 'Uploading...' : 'Upload resource'}
+          </button>
+        </form>
       </div>
 
-      {resources.length > 0 ? (
-        <div className="row g-3">
-          {resources.map((resource) => (
-            <div key={resource.id} className="col-md-6 col-xl-4">
-              <article className="resource-card h-100">
-                <div className="d-flex align-items-center justify-content-between gap-2 mb-2">
-                  <span className="tool-chip tool-chip-medium">{resource.category}</span>
-                  <small className="text-secondary">{resource.resource_type}</small>
-                </div>
-                <h6 className="fw-bold text-dark">{resource.title}</h6>
-                {resource.description && <p className="text-secondary small">{resource.description}</p>}
-                {resource.uploaded_by && (
-                  <small className="d-block text-secondary mb-3">Uploaded by {resource.uploaded_by}</small>
-                )}
-                {resource.resource_url ? (
-                  <a
-                    className="btn btn-outline-primary w-100"
-                    href={resource.resource_url}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Open resource
-                  </a>
-                ) : (
-                  <button type="button" className="btn btn-outline-secondary w-100" disabled>
-                    No link attached
-                  </button>
-                )}
-              </article>
+      <div className="col-xl-7">
+        <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
+          <div className="section-card-header d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <div>
+              <span className="eyebrow-label">Study materials</span>
+              <h5 className="fw-bold text-dark mb-0">Assignments and resources</h5>
             </div>
-          ))}
+            <span className="badge rounded-pill text-bg-primary">{resources.length} resources</span>
+          </div>
+
+          {resources.length > 0 ? (
+            <div className="row g-3">
+              {resources.map((resource) => (
+                <div key={resource.id} className="col-md-6">
+                  <article className="resource-card h-100">
+                    <div className="d-flex align-items-center justify-content-between gap-2 mb-2">
+                      <span className="tool-chip tool-chip-medium">{resource.category}</span>
+                      <small className="text-secondary">{resource.resource_type}</small>
+                    </div>
+                    <h6 className="fw-bold text-dark">{resource.title}</h6>
+                    {resource.description && <p className="text-secondary small">{resource.description}</p>}
+                    {resource.uploaded_by && (
+                      <small className="d-block text-secondary mb-3">Uploaded by {resource.uploaded_by}</small>
+                    )}
+                    {resource.resource_url ? (
+                      <a
+                        className="btn btn-outline-primary w-100"
+                        href={resource.resource_url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Open file
+                      </a>
+                    ) : (
+                      <button type="button" className="btn btn-outline-secondary w-100" disabled>
+                        No file attached
+                      </button>
+                    )}
+                  </article>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              title="No assignments or resources found"
+              message="Upload a PDF/file or link from the form and it will appear here."
+            />
+          )}
         </div>
-      ) : (
-        <EmptyState
-          title="No resources found"
-          message="Learning materials will appear here when they are added from the API."
-        />
-      )}
+      </div>
     </div>
   );
-
   const renderComingSoonTool = () => (
     <div className="card border-0 shadow-sm rounded-4 p-4">
       <EmptyState

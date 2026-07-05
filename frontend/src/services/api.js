@@ -96,6 +96,14 @@ export const getLearningResources = async () => {
   }
 };
 
+export const createLearningResource = async (payload) => {
+  try {
+    return await api.post('/learning-resources', payload);
+  } catch (error) {
+    throw createApiError(error);
+  }
+};
+
 export const getTasks = async () => {
   try {
     return await api.get('/tasks');

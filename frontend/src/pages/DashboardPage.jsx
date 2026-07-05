@@ -78,7 +78,10 @@ function DashboardPage() {
 
   return (
     <>
-      <Layout title={`${profile?.role || 'Student'} Dashboard`} subtitle="Your daily academic overview and activity summary.">
+      <Layout
+        title={`Welcome back, ${profile?.name?.split(' ')[0] || 'Student'}`}
+        subtitle="Here’s a clear view of your campus activity today."
+      >
         {error && (
           <StatusAlert
             variant="danger"
@@ -98,29 +101,29 @@ function DashboardPage() {
 
         <div className="row g-4 mb-4">
           <div className="col-md-6 col-xl-3">
-            <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
-              <p className="text-muted small mb-1">Role</p>
-              <h3 className="fw-bold text-dark mb-1">{profile?.role || 'Student'}</h3>
+            <div className="dashboard-stat-card stat-blue card border-0 shadow-sm rounded-4 p-4 h-100">
+              <p className="text-muted small mb-1">Academic role</p>
+              <h3 className="fw-bold text-dark text-capitalize mb-1">{profile?.role || 'Student'}</h3>
               <small className="text-secondary">Authenticated account</small>
             </div>
           </div>
           <div className="col-md-6 col-xl-3">
-            <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
-              <p className="text-muted small mb-1">Tasks</p>
+            <div className="dashboard-stat-card stat-green card border-0 shadow-sm rounded-4 p-4 h-100">
+              <p className="text-muted small mb-1">Active tasks</p>
               <h3 className="fw-bold text-dark mb-1">{tasks.length}</h3>
               <small className="text-secondary">Available tasks</small>
             </div>
           </div>
           <div className="col-md-6 col-xl-3">
-            <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
-              <p className="text-muted small mb-1">Recommendations</p>
+            <div className="dashboard-stat-card stat-violet card border-0 shadow-sm rounded-4 p-4 h-100">
+              <p className="text-muted small mb-1">Smart insights</p>
               <h3 className="fw-bold text-dark mb-1">{recommendations.length}</h3>
               <small className="text-secondary">AI suggestions</small>
             </div>
           </div>
           <div className="col-md-6 col-xl-3">
-            <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
-              <p className="text-muted small mb-1">Resources</p>
+            <div className="dashboard-stat-card stat-amber card border-0 shadow-sm rounded-4 p-4 h-100">
+              <p className="text-muted small mb-1">Learning resources</p>
               <h3 className="fw-bold text-dark mb-1">{resources.length}</h3>
               <small className="text-secondary">Learning materials</small>
             </div>

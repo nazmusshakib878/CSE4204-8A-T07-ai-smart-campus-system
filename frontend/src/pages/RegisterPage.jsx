@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
+import AuthPageLayout from '../components/AuthPageLayout';
 import { useAuth } from '../auth/auth-context';
 import { validateRegistrationForm } from '../utils/validation';
 import { StatusAlert } from '../components/Feedback';
@@ -90,24 +91,24 @@ function RegisterPage() {
   }
 
   return (
-    <Layout title="Create Account" subtitle="Join the smart campus platform and access your academic tools.">
-      <div className="row justify-content-center">
-        <div className="col-12 col-lg-9 col-xl-8">
-          <div className="form-card card border-0 shadow-lg rounded-4 p-4">
-            <h4 className="fw-bold text-dark mb-3">Register as a new user</h4>
-            <p className="text-secondary mb-4">Choose your role and set up your profile.</p>
+    <Layout>
+      <AuthPageLayout
+        eyebrow="JOIN THE CAMPUS"
+        title="Create your account"
+        subtitle="Set up your profile once, then access every academic tool from one place."
+      >
+        <div className="auth-form-card">
+          {error && (
+            <StatusAlert
+              variant="danger"
+              message={error}
+              onDismiss={() => setError('')}
+            />
+          )}
 
-            {error && (
-              <StatusAlert
-                variant="danger"
-                message={error}
-                onDismiss={() => setError('')}
-              />
-            )}
-
-            <form onSubmit={handleSubmit} noValidate>
-              <div className="row g-3">
-                <div className="col-md-6">
+          <form onSubmit={handleSubmit} noValidate>
+            <div className="row g-3">
+              <div className="col-md-6">
                   <label className="form-label" htmlFor="register-name">Full name</label>
                   <input
                     id="register-name"
@@ -123,8 +124,8 @@ function RegisterPage() {
                     required
                   />
                   {errors.name && <div id="register-name-error" className="invalid-feedback">{errors.name}</div>}
-                </div>
-                <div className="col-md-6">
+              </div>
+              <div className="col-md-6">
                   <label className="form-label" htmlFor="register-email">Email</label>
                   <input
                     id="register-email"
@@ -141,8 +142,8 @@ function RegisterPage() {
                     required
                   />
                   {errors.email && <div id="register-email-error" className="invalid-feedback">{errors.email}</div>}
-                </div>
-                <div className="col-md-6">
+              </div>
+              <div className="col-md-6">
                   <label className="form-label" htmlFor="register-role">Role</label>
                   <select
                     id="register-role"
@@ -160,8 +161,8 @@ function RegisterPage() {
                     <option value="admin">Admin</option>
                   </select>
                   {errors.role && <div id="register-role-error" className="invalid-feedback">{errors.role}</div>}
-                </div>
-                <div className="col-md-6">
+              </div>
+              <div className="col-md-6">
                   <label className="form-label" htmlFor="register-password">Password</label>
                   <input
                     id="register-password"
@@ -183,8 +184,8 @@ function RegisterPage() {
                   <div id="register-password-help" className="form-text">
                     Use 8+ characters with uppercase, lowercase, a number, and a symbol.
                   </div>
-                </div>
-                <div className="col-md-6">
+              </div>
+              <div className="col-md-6">
                   <label className="form-label" htmlFor="register-password-confirmation">Confirm password</label>
                   <input
                     id="register-password-confirmation"
@@ -205,21 +206,20 @@ function RegisterPage() {
                       {errors.password_confirmation}
                     </div>
                   )}
-                </div>
               </div>
+            </div>
 
-              <button type="submit" className="btn btn-primary rounded-pill w-100 py-2 mt-4" disabled={loading} aria-busy={loading}>
-                {loading && <span className="spinner-border spinner-border-sm me-2" aria-hidden="true" />}
-                {loading ? 'Creating account...' : 'Create Account'}
-              </button>
-            </form>
+            <button type="submit" className="btn btn-primary rounded-3 w-100 py-2 mt-4" disabled={loading} aria-busy={loading}>
+              {loading && <span className="spinner-border spinner-border-sm me-2" aria-hidden="true" />}
+              {loading ? 'Creating account...' : 'Create my account'}
+            </button>
+          </form>
 
-            <p className="text-center text-secondary mt-3 mb-0">
-              Already have an account? <Link to="/login" className="text-primary">Sign in</Link>
-            </p>
-          </div>
+          <p className="text-center text-secondary mt-4 mb-0">
+            Already have an account? <Link to="/login" className="fw-semibold text-primary">Sign in</Link>
+          </p>
         </div>
-      </div>
+      </AuthPageLayout>
     </Layout>
   );
 }

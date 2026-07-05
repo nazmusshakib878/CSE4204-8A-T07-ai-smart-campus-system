@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
+import AuthPageLayout from '../components/AuthPageLayout';
 import { useAuth } from '../auth/auth-context';
 import { validateLoginForm } from '../utils/validation';
 import { StatusAlert } from '../components/Feedback';
@@ -81,70 +82,73 @@ function LoginPage() {
   }
 
   return (
-    <Layout title="Sign In" subtitle="Access your student or admin dashboard securely.">
-      <div className="row justify-content-center">
-        <div className="col-12 col-md-8 col-lg-5">
-          <div className="form-card card border-0 shadow-lg rounded-4 p-4">
-            <h4 className="fw-bold text-dark mb-3">Welcome back</h4>
-            <p className="text-secondary mb-4">Enter your credentials to continue.</p>
+    <Layout>
+      <AuthPageLayout
+        eyebrow="WELCOME BACK"
+        title="Sign in to your account"
+        subtitle="Use your campus credentials to continue to your personalized workspace."
+      >
+        <div className="auth-form-card">
+          {error && (
+            <StatusAlert
+              variant="danger"
+              message={error}
+              onDismiss={() => setError('')}
+            />
+          )}
 
-            {error && (
-              <StatusAlert
-                variant="danger"
-                message={error}
-                onDismiss={() => setError('')}
+          <form onSubmit={handleSubmit} noValidate>
+            <div className="mb-4">
+              <label className="form-label" htmlFor="login-email">Email address</label>
+              <input
+                id="login-email"
+                type="email"
+                name="email"
+                autoComplete="email"
+                className={`form-control form-control-lg${errors.email ? ' is-invalid' : ''}`}
+                value={form.email}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                placeholder="student@nubtk.edu"
+                aria-invalid={Boolean(errors.email)}
+                aria-describedby={errors.email ? 'login-email-error' : undefined}
+                required
               />
-            )}
-
-            <form onSubmit={handleSubmit} noValidate>
-              <div className="mb-3">
-                <label className="form-label" htmlFor="login-email">Email address</label>
-                <input
-                  id="login-email"
-                  type="email"
-                  name="email"
-                  autoComplete="email"
-                  className={`form-control form-control-lg${errors.email ? ' is-invalid' : ''}`}
-                  value={form.email}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder="student@nubtk.edu"
-                  aria-invalid={Boolean(errors.email)}
-                  aria-describedby={errors.email ? 'login-email-error' : undefined}
-                  required
-                />
-                {errors.email && <div id="login-email-error" className="invalid-feedback">{errors.email}</div>}
-              </div>
-              <div className="mb-3">
+              {errors.email && <div id="login-email-error" className="invalid-feedback">{errors.email}</div>}
+            </div>
+            <div className="mb-4">
+              <div className="d-flex align-items-center justify-content-between gap-3">
                 <label className="form-label" htmlFor="login-password">Password</label>
-                <input
-                  id="login-password"
-                  type="password"
-                  name="password"
-                  autoComplete="current-password"
-                  className={`form-control form-control-lg${errors.password ? ' is-invalid' : ''}`}
-                  value={form.password}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder="••••••••"
-                  aria-invalid={Boolean(errors.password)}
-                  aria-describedby={errors.password ? 'login-password-error' : undefined}
-                  required
-                />
-                {errors.password && <div id="login-password-error" className="invalid-feedback">{errors.password}</div>}
+                <span className="small text-secondary">Keep your credentials private</span>
               </div>
-              <button type="submit" className="btn btn-primary rounded-pill w-100 py-2 mb-3" disabled={loading} aria-busy={loading}>
-                {loading && <span className="spinner-border spinner-border-sm me-2" aria-hidden="true" />}
-                {loading ? 'Signing in...' : 'Sign In'}
-              </button>
-            </form>
+              <input
+                id="login-password"
+                type="password"
+                name="password"
+                autoComplete="current-password"
+                className={`form-control form-control-lg${errors.password ? ' is-invalid' : ''}`}
+                value={form.password}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                placeholder="••••••••"
+                aria-invalid={Boolean(errors.password)}
+                aria-describedby={errors.password ? 'login-password-error' : undefined}
+                required
+              />
+              {errors.password && <div id="login-password-error" className="invalid-feedback">{errors.password}</div>}
+            </div>
+            <button type="submit" className="btn btn-primary rounded-3 w-100 py-2 mb-4" disabled={loading} aria-busy={loading}>
+              {loading && <span className="spinner-border spinner-border-sm me-2" aria-hidden="true" />}
+              {loading ? 'Signing in...' : 'Sign in securely'}
+            </button>
+          </form>
 
-            <p className="text-center text-secondary mb-0">
-              New here? <Link to="/register" className="text-primary">Create an account</Link>
-            </p>
-          </div>
+          <div className="auth-form-divider"><span>New to NUBTK Campus?</span></div>
+          <Link to="/register" className="btn btn-outline-primary rounded-3 w-100">
+            Create an account
+          </Link>
         </div>
-      </div>
+      </AuthPageLayout>
     </Layout>
   );
 }

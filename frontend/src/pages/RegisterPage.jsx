@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { registerUser } from '../services/api';
+import { useAuth } from '../auth/auth-context';
 
 function RegisterPage() {
   const navigate = useNavigate();
+  const { isAuthenticated, register } = useAuth();
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -25,16 +26,18 @@ function RegisterPage() {
     setLoading(true);
 
     try {
-      const response = await registerUser(form);
-      localStorage.setItem('auth_token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      navigate('/dashboard');
+      await register(form);
+      navigate('/dashboard', { replace: true });
     } catch (err) {
-      setError(err?.response?.data?.message || 'Registration failed.');
+      setError(err.message || 'Registration failed.');
     } finally {
       setLoading(false);
     }
   };
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <Layout title="Create Account" subtitle="Join the smart campus platform and access your academic tools.">

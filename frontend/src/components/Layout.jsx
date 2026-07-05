@@ -1,6 +1,9 @@
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/auth-context';
 
 function Layout({ children, title, subtitle }) {
+  const navigate = useNavigate();
+  const { isAuthenticated, logout, user } = useAuth();
   const navItems = [
     { to: '/', label: 'Home' },
     { to: '/dashboard', label: 'Dashboard' },
@@ -8,6 +11,11 @@ function Layout({ children, title, subtitle }) {
     { to: '/ai-assistant', label: 'AI Assistant' },
     { to: '/admin', label: 'Admin' }
   ];
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <div className="app-shell">
@@ -26,8 +34,21 @@ function Layout({ children, title, subtitle }) {
                 {item.label}
               </NavLink>
             ))}
-            <Link to="/login" className="btn btn-outline-secondary rounded-pill px-3">Login</Link>
-            <Link to="/register" className="btn btn-primary rounded-pill px-3">Register</Link>
+            {isAuthenticated ? (
+              <>
+                <Link to="/profile" className="btn btn-outline-secondary rounded-pill px-3">
+                  {user?.name || 'Profile'}
+                </Link>
+                <button type="button" className="btn btn-primary rounded-pill px-3" onClick={handleLogout}>
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="btn btn-outline-secondary rounded-pill px-3">Login</Link>
+                <Link to="/register" className="btn btn-primary rounded-pill px-3">Register</Link>
+              </>
+            )}
           </div>
         </div>
       </nav>

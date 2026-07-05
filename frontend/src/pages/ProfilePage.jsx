@@ -1,29 +1,8 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { getProfile } from '../services/api';
+import { useAuth } from '../auth/auth-context';
 
 function ProfilePage() {
-  const navigate = useNavigate();
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-
-    getProfile()
-      .then((response) => setProfile(response.data.user))
-      .catch(() => navigate('/login'))
-      .finally(() => setLoading(false));
-  }, [navigate]);
-
-  if (loading) {
-    return <Layout title="User Profile" subtitle="Loading your profile..."><div className="text-secondary">Loading...</div></Layout>;
-  }
+  const { user: profile } = useAuth();
 
   return (
     <Layout title="User Profile" subtitle="Manage your personal and academic profile information.">

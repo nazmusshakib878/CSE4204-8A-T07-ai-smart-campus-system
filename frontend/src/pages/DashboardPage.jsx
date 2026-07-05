@@ -1,45 +1,38 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { getProfile, getTasks, getRecommendations, getLearningResources } from '../services/api';
+import { useAuth } from '../auth/auth-context';
+import { getTasks, getRecommendations, getLearningResources } from '../services/api';
 
 function DashboardPage() {
-  const navigate = useNavigate();
-  const [profile, setProfile] = useState(null);
+  const { user: profile } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-
     const fetchData = async () => {
       try {
-        const [profileRes, tasksRes, recommendationsRes, resourcesRes] = await Promise.all([
-          getProfile(),
+        const [tasksRes, recommendationsRes, resourcesRes] = await Promise.all([
           getTasks(),
           getRecommendations(),
           getLearningResources()
         ]);
 
-        setProfile(profileRes.data.user);
         setTasks(tasksRes.data.data || []);
         setRecommendations(recommendationsRes.data.data || []);
         setResources(resourcesRes.data.data || []);
       } catch (error) {
-        console.error('Dashboard fetch failed', error);
+        setError(error.message || 'Dashboard data could not be loaded.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [navigate]);
+  }, []);
 
   if (loading) {
     return <Layout title="Dashboard" subtitle="Loading your personalized data..."><div className="text-secondary">Loading...</div></Layout>;
@@ -47,6 +40,7 @@ function DashboardPage() {
 
   return (
     <Layout title={`${profile?.role || 'Student'} Dashboard`} subtitle="Your daily academic overview and activity summary.">
+      {error && <div className="alert alert-danger">{error}</div>}
       <div className="row g-4 mb-4">
         <div className="col-md-6 col-xl-3">
           <div className="card border-0 shadow-sm rounded-4 p-4 h-100">

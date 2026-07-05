@@ -15,14 +15,27 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 && localStorage.getItem('auth_token')) {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user');
+      window.dispatchEvent(new Event('auth:unauthorized'));
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 const normalizeError = (error) => {
   if (error.response) {
     const data = error.response.data;
-    if (data?.message && typeof data.message === 'string') {
-      return data.message;
-    }
     if (data?.errors) {
       return Object.values(data.errors).flat().join(' ');
+    }
+    if (data?.message && typeof data.message === 'string') {
+      return data.message;
     }
     return error.response.statusText || 'Request failed.';
   }
@@ -34,7 +47,9 @@ export const registerUser = async (payload) => {
   try {
     return await api.post('/register', payload);
   } catch (error) {
-    throw new Error(normalizeError(error));
+    const normalizedError = new Error(normalizeError(error));
+    normalizedError.status = error.response?.status;
+    throw normalizedError;
   }
 };
 
@@ -42,7 +57,9 @@ export const loginUser = async (payload) => {
   try {
     return await api.post('/login', payload);
   } catch (error) {
-    throw new Error(normalizeError(error));
+    const normalizedError = new Error(normalizeError(error));
+    normalizedError.status = error.response?.status;
+    throw normalizedError;
   }
 };
 
@@ -50,7 +67,9 @@ export const logoutUser = async () => {
   try {
     return await api.post('/logout');
   } catch (error) {
-    throw new Error(normalizeError(error));
+    const normalizedError = new Error(normalizeError(error));
+    normalizedError.status = error.response?.status;
+    throw normalizedError;
   }
 };
 
@@ -58,7 +77,9 @@ export const getProfile = async () => {
   try {
     return await api.get('/profile');
   } catch (error) {
-    throw new Error(normalizeError(error));
+    const normalizedError = new Error(normalizeError(error));
+    normalizedError.status = error.response?.status;
+    throw normalizedError;
   }
 };
 

@@ -12,14 +12,13 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    Route::apiResource('learning-resources', LearningResourceController::class)
+        ->parameters(['learning-resources' => 'id']);
+
+    Route::apiResource('tasks', CampusTaskController::class)
+        ->parameters(['tasks' => 'id']);
+
+    Route::apiResource('recommendations', RecommendationController::class)
+        ->parameters(['recommendations' => 'id']);
 });
-
-// Later: add auth middleware after authentication module is merged.
-Route::apiResource('learning-resources', LearningResourceController::class)
-    ->parameters(['learning-resources' => 'id']);
-
-Route::apiResource('tasks', CampusTaskController::class)
-    ->parameters(['tasks' => 'id']);
-
-Route::apiResource('recommendations', RecommendationController::class)
-    ->parameters(['recommendations' => 'id']);

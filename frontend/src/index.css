@@ -2321,3 +2321,15 @@ body {
     flex-direction: column;
   }
 }
+
+.home-feature-icon {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border-radius: 0.9rem;
+  color: #2563eb;
+  background: #eff6ff;
+  font-size: 1rem;
+  font-weight: 900;
+}

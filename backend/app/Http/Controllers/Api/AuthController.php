@@ -7,17 +7,45 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
     public function register(Request $request): JsonResponse
     {
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email',
-            'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|in:student,faculty,admin',
+        $request->merge([
+            'name' => trim((string) $request->input('name')),
+            'email' => Str::lower(trim((string) $request->input('email'))),
         ]);
+
+        $validatedData = $request->validate(
+            [
+                'name' => ['required', 'string', 'min:2', 'max:255'],
+                'email' => ['required', 'string', 'email:rfc', 'max:255', Rule::unique(User::class)],
+                'password' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    Password::min(8)->letters()->mixedCase()->numbers()->symbols(),
+                ],
+                'password_confirmation' => ['required', 'string', 'max:255', 'same:password'],
+                'role' => ['required', Rule::in(['student', 'faculty', 'admin'])],
+            ],
+            [
+                'name.required' => 'Please enter your full name.',
+                'name.min' => 'Your full name must be at least 2 characters.',
+                'email.required' => 'Please enter your email address.',
+                'email.email' => 'Please enter a valid email address.',
+                'email.unique' => 'An account with this email address already exists.',
+                'password.required' => 'Please create a password.',
+                'password_confirmation.required' => 'Please confirm your password.',
+                'password_confirmation.same' => 'The password confirmation does not match.',
+                'role.required' => 'Please select an account role.',
+                'role.in' => 'Please select a valid account role.',
+            ]
+        );
 
         $user = User::create([
             'name' => $validatedData['name'],
@@ -40,10 +68,21 @@ class AuthController extends Controller
 
     public function login(Request $request): JsonResponse
     {
-        $validatedData = $request->validate([
-            'email' => 'required|string|email',
-            'password' => 'required|string',
+        $request->merge([
+            'email' => Str::lower(trim((string) $request->input('email'))),
         ]);
+
+        $validatedData = $request->validate(
+            [
+                'email' => ['required', 'string', 'email:rfc', 'max:255'],
+                'password' => ['required', 'string', 'max:255'],
+            ],
+            [
+                'email.required' => 'Please enter your email address.',
+                'email.email' => 'Please enter a valid email address.',
+                'password.required' => 'Please enter your password.',
+            ]
+        );
 
         $user = User::where('email', $validatedData['email'])->first();
 

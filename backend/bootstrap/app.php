@@ -29,7 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->wantsJson() || $request->is('api/*')) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Invalid input data.',
+                    'message' => 'Please correct the invalid fields and try again.',
                     'errors' => $e->errors(),
                 ], 422);
             }

@@ -11,6 +11,77 @@ class AuthenticationTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_registration_requires_all_fields(): void
+    {
+        $this->postJson('/api/register')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'name',
+                'email',
+                'password',
+                'password_confirmation',
+                'role',
+            ]);
+
+        $this->assertDatabaseCount('users', 0);
+    }
+
+    public function test_registration_rejects_invalid_input(): void
+    {
+        $response = $this->postJson('/api/register', [
+            'name' => 'A',
+            'email' => 'not-an-email',
+            'password' => 'weak',
+            'password_confirmation' => 'different',
+            'role' => 'visitor',
+        ]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonPath('status', false)
+            ->assertJsonPath('message', 'Please correct the invalid fields and try again.')
+            ->assertJsonValidationErrors([
+                'name',
+                'email',
+                'password',
+                'password_confirmation',
+                'role',
+            ]);
+
+        $this->assertDatabaseCount('users', 0);
+    }
+
+    public function test_registration_normalizes_valid_input(): void
+    {
+        $response = $this->postJson('/api/register', [
+            'name' => '  Ayesha Rahman  ',
+            'email' => '  AYESHA@EXAMPLE.COM  ',
+            'password' => 'StrongPass1!',
+            'password_confirmation' => 'StrongPass1!',
+            'role' => 'student',
+        ]);
+
+        $response
+            ->assertCreated()
+            ->assertJsonPath('user.name', 'Ayesha Rahman')
+            ->assertJsonPath('user.email', 'ayesha@example.com');
+
+        $this->assertDatabaseHas('users', [
+            'name' => 'Ayesha Rahman',
+            'email' => 'ayesha@example.com',
+        ]);
+    }
+
+    public function test_login_rejects_missing_or_malformed_input(): void
+    {
+        $this->postJson('/api/login', [
+            'email' => 'invalid-email',
+            'password' => '',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['email', 'password']);
+    }
+
     public function test_an_approved_user_can_login_and_access_protected_routes(): void
     {
         $user = User::factory()->create([

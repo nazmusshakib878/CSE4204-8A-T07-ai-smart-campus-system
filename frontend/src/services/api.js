@@ -31,11 +31,11 @@ api.interceptors.response.use(
 const normalizeError = (error) => {
   if (error.response) {
     const data = error.response.data;
-    if (data?.errors) {
-      return Object.values(data.errors).flat().join(' ');
-    }
     if (data?.message && typeof data.message === 'string') {
       return data.message;
+    }
+    if (data?.errors) {
+      return Object.values(data.errors).flat().join(' ');
     }
     return error.response.statusText || 'Request failed.';
   }
@@ -43,13 +43,24 @@ const normalizeError = (error) => {
   return error.message || 'Network error. Please try again.';
 };
 
+const createApiError = (error) => {
+  const normalizedError = new Error(normalizeError(error));
+  normalizedError.status = error.response?.status;
+  normalizedError.fields = Object.fromEntries(
+    Object.entries(error.response?.data?.errors || {}).map(([field, messages]) => [
+      field,
+      Array.isArray(messages) ? messages[0] : messages,
+    ])
+  );
+
+  return normalizedError;
+};
+
 export const registerUser = async (payload) => {
   try {
     return await api.post('/register', payload);
   } catch (error) {
-    const normalizedError = new Error(normalizeError(error));
-    normalizedError.status = error.response?.status;
-    throw normalizedError;
+    throw createApiError(error);
   }
 };
 
@@ -57,9 +68,7 @@ export const loginUser = async (payload) => {
   try {
     return await api.post('/login', payload);
   } catch (error) {
-    const normalizedError = new Error(normalizeError(error));
-    normalizedError.status = error.response?.status;
-    throw normalizedError;
+    throw createApiError(error);
   }
 };
 
@@ -67,9 +76,7 @@ export const logoutUser = async () => {
   try {
     return await api.post('/logout');
   } catch (error) {
-    const normalizedError = new Error(normalizeError(error));
-    normalizedError.status = error.response?.status;
-    throw normalizedError;
+    throw createApiError(error);
   }
 };
 
@@ -77,9 +84,7 @@ export const getProfile = async () => {
   try {
     return await api.get('/profile');
   } catch (error) {
-    const normalizedError = new Error(normalizeError(error));
-    normalizedError.status = error.response?.status;
-    throw normalizedError;
+    throw createApiError(error);
   }
 };
 
@@ -87,7 +92,7 @@ export const getLearningResources = async () => {
   try {
     return await api.get('/learning-resources');
   } catch (error) {
-    throw new Error(normalizeError(error));
+    throw createApiError(error);
   }
 };
 
@@ -95,7 +100,7 @@ export const getTasks = async () => {
   try {
     return await api.get('/tasks');
   } catch (error) {
-    throw new Error(normalizeError(error));
+    throw createApiError(error);
   }
 };
 
@@ -103,7 +108,7 @@ export const getRecommendations = async () => {
   try {
     return await api.get('/recommendations');
   } catch (error) {
-    throw new Error(normalizeError(error));
+    throw createApiError(error);
   }
 };
 
@@ -111,7 +116,7 @@ export const createTask = async (payload) => {
   try {
     return await api.post('/tasks', payload);
   } catch (error) {
-    throw new Error(normalizeError(error));
+    throw createApiError(error);
   }
 };
 
@@ -119,7 +124,7 @@ export const deleteTask = async (id) => {
   try {
     return await api.delete(`/tasks/${id}`);
   } catch (error) {
-    throw new Error(normalizeError(error));
+    throw createApiError(error);
   }
 };
 

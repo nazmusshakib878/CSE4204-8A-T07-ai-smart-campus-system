@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useAuth } from '../auth/auth-context';
@@ -8,10 +8,33 @@ const getProfilePhotoKey = (profile) => {
   return owner ? `profile_photo_${owner}` : '';
 };
 
+const iconPaths = {
+  camera: 'M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l2-3h8l2 3h3a2 2 0 0 1 2 2v11ZM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
+  eye: 'M1.5 12s4-7 10.5-7 10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Zm10.5 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
+  folder: 'M3 6a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6Z',
+  trash: 'M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3',
+};
+
+function PhotoActionIcon({ name }) {
+  return (
+    <svg className="photo-action-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d={iconPaths[name]} />
+    </svg>
+  );
+}
+
 function ProfilePage() {
   const { user: profile } = useAuth();
   const [profilePhoto, setProfilePhoto] = useState('');
   const [photoError, setPhotoError] = useState('');
+  const [photoMenuOpen, setPhotoMenuOpen] = useState(false);
+  const [viewPhotoOpen, setViewPhotoOpen] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [cameraError, setCameraError] = useState('');
+  const fileInputRef = useRef(null);
+  const videoRef = useRef(null);
+  const cameraStreamRef = useRef(null);
   const profilePhotoKey = useMemo(() => getProfilePhotoKey(profile), [profile]);
   const initials = profile?.name?.slice(0, 2).toUpperCase() || 'US';
   const role = profile?.role || 'Student';
@@ -24,6 +47,45 @@ function ProfilePage() {
   useEffect(() => {
     setProfilePhoto(profilePhotoKey ? localStorage.getItem(profilePhotoKey) || '' : '');
   }, [profilePhotoKey]);
+
+  useEffect(() => {
+    if (!cameraOpen) return undefined;
+
+    let cancelled = false;
+    setCameraReady(false);
+    setCameraError('');
+
+    const startCamera = async () => {
+      try {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          throw new Error('Camera is not available in this browser.');
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        if (cancelled) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+
+        cameraStreamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+        }
+        setCameraReady(true);
+      } catch (error) {
+        setCameraError(error.message || 'Could not open the camera.');
+      }
+    };
+
+    startCamera();
+
+    return () => {
+      cancelled = true;
+      cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+      cameraStreamRef.current = null;
+    };
+  }, [cameraOpen]);
 
   const updateProfilePhoto = (photo) => {
     if (!profilePhotoKey) return;
@@ -68,6 +130,32 @@ function ProfilePage() {
     reader.onload = () => updateProfilePhoto(reader.result);
     reader.onerror = () => setPhotoError('Could not upload this image. Please try another one.');
     reader.readAsDataURL(file);
+    setPhotoMenuOpen(false);
+  };
+
+  const openCamera = () => {
+    setPhotoMenuOpen(false);
+    setCameraOpen(true);
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current || !profilePhotoKey) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth || 640;
+    canvas.height = videoRef.current.videoHeight || 480;
+    const context = canvas.getContext('2d');
+    context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    updateProfilePhoto(canvas.toDataURL('image/jpeg', 0.9));
+    setCameraOpen(false);
+  };
+
+  const removePhoto = () => {
+    updateProfilePhoto('');
+    setPhotoMenuOpen(false);
+    setViewPhotoOpen(false);
+    setPhotoError('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const profileStats = [
@@ -89,38 +177,63 @@ function ProfilePage() {
     <Layout title="My Profile" subtitle="Keep your campus identity clear, complete, and ready to use.">
       <div className="profile-hero mb-4">
         <div className="profile-hero-main">
-          <div className="profile-photo-preview profile-photo-preview-lg">
-            {profilePhoto ? (
-              <img src={profilePhoto} alt={`${profile?.name || 'User'} profile`} />
-            ) : (
-              <span>{initials}</span>
+          <div className="profile-photo-control">
+            <div className="profile-photo-preview profile-photo-preview-lg">
+              {profilePhoto ? (
+                <img src={profilePhoto} alt={`${profile?.name || 'User'} profile`} />
+              ) : (
+                <span>{initials}</span>
+              )}
+            </div>
+            <button
+              type="button"
+              className="profile-photo-edit-button"
+              aria-expanded={photoMenuOpen}
+              onClick={() => setPhotoMenuOpen((open) => !open)}
+            >
+              <PhotoActionIcon name="camera" />
+              <span>Edit</span>
+            </button>
+            {photoMenuOpen && (
+              <div className="profile-photo-menu">
+                <button
+                  type="button"
+                  disabled={!profilePhoto}
+                  onClick={() => {
+                    setPhotoMenuOpen(false);
+                    setViewPhotoOpen(true);
+                  }}
+                >
+                  <PhotoActionIcon name="eye" />
+                  <span>View</span>
+                </button>
+                <button type="button" onClick={openCamera}>
+                  <PhotoActionIcon name="camera" />
+                  <span>Take</span>
+                </button>
+                <button type="button" onClick={() => fileInputRef.current?.click()}>
+                  <PhotoActionIcon name="folder" />
+                  <span>Upload</span>
+                </button>
+                <button type="button" disabled={!profilePhoto} onClick={removePhoto}>
+                  <PhotoActionIcon name="trash" />
+                  <span>Remove</span>
+                </button>
+              </div>
             )}
+            <input
+              ref={fileInputRef}
+              id="profile-photo-upload"
+              className="visually-hidden"
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoChange}
+            />
           </div>
           <div className="min-w-0">
             <span className="eyebrow-label">Campus account</span>
             <h3>{profile?.name || 'User'}</h3>
             <p>{department} | {role}</p>
-            <div className="profile-hero-actions">
-              <label className="btn btn-light rounded-pill px-4" htmlFor="profile-photo-upload">
-                Upload Photo
-              </label>
-              <input
-                id="profile-photo-upload"
-                className="visually-hidden"
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoChange}
-              />
-              {profilePhoto && (
-                <button
-                  type="button"
-                  className="btn btn-outline-light rounded-pill px-4"
-                  onClick={() => updateProfilePhoto('')}
-                >
-                  Remove
-                </button>
-              )}
-            </div>
             {photoError && <small className="profile-photo-error">{photoError}</small>}
           </div>
         </div>
@@ -188,6 +301,36 @@ function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {viewPhotoOpen && profilePhoto && (
+        <div className="profile-photo-modal" role="dialog" aria-modal="true" aria-label="View profile photo">
+          <div className="profile-photo-modal-card">
+            <img src={profilePhoto} alt={`${profile?.name || 'User'} profile`} />
+            <div className="profile-photo-modal-actions">
+              <button type="button" className="btn btn-outline-secondary" onClick={() => setViewPhotoOpen(false)}>Close</button>
+              <button type="button" className="btn btn-outline-danger" onClick={removePhoto}>Remove photo</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {cameraOpen && (
+        <div className="profile-photo-modal" role="dialog" aria-modal="true" aria-label="Take profile photo">
+          <div className="profile-photo-modal-card profile-camera-card">
+            <div className="profile-camera-frame">
+              {cameraError ? (
+                <p>{cameraError}</p>
+              ) : (
+                <video ref={videoRef} playsInline muted />
+              )}
+            </div>
+            <div className="profile-photo-modal-actions">
+              <button type="button" className="btn btn-outline-secondary" onClick={() => setCameraOpen(false)}>Cancel</button>
+              <button type="button" className="btn btn-primary" disabled={!cameraReady || Boolean(cameraError)} onClick={capturePhoto}>Use photo</button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

@@ -1,7 +1,11 @@
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
+import { useAuth } from '../auth/auth-context';
+import { getDashboardPath } from '../utils/routes';
 
 function NotFoundPage() {
+  const { isAuthenticated, user } = useAuth();
+
   return (
     <Layout>
       <section className="not-found-state card border-0 shadow-sm rounded-4 p-5 text-center mx-auto">
@@ -12,7 +16,9 @@ function NotFoundPage() {
         </p>
         <div className="d-flex flex-column flex-sm-row justify-content-center gap-2">
           <Link to="/" className="btn btn-primary rounded-pill px-4">Return home</Link>
-          <Link to="/dashboard" className="btn btn-outline-secondary rounded-pill px-4">Open dashboard</Link>
+          <Link to={isAuthenticated ? getDashboardPath(user) : '/login'} className="btn btn-outline-secondary rounded-pill px-4">
+            {isAuthenticated ? 'Open dashboard' : 'Sign in'}
+          </Link>
         </div>
       </section>
     </Layout>

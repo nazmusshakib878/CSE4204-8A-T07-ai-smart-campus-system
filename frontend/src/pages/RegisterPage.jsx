@@ -4,11 +4,12 @@ import Layout from '../components/Layout';
 import AuthPageLayout from '../components/AuthPageLayout';
 import { useAuth } from '../auth/auth-context';
 import { validateRegistrationForm } from '../utils/validation';
+import { getDashboardPath } from '../utils/routes';
 import { StatusAlert } from '../components/Feedback';
 
 function RegisterPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, register } = useAuth();
+  const { isAuthenticated, user, register } = useAuth();
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -67,7 +68,7 @@ function RegisterPage() {
 
     try {
       const registeredUser = await register(normalizedForm);
-      navigate('/dashboard', {
+      navigate(getDashboardPath(registeredUser), {
         replace: true,
         state: {
           flash: {
@@ -87,7 +88,7 @@ function RegisterPage() {
   };
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={getDashboardPath(user)} replace />;
   }
 
   return (

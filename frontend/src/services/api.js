@@ -136,4 +136,28 @@ export const deleteTask = async (id) => {
   }
 };
 
+export const getNotices = async () => {
+  try {
+    return await api.get('/notices');
+  } catch (error) {
+    throw createApiError(error);
+  }
+};
+
+export const createNotice = async (payload) => {
+  try {
+    return await api.post('/notices', payload);
+  } catch (error) {
+    throw createApiError(error);
+  }
+};
+
+export const deleteNotice = async (id) => {
+  try {
+    return await api.delete(`/notices/${id}`);
+  } catch (error) {
+    throw createApiError(error);
+  }
+};
+
 export default api;

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/auth-context';
 import { StatusAlert } from './Feedback';
+import { getDashboardPath } from '../utils/routes';
 
 const CAMPUS_LOGO_URL = 'https://nubtkhulna.ac.bd/ter/assets/img/adminica_logo_blue-trans.png';
 const getProfilePhotoKey = (profile) => {
@@ -62,7 +63,7 @@ function Layout({ children, title, subtitle }) {
   const isAdminUser = user?.role === 'admin';
   const publicNavItems = [
     { to: '/', label: 'Home' },
-    ...(isAuthenticated ? [{ to: isAdminUser ? '/admin' : isFacultyUser ? '/faculty-dashboard' : '/dashboard', label: 'Dashboard' }] : []),
+    ...(isAuthenticated ? [{ to: getDashboardPath(user), label: 'Dashboard' }] : []),
   ];
   const studentNavItems = [
     { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },

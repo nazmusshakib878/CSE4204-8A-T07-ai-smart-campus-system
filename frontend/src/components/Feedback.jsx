@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
 
 export function StatusAlert({
   variant = 'info',
@@ -57,6 +57,73 @@ export function EmptyState({ title, message }) {
       <h6 className="fw-bold text-dark mb-2">{title}</h6>
       <p className="text-secondary small mb-0">{message}</p>
     </div>
+  );
+}
+
+export function ModalDialog({
+  open,
+  title,
+  children,
+  onClose,
+  size = 'modal-lg',
+  closeDisabled = false,
+}) {
+  const titleId = useId();
+  const closeButtonRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    closeButtonRef.current?.focus();
+
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape' && !closeDisabled) onCloseRef.current();
+    };
+
+    window.addEventListener('keydown', closeOnEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [closeDisabled, open]);
+
+  if (!open) return null;
+
+  return (
+    <>
+      <div className="modal-backdrop fade show" />
+      <div
+        className="modal fade show d-block"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget && !closeDisabled) onClose();
+        }}
+      >
+        <div className={`modal-dialog modal-dialog-centered modal-dialog-scrollable ${size}`}>
+          <div className="modal-content border-0 rounded-4 shadow-lg">
+            <div className="modal-header">
+              <h5 id={titleId} className="modal-title fw-bold">{title}</h5>
+              <button
+                ref={closeButtonRef}
+                type="button"
+                className="btn-close"
+                aria-label={`Close ${title}`}
+                onClick={onClose}
+                disabled={closeDisabled}
+              />
+            </div>
+            <div className="modal-body">{children}</div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 

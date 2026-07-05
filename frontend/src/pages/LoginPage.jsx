@@ -4,12 +4,13 @@ import Layout from '../components/Layout';
 import AuthPageLayout from '../components/AuthPageLayout';
 import { useAuth } from '../auth/auth-context';
 import { validateLoginForm } from '../utils/validation';
+import { getDashboardPath } from '../utils/routes';
 import { StatusAlert } from '../components/Feedback';
 
 function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated, user, login } = useAuth();
   const [form, setForm] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
@@ -58,7 +59,7 @@ function LoginPage() {
 
     try {
       const authenticatedUser = await login(normalizedForm);
-      navigate(location.state?.from || '/dashboard', {
+      navigate(location.state?.from || getDashboardPath(authenticatedUser), {
         replace: true,
         state: {
           flash: {
@@ -78,7 +79,7 @@ function LoginPage() {
   };
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={getDashboardPath(user)} replace />;
   }
 
   return (

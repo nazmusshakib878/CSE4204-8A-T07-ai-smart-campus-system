@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 
 const stats = [
@@ -71,7 +72,7 @@ function AdminPage() {
                 </div>
               ))}
             </div>
-            <a href="/admin/users" className="btn btn-outline-primary w-100 mt-4">Review Pending Users</a>
+            <Link to="/admin/users" className="btn btn-outline-primary w-100 mt-4">Review Pending Users</Link>
           </section>
         </div>
       </div>

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useAuth } from '../auth/auth-context';
+import { getDashboardPath } from '../utils/routes';
 
 const getProfilePhotoKey = (profile) => {
   const owner = profile?.id || profile?.email || profile?.student_id || profile?.varsity_id || profile?.university_id;
@@ -43,6 +44,21 @@ function ProfilePage() {
   const studentId = profile?.student_id || profile?.varsity_id || profile?.university_id || 'Not added';
   const phone = profile?.phone || profile?.phone_number || 'Not added';
   const session = profile?.session || profile?.batch || 'Not added';
+  const dashboardPath = getDashboardPath(profile);
+  const quickActions = role === 'admin'
+    ? [
+        { to: '/admin/users', label: 'Manage users', primary: false },
+        { to: '/admin/notices', label: 'Manage notices', primary: true },
+      ]
+    : role === 'faculty'
+      ? [
+          { to: '/student-monitoring', label: 'Student monitoring', primary: false },
+          { to: '/risk-alerts', label: 'Risk alerts', primary: true },
+        ]
+      : [
+          { to: '/functions', label: 'Campus tools', primary: false },
+          { to: '/course-recommendations', label: 'Course recommendations', primary: true },
+        ];
 
   useEffect(() => {
     setProfilePhoto(profilePhotoKey ? localStorage.getItem(profilePhotoKey) || '' : '');
@@ -283,9 +299,16 @@ function ProfilePage() {
               <span className="eyebrow-label text-primary">Quick actions</span>
               <h5 className="fw-bold text-dark mb-3">Campus shortcuts</h5>
               <div className="d-grid gap-2">
-                <Link to="/dashboard" className="btn btn-outline-secondary text-start">Open dashboard</Link>
-                <Link to="/functions" className="btn btn-outline-secondary text-start">Campus tools</Link>
-                <Link to="/ai-assistant" className="btn btn-primary text-start">Ask AI Assistant</Link>
+                <Link to={dashboardPath} className="btn btn-outline-secondary text-start">Open dashboard</Link>
+                {quickActions.map((action) => (
+                  <Link
+                    key={action.to}
+                    to={action.to}
+                    className={`btn ${action.primary ? 'btn-primary' : 'btn-outline-secondary'} text-start`}
+                  >
+                    {action.label}
+                  </Link>
+                ))}
               </div>
             </div>
 

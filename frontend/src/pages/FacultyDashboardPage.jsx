@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 
 const stats = [
@@ -77,7 +78,7 @@ function FacultyDashboardPage() {
       <section className="faculty-panel">
         <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
           <h4 className="mb-0">Student List</h4>
-          <a href="/student-monitoring" className="text-primary text-decoration-none fw-semibold">View full monitoring</a>
+          <Link to="/student-monitoring" className="text-primary text-decoration-none fw-semibold">View full monitoring</Link>
         </div>
         <p className="text-secondary mb-0">Use Student Monitoring for attendance, CGPA, activity, and risk status.</p>
       </section>

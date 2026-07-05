@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import campusImg from '../assets/ChatGPT Image Jul 4, 2026, 11_22_37 PM.png';
+import { useAuth } from '../auth/auth-context';
+import { getDashboardPath } from '../utils/routes';
 
 function HomePage() {
-  // TODO: Replace this with your actual authentication state
-  const isLoggedIn = false; 
+  const { isAuthenticated, user } = useAuth();
+  const dashboardPath = getDashboardPath(user);
 
   const features = [
     { title: 'Attendance Tracking', desc: 'Real-time updates on class participation and absence patterns.', icon: '📊' },
@@ -35,8 +37,12 @@ function HomePage() {
             </p>
             
             <div className="d-flex flex-wrap gap-3 mb-5">
-              <Link to="/register" className="btn btn-primary btn-lg rounded-pill px-5 shadow-sm fw-bold">Create Account</Link>
-              <Link to="/dashboard" className="btn btn-white btn-lg rounded-pill px-5 bg-white shadow-sm border fw-bold text-dark">View Dashboard</Link>
+              {!isAuthenticated && (
+                <Link to="/register" className="btn btn-primary btn-lg rounded-pill px-5 shadow-sm fw-bold">Create Account</Link>
+              )}
+              <Link to={isAuthenticated ? dashboardPath : '/login'} className="btn btn-white btn-lg rounded-pill px-5 bg-white shadow-sm border fw-bold text-dark">
+                {isAuthenticated ? 'View Dashboard' : 'Sign In'}
+              </Link>
             </div>
 
             <div className="d-flex gap-4">
@@ -57,7 +63,7 @@ function HomePage() {
               <img src={campusImg} alt="NUBTK Campus" className="img-fluid w-100" style={{ height: '420px', objectFit: 'cover' }} />
               
               {/* Floating Stat Box over Image - ONLY SHOWS IF LOGGED IN */}
-              {isLoggedIn && (
+              {isAuthenticated && (
                 <div className="position-absolute bottom-0 start-0 w-100 p-3 p-lg-4" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }}>
                   <div className="bg-white rounded-4 p-3 shadow-sm border-top border-primary border-4">
                     <div className="d-flex justify-content-between align-items-center mb-3">
@@ -99,7 +105,9 @@ function HomePage() {
       <section className="rounded-4 p-5 text-center text-white shadow-lg mb-4" style={{ background: 'linear-gradient(135deg, #2563eb, #0f172a)' }}>
         <span className="badge bg-white bg-opacity-25 text-white rounded-pill px-3 py-2 mb-3 shadow-sm border border-light">READY TO EXPLORE</span>
         <h2 className="display-6 fw-bold mb-4">Launch your smart campus experience today.</h2>
-        <Link to="/login" className="btn btn-light btn-lg text-primary rounded-pill px-5 fw-bold shadow">Get Started Now</Link>
+        <Link to={isAuthenticated ? dashboardPath : '/login'} className="btn btn-light btn-lg text-primary rounded-pill px-5 fw-bold shadow">
+          {isAuthenticated ? 'Open Dashboard' : 'Get Started Now'}
+        </Link>
       </section>
 
     </Layout>

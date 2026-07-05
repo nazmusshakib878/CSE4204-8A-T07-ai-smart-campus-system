@@ -40,7 +40,7 @@ function DashboardPage() {
 
   return (
     <Layout title={`${profile?.role || 'Student'} Dashboard`} subtitle="Your daily academic overview and activity summary.">
-      {error && <div className="alert alert-danger">{error}</div>}
+      {error && <div className="alert alert-danger" role="alert">{error}</div>}
       <div className="row g-4 mb-4">
         <div className="col-md-6 col-xl-3">
           <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
@@ -75,7 +75,7 @@ function DashboardPage() {
       <div className="row g-4">
         <div className="col-lg-8">
           <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
-            <div className="d-flex justify-content-between align-items-center mb-3">
+            <div className="section-card-header d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
               <h5 className="fw-bold text-dark mb-0">Recent activity</h5>
               <Link to="/functions" className="text-primary small">View all</Link>
             </div>

@@ -83,12 +83,12 @@ function RegisterPage() {
   return (
     <Layout title="Create Account" subtitle="Join the smart campus platform and access your academic tools.">
       <div className="row justify-content-center">
-        <div className="col-lg-7">
-          <div className="card border-0 shadow-lg rounded-4 p-4">
+        <div className="col-12 col-lg-9 col-xl-8">
+          <div className="form-card card border-0 shadow-lg rounded-4 p-4">
             <h4 className="fw-bold text-dark mb-3">Register as a new user</h4>
             <p className="text-secondary mb-4">Choose your role and set up your profile.</p>
 
-            {error && <div className="alert alert-danger">{error}</div>}
+            {error && <div className="alert alert-danger" role="alert">{error}</div>}
 
             <form onSubmit={handleSubmit} noValidate>
               <div className="row g-3">

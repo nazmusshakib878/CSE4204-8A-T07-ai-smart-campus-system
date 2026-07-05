@@ -21,6 +21,7 @@ html {
 body {
   margin: 0;
   min-width: 320px;
+  overflow-x: hidden;
   background: linear-gradient(135deg, #f8fbff 0%, #eef4ff 100%);
 }
 
@@ -29,7 +30,122 @@ body {
 }
 
 .app-shell {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
+}
+
+.app-main {
+  flex: 1 0 auto;
+  width: 100%;
+}
+
+.navbar {
+  z-index: 1030;
+}
+
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  background: linear-gradient(135deg, #2563eb, #0f172a);
+}
+
+.brand-mark svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+.brand-text {
+  white-space: nowrap;
+}
+
+.navbar-toggler {
+  width: 44px;
+  height: 44px;
+  padding: 0.35rem;
+}
+
+.site-navigation {
+  display: none;
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+  padding-top: 0.75rem;
+  margin-top: 0.75rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.site-navigation.is-open {
+  display: flex;
+}
+
+.site-navigation .nav-link {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.75rem;
+  color: #475569;
+  font-weight: 500;
+}
+
+.site-navigation .nav-link:hover,
+.site-navigation .nav-link:focus-visible,
+.site-navigation .nav-link.active {
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.nav-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.nav-actions .btn {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-link {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-title {
+  font-size: clamp(1.65rem, 4vw, 2rem);
+}
+
+.card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.btn,
+.form-control,
+.form-select {
+  min-height: 44px;
+}
+
+.btn:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible,
+.navbar-toggler:focus-visible,
+.nav-link:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.35);
+  outline-offset: 2px;
+}
+
+.footer-content {
+  text-align: center;
 }
 
 .card-hover {
@@ -50,3 +166,130 @@ body {
   background: linear-gradient(135deg, #1d4ed8, #1e40af);
 }
 
+@media (min-width: 992px) {
+  .site-navigation {
+    display: flex;
+    width: auto;
+    flex: 1 1 auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem;
+    padding-top: 0;
+    margin-top: 0;
+    margin-left: auto;
+    border-top: 0;
+  }
+
+  .nav-actions {
+    flex-direction: row;
+    padding-top: 0;
+    margin-left: 0.35rem;
+  }
+
+  .profile-link {
+    max-width: 180px;
+  }
+
+  .footer-content {
+    text-align: initial;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .app-main {
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+  }
+
+  .page-heading {
+    margin-bottom: 1.25rem !important;
+  }
+
+  .display-5 {
+    font-size: clamp(2rem, 10vw, 2.75rem);
+  }
+
+  .lead {
+    font-size: 1.05rem;
+  }
+
+  .app-main .row {
+    --bs-gutter-x: 1.25rem;
+    --bs-gutter-y: 1.25rem;
+  }
+
+  .home-hero {
+    margin-bottom: 2rem !important;
+  }
+
+  .home-hero-image {
+    height: 240px !important;
+  }
+
+  .home-cta {
+    padding: 2rem 1.25rem !important;
+  }
+
+  .assistant-response {
+    min-height: 160px !important;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .brand-mark {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+  }
+
+  .brand-text {
+    font-size: 1rem;
+  }
+
+  .app-main .card.p-4,
+  .app-main .card .card-body.p-4 {
+    padding: 1.25rem !important;
+  }
+
+  .hero-actions,
+  .hero-stats {
+    flex-direction: column;
+  }
+
+  .hero-actions .btn,
+  .hero-stats > * {
+    width: 100%;
+  }
+
+  .assistant-composer {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .assistant-composer > .form-control,
+  .assistant-composer > .btn {
+    width: 100%;
+    border-radius: 0.75rem !important;
+  }
+
+  .section-card-header {
+    align-items: flex-start !important;
+  }
+
+  .footer-content small {
+    display: block;
+    max-width: 32rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

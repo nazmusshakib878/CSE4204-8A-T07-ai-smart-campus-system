@@ -14,7 +14,7 @@ function FunctionsPage() {
         {cards.map((card) => (
           <div key={card.title} className="col-md-6">
             <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
-              <div className="d-flex justify-content-between align-items-center mb-3">
+              <div className="section-card-header d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                 <h5 className="fw-bold text-dark mb-0">{card.title}</h5>
                 <span className="badge bg-primary-subtle text-primary">{card.badge}</span>
               </div>

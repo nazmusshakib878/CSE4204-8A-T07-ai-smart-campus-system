@@ -74,12 +74,12 @@ function LoginPage() {
   return (
     <Layout title="Sign In" subtitle="Access your student or admin dashboard securely.">
       <div className="row justify-content-center">
-        <div className="col-lg-5">
-          <div className="card border-0 shadow-lg rounded-4 p-4">
+        <div className="col-12 col-md-8 col-lg-5">
+          <div className="form-card card border-0 shadow-lg rounded-4 p-4">
             <h4 className="fw-bold text-dark mb-3">Welcome back</h4>
             <p className="text-secondary mb-4">Enter your credentials to continue.</p>
 
-            {error && <div className="alert alert-danger">{error}</div>}
+            {error && <div className="alert alert-danger" role="alert">{error}</div>}
 
             <form onSubmit={handleSubmit} noValidate>
               <div className="mb-3">

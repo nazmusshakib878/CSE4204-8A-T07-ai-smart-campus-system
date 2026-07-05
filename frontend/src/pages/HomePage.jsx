@@ -3,89 +3,105 @@ import Layout from '../components/Layout';
 import campusImg from '../assets/ChatGPT Image Jul 4, 2026, 11_22_37 PM.png';
 
 function HomePage() {
+  // TODO: Replace this with your actual authentication state
+  const isLoggedIn = false; 
+
   const features = [
-    { title: 'Attendance Tracking', desc: 'Stay updated with class participation and absence patterns.', icon: '📈' },
-    { title: 'Academic Insights', desc: 'Review marks, GPA trends, and performance summaries clearly.', icon: '🎯' },
-    { title: 'AI Study Support', desc: 'Get smart recommendations and academic guidance instantly.', icon: '🤖' }
+    { title: 'Attendance Tracking', desc: 'Real-time updates on class participation and absence patterns.', icon: '📊' },
+    { title: 'Academic Insights', desc: 'Clear view of marks, GPA trends, and performance summaries.', icon: '🎓' },
+    { title: 'AI Study Support', desc: 'Smart guidance and academic recommendations 24/7.', icon: '🚀' }
   ];
 
   return (
-    <Layout title="Welcome to NUBTK Campus" subtitle="A smart platform for students, faculty, and administrators.">
-      <section className="home-hero row align-items-center g-5 mb-5">
-        <div className="col-lg-7">
-          <span className="badge rounded-pill bg-primary-subtle text-primary px-3 py-2 mb-3">AI-POWERED EDUCATION EXPERIENCE</span>
-          <h1 className="display-5 fw-bold text-dark mb-3">Smarter campus operations from one unified platform.</h1>
-          <p className="lead text-secondary mb-4">
-            Manage learning, attendance, student progress, and communication in a modern experience tailored for universities.
-          </p>
-          <div className="hero-actions d-flex flex-wrap gap-3 mb-4">
-            <Link to="/register" className="btn btn-primary rounded-pill px-4 py-2">Create Account</Link>
-            <Link to="/dashboard" className="btn btn-outline-secondary rounded-pill px-4 py-2">View Dashboard</Link>
-          </div>
-          <div className="hero-stats d-flex flex-wrap gap-3">
-            <div className="bg-white rounded-4 px-3 py-2 shadow-sm border">
-              <div className="fw-bold text-dark">8,400+ Students</div>
-              <small className="text-secondary">Active users</small>
+    <Layout title="Home" subtitle="Welcome to NUBTK Smart Campus">
+      
+      {/* Modern Hero Section */}
+      <section className="home-hero rounded-4 shadow-sm p-4 p-lg-5 mb-5 mt-3" style={{ background: 'linear-gradient(145deg, #f8fafc, #e2e8f0)' }}>
+        <div className="row align-items-center g-5">
+          
+          {/* Left Content */}
+          <div className="col-lg-7">
+            <div className="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 mb-4 border border-primary-subtle">
+              ✨ NUBTK Smart Campus Platform
             </div>
-            <div className="bg-white rounded-4 px-3 py-2 shadow-sm border">
-              <div className="fw-bold text-dark">24/7 AI Support</div>
-              <small className="text-secondary">Always available</small>
+            
+            <h1 className="display-4 mb-3" style={{ fontWeight: 800, color: '#1e293b', lineHeight: '1.2' }}>
+              Northern University of <br />
+              <span style={{ color: '#2563eb' }}>Business & Technology | Khulna</span>
+            </h1>
+            
+            <p className="lead text-secondary mb-5 fs-4">
+              Smarter campus operations, attendance, and student progress from one unified platform.
+            </p>
+            
+            <div className="d-flex flex-wrap gap-3 mb-5">
+              <Link to="/register" className="btn btn-primary btn-lg rounded-pill px-5 shadow-sm fw-bold">Create Account</Link>
+              <Link to="/dashboard" className="btn btn-white btn-lg rounded-pill px-5 bg-white shadow-sm border fw-bold text-dark">View Dashboard</Link>
             </div>
-          </div>
-        </div>
 
-        <div className="col-lg-5">
-          <div className="card border-0 shadow-lg rounded-4 overflow-hidden">
-            <img src={campusImg} alt="Campus management preview" className="home-hero-image img-fluid w-100" style={{ height: 320, objectFit: 'cover' }} />
-            <div className="card-body p-4">
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <div>
-                  <p className="small text-muted mb-1">Today’s overview</p>
-                  <h5 className="fw-bold mb-0">Academic performance</h5>
-                </div>
-                <span className="badge bg-success-subtle text-success">Live</span>
+            <div className="d-flex gap-4">
+              <div>
+                <h3 className="fw-bold mb-0 text-dark">8,400+</h3>
+                <span className="text-muted small fw-semibold">Active Students</span>
               </div>
-              <div className="row g-3">
-                <div className="col-6">
-                  <div className="rounded-3 bg-light p-3">
-                    <div className="small text-muted">Avg. CGPA</div>
-                    <div className="fw-bold fs-5 text-dark">3.74</div>
+              <div className="border-start ps-4 border-2">
+                <h3 className="fw-bold mb-0 text-dark">24/7</h3>
+                <span className="text-muted small fw-semibold">AI Support Available</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Content - Floating Image Card */}
+          <div className="col-lg-5">
+            <div className="card border-0 shadow-lg rounded-4 overflow-hidden position-relative">
+              <img src={campusImg} alt="NUBTK Campus" className="img-fluid w-100" style={{ height: '420px', objectFit: 'cover' }} />
+              
+              {/* Floating Stat Box over Image - ONLY SHOWS IF LOGGED IN */}
+              {isLoggedIn && (
+                <div className="position-absolute bottom-0 start-0 w-100 p-3 p-lg-4" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }}>
+                  <div className="bg-white rounded-4 p-3 shadow-sm border-top border-primary border-4">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <span className="fw-bold text-dark fs-5">Academic Overview</span>
+                      <span className="badge bg-success text-white rounded-pill px-3">Live</span>
+                    </div>
+                    <div className="d-flex justify-content-between">
+                      <div>
+                        <small className="text-muted d-block fw-semibold">Average CGPA</small>
+                        <span className="fs-4 fw-bold text-primary">3.74</span>
+                      </div>
+                      <div className="text-end">
+                        <small className="text-muted d-block fw-semibold">Overall Attendance</small>
+                        <span className="fs-4 fw-bold text-primary">92.4%</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="col-6">
-                  <div className="rounded-3 bg-light p-3">
-                    <div className="small text-muted">Attendance</div>
-                    <div className="fw-bold fs-5 text-dark">92.4%</div>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
       </section>
 
+      {/* Premium Features Section */}
       <section className="row g-4 mb-5">
         {features.map((feature) => (
-          <div key={feature.title} className="col-md-6 col-xl-4">
-            <div className="card border-0 shadow-sm rounded-4 h-100 p-4">
-              <div className="fs-3 mb-3">{feature.icon}</div>
-              <h5 className="fw-bold text-dark">{feature.title}</h5>
-              <p className="text-secondary mb-0">{feature.desc}</p>
+          <div key={feature.title} className="col-md-4">
+            <div className="card border-0 shadow-sm rounded-4 h-100 p-4 bg-white" style={{ transition: 'transform 0.3s ease' }}>
+              <div className="display-5 mb-3">{feature.icon}</div>
+              <h4 className="fw-bold text-dark">{feature.title}</h4>
+              <p className="text-secondary mb-0 fs-6">{feature.desc}</p>
             </div>
           </div>
         ))}
       </section>
 
-      <section className="home-cta rounded-4 p-5 text-white" style={{ background: 'linear-gradient(135deg, #1d4ed8, #0f172a)' }}>
-        <div className="text-center">
-          <p className="text-uppercase small mb-2" style={{ letterSpacing: '2px', opacity: 0.8 }}>READY TO EXPLORE</p>
-          <h2 className="fw-bold mb-3">Launch your smart campus experience today.</h2>
-          <p className="mb-4 mx-auto text-light" style={{ maxWidth: 680 }}>
-            Register, access your dashboard, explore academic tools, and interact with the AI assistant from one portal.
-          </p>
-          <Link to="/login" className="btn btn-light text-primary rounded-pill px-4 py-2 fw-semibold">Get Started</Link>
-        </div>
+      {/* Call to Action Section */}
+      <section className="rounded-4 p-5 text-center text-white shadow-lg mb-4" style={{ background: 'linear-gradient(135deg, #2563eb, #0f172a)' }}>
+        <span className="badge bg-white bg-opacity-25 text-white rounded-pill px-3 py-2 mb-3 shadow-sm border border-light">READY TO EXPLORE</span>
+        <h2 className="display-6 fw-bold mb-4">Launch your smart campus experience today.</h2>
+        <Link to="/login" className="btn btn-light btn-lg text-primary rounded-pill px-5 fw-bold shadow">Get Started Now</Link>
       </section>
+
     </Layout>
   );
 }

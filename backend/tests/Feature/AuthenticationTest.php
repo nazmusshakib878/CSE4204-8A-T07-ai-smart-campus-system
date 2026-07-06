@@ -18,9 +18,11 @@ class AuthenticationTest extends TestCase
             ->assertJsonValidationErrors([
                 'name',
                 'email',
+                'phone',
                 'password',
                 'password_confirmation',
                 'role',
+                'department',
             ]);
 
         $this->assertDatabaseCount('users', 0);
@@ -31,9 +33,12 @@ class AuthenticationTest extends TestCase
         $response = $this->postJson('/api/register', [
             'name' => 'A',
             'email' => 'not-an-email',
+            'phone' => 'bad-phone',
             'password' => 'weak',
             'password_confirmation' => 'different',
             'role' => 'visitor',
+            'department' => '',
+            'student_id' => 'bad-id',
         ]);
 
         $response
@@ -43,33 +48,78 @@ class AuthenticationTest extends TestCase
             ->assertJsonValidationErrors([
                 'name',
                 'email',
+                'phone',
                 'password',
                 'password_confirmation',
                 'role',
+                'department',
             ]);
 
         $this->assertDatabaseCount('users', 0);
     }
 
-    public function test_registration_normalizes_valid_input(): void
+    public function test_student_registration_normalizes_valid_input_and_stays_pending(): void
     {
         $response = $this->postJson('/api/register', [
             'name' => '  Ayesha Rahman  ',
             'email' => '  AYESHA@EXAMPLE.COM  ',
+            'phone' => ' 01712345678 ',
             'password' => 'StrongPass1!',
             'password_confirmation' => 'StrongPass1!',
             'role' => 'student',
+            'department' => 'Computer Science & Engineering',
+            'student_id' => ' ce66334459156 ',
         ]);
 
         $response
             ->assertCreated()
             ->assertJsonPath('user.name', 'Ayesha Rahman')
-            ->assertJsonPath('user.email', 'ayesha@example.com');
+            ->assertJsonPath('user.email', 'ayesha@example.com')
+            ->assertJsonPath('user.phone', '01712345678')
+            ->assertJsonPath('user.approval_status', 'pending')
+            ->assertJsonMissingPath('token');
 
         $this->assertDatabaseHas('users', [
             'name' => 'Ayesha Rahman',
             'email' => 'ayesha@example.com',
+            'phone' => '01712345678',
+            'department' => 'Computer Science & Engineering',
+            'student_id' => 'CE66334459156',
+            'approval_status' => 'pending',
         ]);
+    }
+
+    public function test_faculty_registration_requires_valid_faculty_id(): void
+    {
+        $this->postJson('/api/register', [
+            'name' => 'Dr. Farhana Islam',
+            'email' => 'farhana@example.com',
+            'phone' => '01712345679',
+            'password' => 'StrongPass1!',
+            'password_confirmation' => 'StrongPass1!',
+            'role' => 'faculty',
+            'department' => 'Electrical & Electronic Engineering',
+            'faculty_id' => 'FAC-EEE-0145',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('user.faculty_id', 'FAC-EEE-0145')
+            ->assertJsonPath('user.phone', '01712345679')
+            ->assertJsonPath('user.approval_status', 'pending');
+    }
+
+    public function test_public_registration_rejects_admin_role(): void
+    {
+        $this->postJson('/api/register', [
+            'name' => 'System Admin',
+            'email' => 'admin@example.com',
+            'phone' => '01712345670',
+            'password' => 'StrongPass1!',
+            'password_confirmation' => 'StrongPass1!',
+            'role' => 'admin',
+            'department' => 'ADMIN',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['role']);
     }
 
     public function test_login_rejects_missing_or_malformed_input(): void
@@ -125,7 +175,7 @@ class AuthenticationTest extends TestCase
             ]);
     }
 
-    public function test_unapproved_users_cannot_login(): void
+    public function test_pending_users_cannot_login(): void
     {
         User::factory()->create([
             'email' => 'pending@example.com',
@@ -138,7 +188,70 @@ class AuthenticationTest extends TestCase
             'password' => 'secret-password',
         ])
             ->assertForbidden()
-            ->assertJsonPath('status', false);
+            ->assertJson([
+                'status' => false,
+                'message' => 'Your account is pending administrator approval.',
+            ]);
+    }
+
+    public function test_only_admin_users_can_create_admin_accounts(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'approval_status' => 'approved',
+        ]);
+
+        $this->actingAs($admin, 'sanctum')
+            ->postJson('/api/admin/create-admin', [
+                'name' => 'System Admin',
+                'email' => 'system-admin@example.com',
+                'phone' => '01712345671',
+                'password' => 'StrongPass1!',
+                'admin_id' => 'ADM-045',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('user.role', 'admin')
+            ->assertJsonPath('user.phone', '01712345671')
+            ->assertJsonPath('user.admin_id', 'ADM-045')
+            ->assertJsonPath('user.approval_status', 'approved');
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'system-admin@example.com',
+            'phone' => '01712345671',
+            'admin_id' => 'ADM-045',
+            'role' => 'admin',
+            'approval_status' => 'approved',
+        ]);
+    }
+
+    public function test_admin_can_list_and_approve_pending_users(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'approval_status' => 'approved',
+        ]);
+        $student = User::factory()->create([
+            'role' => 'student',
+            'approval_status' => 'pending',
+            'student_id' => 'CE66334459156',
+        ]);
+
+        $this->actingAs($admin, 'sanctum')
+            ->getJson('/api/admin/pending-users')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $student->id);
+
+        $this->actingAs($admin, 'sanctum')
+            ->patchJson("/api/admin/users/{$student->id}/approval", [
+                'approval_status' => 'approved',
+            ])
+            ->assertOk()
+            ->assertJsonPath('user.approval_status', 'approved');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $student->id,
+            'approval_status' => 'approved',
+        ]);
     }
 
     public function test_guests_cannot_access_protected_api_routes(): void
@@ -178,8 +291,6 @@ class AuthenticationTest extends TestCase
 
         $this->assertDatabaseCount('personal_access_tokens', 0);
 
-        // Each real API call starts with a fresh guard. Reset the guard here
-        // because the feature-test application handles both calls in-process.
         Auth::forgetGuards();
 
         $this->withToken($token)

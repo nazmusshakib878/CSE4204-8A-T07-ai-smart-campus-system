@@ -73,6 +73,10 @@ export function AuthProvider({ children }) {
 
   const applyAuthResponse = useCallback((response) => {
     const { token: newToken, user: authenticatedUser } = response.data;
+    if (!newToken) {
+      setInitializing(false);
+      return authenticatedUser;
+    }
     storeSession(newToken, authenticatedUser);
     setToken(newToken);
     setUser(authenticatedUser);

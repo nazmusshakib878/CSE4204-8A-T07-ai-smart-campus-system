@@ -80,6 +80,62 @@ export const logoutUser = async () => {
   }
 };
 
+export const createAdmin = async (payload) => {
+  try {
+    return await api.post('/admin/create-admin', payload);
+  } catch (error) {
+    throw createApiError(error);
+  }
+};
+
+export const getPendingUsers = async () => {
+  try {
+    return await api.get('/admin/pending-users');
+  } catch (error) {
+    throw createApiError(error);
+  }
+};
+
+export const updateUserApproval = async (id, approvalStatus) => {
+  try {
+    return await api.patch(`/admin/users/${id}/approval`, { approval_status: approvalStatus });
+  } catch (error) {
+    throw createApiError(error);
+  }
+};
+
+
+export const getDepartments = async () => {
+  try {
+    return await api.get('/departments');
+  } catch (error) {
+    throw createApiError(error);
+  }
+};
+
+export const getAdminDepartments = async () => {
+  try {
+    return await api.get('/admin/departments');
+  } catch (error) {
+    throw createApiError(error);
+  }
+};
+
+export const createDepartment = async (payload) => {
+  try {
+    return await api.post('/admin/departments', payload);
+  } catch (error) {
+    throw createApiError(error);
+  }
+};
+
+export const deleteDepartment = async (id) => {
+  try {
+    return await api.delete(`/admin/departments/${id}`);
+  } catch (error) {
+    throw createApiError(error);
+  }
+};
 export const getProfile = async () => {
   try {
     return await api.get('/profile');

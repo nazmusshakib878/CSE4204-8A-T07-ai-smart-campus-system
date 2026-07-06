@@ -21,6 +21,7 @@ const iconPaths = {
   admin: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87m0-7.26a4 4 0 0 1 0 7.75',
   users: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm11 10v-2a3 3 0 0 0-2-2.83M16 3.13a4 4 0 0 1 0 7.75',
   notices: 'M7 3h8l4 4v14H7V3Zm8 0v5h5M9 13h8M9 17h8M9 9h3',
+  departments: 'M4 4h16v5H4V4Zm0 7h7v9H4v-9Zm9 0h7v9h-7v-9Z',
   profile: 'M20 21a8 8 0 0 0-16 0m8-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
 };
 
@@ -80,6 +81,7 @@ function Layout({ children, title, subtitle }) {
     { to: '/admin', label: 'Dashboard', icon: 'dashboard' },
     { to: '/admin/users', label: 'Manage Users', icon: 'users' },
     { to: '/admin/notices', label: 'Manage Notices', icon: 'notices' },
+    { to: '/admin/departments', label: 'Manage Departments', icon: 'departments' },
   ];
   const appNavItems = isAdminUser ? adminNavItems : isFacultyUser ? facultyNavItems : studentNavItems;
   const internalRoutes = ['/dashboard', '/profile', '/functions', '/ai-assistant', '/course-recommendations', '/faculty-dashboard', '/student-monitoring', '/risk-alerts', '/admin'];

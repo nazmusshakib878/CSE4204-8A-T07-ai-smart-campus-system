@@ -15,6 +15,7 @@ import RiskAlertsPage from './pages/RiskAlertsPage';
 import AdminPage from './pages/AdminPage';
 import ManageUsersPage from './pages/ManageUsersPage';
 import ManageNoticesPage from './pages/ManageNoticesPage';
+import ManageDepartmentsPage from './pages/ManageDepartmentsPage';
 import NotFoundPage from './pages/NotFoundPage';
 import { AuthProvider } from './auth/AuthContext';
 import ProtectedRoute from './auth/ProtectedRoute';
@@ -45,7 +46,7 @@ function App() {
             <Route path="/risk-alerts" element={<RiskAlertsPage />} />
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/admin/users" element={<ManageUsersPage />} />
-            <Route path="/admin/notices" element={<ManageNoticesPage />} />
+            <Route path="/admin/notices" element={<ManageNoticesPage />} />`r`n            <Route path="/admin/departments" element={<ManageDepartmentsPage />} />
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />

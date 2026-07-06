@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/auth-context';
 import { StatusAlert } from './Feedback';
 import { getDashboardPath } from '../utils/routes';
+import { getNotices } from '../services/api';
 
 const CAMPUS_LOGO_URL = 'https://nubtkhulna.ac.bd/ter/assets/img/adminica_logo_blue-trans.png';
 const getProfilePhotoKey = (profile) => {
@@ -22,6 +23,7 @@ const iconPaths = {
   users: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm11 10v-2a3 3 0 0 0-2-2.83M16 3.13a4 4 0 0 1 0 7.75',
   notices: 'M7 3h8l4 4v14H7V3Zm8 0v5h5M9 13h8M9 17h8M9 9h3',
   departments: 'M4 4h16v5H4V4Zm0 7h7v9H4v-9Zm9 0h7v9h-7v-9Z',
+  messages: 'M4 5h16v12H7l-3 3V5Zm4 4h8m-8 4h5',
   profile: 'M20 21a8 8 0 0 0-16 0m8-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
 };
 
@@ -60,6 +62,7 @@ function Layout({ children, title, subtitle }) {
   const [loggingOut, setLoggingOut] = useState(false);
   const [flash, setFlash] = useState(null);
   const [profilePhoto, setProfilePhoto] = useState('');
+  const [unreadNotices, setUnreadNotices] = useState(0);
   const isFacultyUser = user?.role === 'faculty';
   const isAdminUser = user?.role === 'admin';
   const publicNavItems = [
@@ -71,20 +74,24 @@ function Layout({ children, title, subtitle }) {
     { to: '/functions', label: 'Campus Tools', icon: 'functions' },
     { to: '/ai-assistant', label: 'AI Assistant', icon: 'assistant' },
     { to: '/course-recommendations', label: 'Course Recommendations', icon: 'recommendations' },
+    { to: '/messages', label: unreadNotices > 0 ? `Messages (${unreadNotices})` : 'Messages', icon: 'messages' },
   ];
   const facultyNavItems = [
     { to: '/faculty-dashboard', label: 'Faculty Dashboard', icon: 'dashboard' },
     { to: '/student-monitoring', label: 'Student Monitoring', icon: 'monitoring' },
     { to: '/risk-alerts', label: 'Risk Alerts', icon: 'risk' },
+    { to: '/notices/manage', label: 'Send Notices', icon: 'notices' },
+    { to: '/messages', label: unreadNotices > 0 ? `Messages (${unreadNotices})` : 'Messages', icon: 'messages' },
   ];
   const adminNavItems = [
     { to: '/admin', label: 'Dashboard', icon: 'dashboard' },
     { to: '/admin/users', label: 'Manage Users', icon: 'users' },
     { to: '/admin/notices', label: 'Manage Notices', icon: 'notices' },
     { to: '/admin/departments', label: 'Manage Departments', icon: 'departments' },
+    { to: '/messages', label: unreadNotices > 0 ? `Messages (${unreadNotices})` : 'Messages', icon: 'messages' },
   ];
   const appNavItems = isAdminUser ? adminNavItems : isFacultyUser ? facultyNavItems : studentNavItems;
-  const internalRoutes = ['/dashboard', '/profile', '/functions', '/ai-assistant', '/course-recommendations', '/faculty-dashboard', '/student-monitoring', '/risk-alerts', '/admin'];
+  const internalRoutes = ['/dashboard', '/profile', '/functions', '/ai-assistant', '/course-recommendations', '/messages', '/notices/manage', '/faculty-dashboard', '/student-monitoring', '/risk-alerts', '/admin'];
   const useInternalLayout = isAuthenticated
     && internalRoutes.some((route) => location.pathname.startsWith(route));
   const currentSection = location.pathname === '/profile'
@@ -100,6 +107,34 @@ function Layout({ children, title, subtitle }) {
   useEffect(() => {
     setMenuOpen(false);
   }, [location.pathname]);
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      setUnreadNotices(0);
+      return undefined;
+    }
+
+    let active = true;
+    const readKey = `notice_read_ids_${user.id || user.email || 'guest'}`;
+    const refreshUnread = () => {
+      getNotices()
+        .then((response) => {
+          if (!active) return;
+          const notices = response.data.data || [];
+          const readIds = JSON.parse(localStorage.getItem(readKey) || '[]');
+          setUnreadNotices(notices.filter((notice) => !readIds.includes(String(notice.id))).length);
+        })
+        .catch(() => {
+          if (active) setUnreadNotices(0);
+        });
+    };
+
+    refreshUnread();
+    window.addEventListener('notice-read-updated', refreshUnread);
+    return () => {
+      active = false;
+      window.removeEventListener('notice-read-updated', refreshUnread);
+    };
+  }, [isAuthenticated, user]);
 
   useEffect(() => {
     const profilePhotoKey = getProfilePhotoKey(user);

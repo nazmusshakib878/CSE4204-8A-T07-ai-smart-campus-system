@@ -16,6 +16,7 @@ import AdminPage from './pages/AdminPage';
 import ManageUsersPage from './pages/ManageUsersPage';
 import ManageNoticesPage from './pages/ManageNoticesPage';
 import ManageDepartmentsPage from './pages/ManageDepartmentsPage';
+import NoticeInboxPage from './pages/NoticeInboxPage';
 import NotFoundPage from './pages/NotFoundPage';
 import { AuthProvider } from './auth/AuthContext';
 import ProtectedRoute from './auth/ProtectedRoute';
@@ -26,6 +27,7 @@ function DashboardEntry() {
   if (user?.role === 'admin') return <AdminPage />;
   return user?.role === 'faculty' ? <FacultyDashboardPage /> : <DashboardPage />;
 }
+
 function App() {
   return (
     <Router>
@@ -41,12 +43,15 @@ function App() {
             <Route path="/functions" element={<FunctionsPage />} />
             <Route path="/ai-assistant" element={<AiAssistantPage />} />
             <Route path="/course-recommendations" element={<CourseRecommendationsPage />} />
+            <Route path="/messages" element={<NoticeInboxPage />} />
+            <Route path="/notices/manage" element={<ManageNoticesPage />} />
             <Route path="/faculty-dashboard" element={<FacultyDashboardPage />} />
             <Route path="/student-monitoring" element={<StudentMonitoringPage />} />
             <Route path="/risk-alerts" element={<RiskAlertsPage />} />
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/admin/users" element={<ManageUsersPage />} />
-            <Route path="/admin/notices" element={<ManageNoticesPage />} />`r`n            <Route path="/admin/departments" element={<ManageDepartmentsPage />} />
+            <Route path="/admin/notices" element={<ManageNoticesPage />} />
+            <Route path="/admin/departments" element={<ManageDepartmentsPage />} />
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />

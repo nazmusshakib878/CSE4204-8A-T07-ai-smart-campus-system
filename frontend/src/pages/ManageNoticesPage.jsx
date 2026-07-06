@@ -1,16 +1,32 @@
 import { useCallback, useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import { ConfirmDialog, EmptyState, LoadingState, ModalDialog, StatusAlert } from '../components/Feedback';
-import { createNotice, deleteNotice, getNotices } from '../services/api';
+import { createNotice, deleteNotice, getDepartments, getNotices } from '../services/api';
+import { useAuth } from '../auth/auth-context';
+
+const emptyForm = {
+  title: '',
+  description: '',
+  category: 'Academic',
+  audience: 'All',
+  target_department: '',
+  target_role: 'All',
+  target_semester: '',
+  attachment: null,
+};
 
 const normalizeNotice = (notice) => ({
   ...notice,
   date: (notice.publish_date || notice.created_at || '').slice(0, 10),
-  tags: [notice.category || 'Academic', notice.audience || 'All'],
+  tags: [notice.category || 'Academic', notice.audience || 'All', notice.target_department, notice.target_role, notice.target_semester]
+    .filter(Boolean),
 });
 
 function ManageNoticesPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const [notices, setNotices] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [error, setError] = useState('');
@@ -19,15 +35,19 @@ function ManageNoticesPage() {
   const [deleting, setDeleting] = useState(false);
   const [selectedNotice, setSelectedNotice] = useState(null);
   const [noticeToDelete, setNoticeToDelete] = useState(null);
-  const [form, setForm] = useState({ title: '', description: '', category: 'Academic', audience: 'All' });
+  const [form, setForm] = useState(emptyForm);
 
   const fetchNotices = useCallback(async () => {
     setLoading(true);
     setError('');
 
     try {
-      const response = await getNotices();
-      setNotices((response.data.data || []).map(normalizeNotice));
+      const [noticeResponse, departmentResponse] = await Promise.all([
+        getNotices(),
+        getDepartments(),
+      ]);
+      setNotices((noticeResponse.data.data || []).map(normalizeNotice));
+      setDepartments(departmentResponse.data.data || []);
     } catch (requestError) {
       setError(requestError.message || 'Notices could not be loaded.');
     } finally {
@@ -39,20 +59,40 @@ function ManageNoticesPage() {
     fetchNotices();
   }, [fetchNotices]);
 
+  const handleChange = (event) => {
+    const { name, value, files } = event.target;
+    setForm((current) => ({ ...current, [name]: files ? files[0] || null : value }));
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSaving(true);
     setFeedback(null);
 
+    const payload = {
+      title: form.title.trim(),
+      description: form.description.trim(),
+      category: form.category,
+      audience: isAdmin ? form.audience : 'Department',
+      target_department: isAdmin ? form.target_department : (user?.department || form.target_department),
+      target_role: isAdmin ? form.target_role : 'Students',
+      target_semester: form.target_semester.trim(),
+    };
+
+    if (payload.audience !== 'Department') {
+      payload.target_department = '';
+      payload.target_role = payload.audience === 'Students' ? 'Students' : payload.audience === 'Faculty' ? 'Faculty' : 'All';
+      payload.target_semester = '';
+    }
+
+    const requestPayload = new FormData();
+    Object.entries(payload).forEach(([key, value]) => requestPayload.append(key, value || ''));
+    if (form.attachment) requestPayload.append('attachment', form.attachment);
+
     try {
-      const response = await createNotice({
-        title: form.title.trim(),
-        description: form.description.trim(),
-        category: form.category,
-        audience: form.audience,
-      });
+      const response = await createNotice(requestPayload);
       setNotices((currentNotices) => [normalizeNotice(response.data.data), ...currentNotices]);
-      setForm({ title: '', description: '', category: 'Academic', audience: 'All' });
+      setForm(emptyForm);
       setShowForm(false);
       setFeedback({ variant: 'success', message: 'Notice published successfully.' });
     } catch (requestError) {
@@ -89,7 +129,7 @@ function ManageNoticesPage() {
 
   return (
     <>
-      <Layout title="Manage Notices" subtitle="Create and manage campus-wide announcements">
+      <Layout title="Manage Notices" subtitle={isAdmin ? 'Create campus-wide and department notices' : 'Send notices to your students'}>
         {feedback && (
           <StatusAlert
             variant={feedback.variant}
@@ -121,51 +161,110 @@ function ManageNoticesPage() {
                 <label className="form-label fw-semibold" htmlFor="notice-title">Notice title</label>
                 <input
                   id="notice-title"
+                  name="title"
                   className="form-control"
                   maxLength={255}
                   value={form.title}
-                  onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
+                  onChange={handleChange}
                   required
                 />
               </div>
               <div className="col-md-6 col-lg-3">
                 <label className="form-label fw-semibold" htmlFor="notice-category">Category</label>
-                <select
-                  id="notice-category"
-                  className="form-select"
-                  value={form.category}
-                  onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}
-                >
+                <select id="notice-category" name="category" className="form-select" value={form.category} onChange={handleChange}>
                   <option>Academic</option>
+                  <option>Academic Risk</option>
                   <option>Exam</option>
                   <option>Holiday</option>
                   <option>Meeting</option>
                   <option>Facility</option>
+                  <option>Payment</option>
                 </select>
               </div>
               <div className="col-md-6 col-lg-3">
                 <label className="form-label fw-semibold" htmlFor="notice-audience">Audience</label>
-                <select
-                  id="notice-audience"
-                  className="form-select"
-                  value={form.audience}
-                  onChange={(event) => setForm((current) => ({ ...current, audience: event.target.value }))}
-                >
-                  <option>All</option>
-                  <option>Students</option>
-                  <option>Faculty</option>
-                </select>
+                {isAdmin ? (
+                  <select id="notice-audience" name="audience" className="form-select" value={form.audience} onChange={handleChange}>
+                    <option value="All">Full varsity</option>
+                    <option value="Students">All students</option>
+                    <option value="Faculty">All faculty</option>
+                    <option value="Department">Department</option>
+                  </select>
+                ) : (
+                  <input id="notice-audience" className="form-control" value="My department students" disabled />
+                )}
               </div>
+
+              {(!isAdmin || form.audience === 'Department') && (
+                <>
+                  <div className="col-md-6 col-lg-4">
+                    <label className="form-label fw-semibold" htmlFor="notice-department">Department</label>
+                    <select
+                      id="notice-department"
+                      name="target_department"
+                      className="form-select"
+                      value={isAdmin ? form.target_department : (user?.department || form.target_department)}
+                      onChange={handleChange}
+                      disabled={!isAdmin && Boolean(user?.department)}
+                      required
+                    >
+                      <option value="">Select department</option>
+                      {departments.map((department) => (
+                        <option key={department.id} value={department.name}>{department.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-md-6 col-lg-4">
+                    <label className="form-label fw-semibold" htmlFor="notice-target-role">Send to</label>
+                    <select
+                      id="notice-target-role"
+                      name="target_role"
+                      className="form-select"
+                      value={isAdmin ? form.target_role : 'Students'}
+                      onChange={handleChange}
+                      disabled={!isAdmin}
+                    >
+                      <option value="All">Faculty + students</option>
+                      <option value="Students">Students only</option>
+                      <option value="Faculty">Faculty only</option>
+                    </select>
+                  </div>
+                  <div className="col-md-6 col-lg-4">
+                    <label className="form-label fw-semibold" htmlFor="notice-semester">Semester</label>
+                    <input
+                      id="notice-semester"
+                      name="target_semester"
+                      className="form-control"
+                      value={form.target_semester}
+                      onChange={handleChange}
+                      placeholder="Optional, e.g. 8"
+                    />
+                  </div>
+                </>
+              )}
+
               <div className="col-12">
                 <label className="form-label fw-semibold" htmlFor="notice-description">Description</label>
                 <textarea
                   id="notice-description"
+                  name="description"
                   className="form-control"
                   rows="4"
-                  maxLength={2000}
+                  maxLength={5000}
                   value={form.description}
-                  onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+                  onChange={handleChange}
                   required
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label fw-semibold" htmlFor="notice-attachment">Due list PDF</label>
+                <input
+                  id="notice-attachment"
+                  name="attachment"
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  className="form-control"
+                  onChange={handleChange}
                 />
               </div>
               <div className="col-12 d-flex justify-content-end">
@@ -190,33 +289,36 @@ function ManageNoticesPage() {
                   </div>
                   <h4>{notice.title}</h4>
                   <small>{notice.date}</small>
+                  {notice.attachment_url && (
+                    <a className="d-inline-block mt-2 text-primary fw-semibold" href={notice.attachment_url} target="_blank" rel="noreferrer">
+                      {notice.attachment_name || 'Open due list PDF'}
+                    </a>
+                  )}
                 </div>
                 <div className="admin-notice-actions">
                   <button type="button" className="btn btn-sm btn-link text-decoration-none" onClick={() => setSelectedNotice(notice)}>View</button>
-                  <button type="button" className="btn btn-sm btn-link text-danger text-decoration-none" onClick={() => requestDelete(notice)}>Delete</button>
+                  {isAdmin && <button type="button" className="btn btn-sm btn-link text-danger text-decoration-none" onClick={() => requestDelete(notice)}>Delete</button>}
                 </div>
               </article>
             ))}
           </div>
         ) : (
-          <EmptyState title="No notices published" message="Use New Notice to publish the first campus announcement." />
+          <EmptyState title="No notices published" message="Use New Notice to publish the first announcement." />
         )}
       </Layout>
 
-      <ModalDialog
-        open={Boolean(selectedNotice)}
-        title={selectedNotice?.title || 'Notice details'}
-        onClose={() => setSelectedNotice(null)}
-      >
+      <ModalDialog open={Boolean(selectedNotice)} title={selectedNotice?.title || 'Notice details'} onClose={() => setSelectedNotice(null)}>
         {selectedNotice && (
           <>
             <div className="d-flex flex-wrap gap-2 mb-3">
               {selectedNotice.tags.map((tag) => <span key={tag} className="course-pill course-pill-primary">{tag}</span>)}
             </div>
             <p className="text-secondary">{selectedNotice.description}</p>
-            {selectedNotice.recipient_name && (
-              <p className="mb-2">
-                <strong>Recipient:</strong> {selectedNotice.recipient_name} ({selectedNotice.recipient_reference})
+            {selectedNotice.attachment_url && (
+              <p>
+                <a className="text-primary fw-semibold" href={selectedNotice.attachment_url} target="_blank" rel="noreferrer">
+                  {selectedNotice.attachment_name || 'Open due list PDF'}
+                </a>
               </p>
             )}
             <small className="text-secondary">
@@ -224,7 +326,7 @@ function ManageNoticesPage() {
               {selectedNotice.author?.name ? ` by ${selectedNotice.author.name}` : ''}
             </small>
             <div className="modal-footer px-0 pb-0 mt-4">
-              <button type="button" className="btn btn-outline-danger" onClick={() => requestDelete(selectedNotice)}>Delete</button>
+              {isAdmin && <button type="button" className="btn btn-outline-danger" onClick={() => requestDelete(selectedNotice)}>Delete</button>}
               <button type="button" className="btn btn-primary px-4" onClick={() => setSelectedNotice(null)}>Close</button>
             </div>
           </>

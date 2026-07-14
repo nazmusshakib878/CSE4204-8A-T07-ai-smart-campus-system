@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\LearningResourceController;
 use App\Http\Controllers\Api\NoticeController;
 use App\Http\Controllers\Api\RecommendationController;
+use App\Http\Controllers\Api\StudentMonitoringController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
@@ -21,6 +22,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/departments', [DepartmentController::class, 'adminIndex']);
     Route::post('/admin/departments', [DepartmentController::class, 'store']);
     Route::delete('/admin/departments/{department}', [DepartmentController::class, 'destroy']);
+    Route::get('/faculty/student-monitoring', [StudentMonitoringController::class, 'index']);
+    Route::post('/faculty/students/{student}/analyze-risk', [StudentMonitoringController::class, 'analyze']);
 
     Route::apiResource('learning-resources', LearningResourceController::class)
         ->parameters(['learning-resources' => 'id']);

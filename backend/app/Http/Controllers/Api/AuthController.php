@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Faculty;
+use App\Models\Student;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -99,6 +101,25 @@ class AuthController extends Controller
             'faculty_id' => $validatedData['role'] === 'faculty' ? $validatedData['faculty_id'] : null,
             'approval_status' => 'pending',
         ]);
+
+        if ($user->role === 'student') {
+            Student::firstOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'student_number' => $user->student_id,
+                    'department' => $user->department,
+                    'program' => $user->department,
+                ]
+            );
+        } else {
+            Faculty::firstOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'department' => $user->department,
+                    'designation' => 'Faculty Member',
+                ]
+            );
+        }
 
         return response()->json([
             'status' => true,

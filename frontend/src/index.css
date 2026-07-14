@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   font-family: Inter, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -3771,4 +3771,104 @@ footer {
   .faculty-quick-link {
     transition: none;
   }
+}
+
+
+/* Live monitoring and AI workflow */
+.monitoring-summary {
+  min-height: 104px;
+  border: 1px solid #e3e9f2;
+  border-left: 4px solid var(--monitoring-color);
+  background: linear-gradient(135deg, #fff, color-mix(in srgb, var(--monitoring-color) 5%, white));
+  box-shadow: 0 10px 28px rgba(15, 35, 65, 0.055);
+}
+
+.monitoring-blue { --monitoring-color: #2563eb; }
+.monitoring-red { --monitoring-color: #dc2626; }
+.monitoring-amber { --monitoring-color: #d97706; }
+.monitoring-green { --monitoring-color: #059669; }
+
+.monitoring-summary strong {
+  color: var(--monitoring-color);
+}
+
+.ai-source-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  color: #1d4ed8;
+  background: #eff6ff;
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.monitoring-chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.monitoring-chart-legend span {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.monitoring-chart-legend i {
+  width: 16px;
+  height: 3px;
+  border-radius: 999px;
+}
+
+.legend-score { background: #1e3a8a; }
+.legend-attendance { background: #14b8a6; }
+
+.ai-risk-explanation {
+  padding: 1rem 1.1rem;
+  border: 1px solid #dbeafe;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #f8fbff, #eff6ff);
+}
+
+.ai-risk-explanation > strong {
+  display: block;
+  color: #1e293b;
+  line-height: 1.55;
+}
+
+.ai-risk-explanation ul {
+  padding-left: 1.2rem;
+  margin: 0.75rem 0;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.ai-risk-explanation p {
+  margin: 0;
+  color: #475569;
+  font-size: 0.82rem;
+}
+
+.risk-advice {
+  margin-top: 0.8rem !important;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  color: #475569 !important;
+  background: #f8fafc;
+  font-size: 0.78rem;
+}
+
+.trend-chart polyline {
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }

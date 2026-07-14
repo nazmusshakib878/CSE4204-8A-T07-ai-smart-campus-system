@@ -216,4 +216,20 @@ export const deleteNotice = async (id) => {
   }
 };
 
+export const getStudentMonitoring = async () => {
+  try {
+    return await api.get('/faculty/student-monitoring');
+  } catch (error) {
+    throw createApiError(error);
+  }
+};
+
+export const analyzeStudentRisk = async (studentDatabaseId) => {
+  try {
+    return await api.post(`/faculty/students/${studentDatabaseId}/analyze-risk`);
+  } catch (error) {
+    throw createApiError(error);
+  }
+};
+
 export default api;

@@ -37,6 +37,11 @@ class Student extends Model
         return $this->hasMany(PerformanceMetric::class);
     }
 
+    public function riskAlerts(): HasMany
+    {
+        return $this->hasMany(RiskAlert::class);
+    }
+
     public function courseRecommendations(): HasMany
     {
         return $this->hasMany(CourseRecommendation::class);

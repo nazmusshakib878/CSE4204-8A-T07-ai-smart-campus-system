@@ -282,4 +282,35 @@ export const saveStudentPerformance = async (courseId, studentId, payload) => {
   catch (error) { throw createApiError(error); }
 };
 
+
+export const getAdminDashboard = async () => {
+  try { return await api.get('/admin/dashboard'); }
+  catch (error) { throw createApiError(error); }
+};
+
+export const getFacultyDashboard = async () => {
+  try { return await api.get('/faculty/dashboard'); }
+  catch (error) { throw createApiError(error); }
+};
+export const updateProfile = async (payload) => {
+  try { return await api.put('/profile', payload); }
+  catch (error) { throw createApiError(error); }
+};
+
+export const changePassword = async (payload) => {
+  try { return await api.put('/profile/password', payload); }
+  catch (error) { throw createApiError(error); }
+};
+
+export const uploadProfilePhoto = async (photo) => {
+  const payload = new FormData();
+  payload.append('photo', photo);
+  try { return await api.post('/profile/photo', payload); }
+  catch (error) { throw createApiError(error); }
+};
+
+export const deleteProfilePhoto = async () => {
+  try { return await api.delete('/profile/photo'); }
+  catch (error) { throw createApiError(error); }
+};
 export default api;

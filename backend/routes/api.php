@@ -4,8 +4,10 @@ use App\Http\Controllers\Api\AcademicManagementController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CampusTaskController;
 use App\Http\Controllers\Api\DepartmentController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\LearningResourceController;
 use App\Http\Controllers\Api\NoticeController;
+use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\RecommendationController;
 use App\Http\Controllers\Api\StudentMonitoringController;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +18,12 @@ Route::get('/departments', [DepartmentController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [AuthController::class, 'profile']);
+    Route::put('/profile', [ProfileController::class, 'update']);
+    Route::put('/profile/password', [ProfileController::class, 'password']);
+    Route::post('/profile/photo', [ProfileController::class, 'uploadPhoto']);
+    Route::delete('/profile/photo', [ProfileController::class, 'deletePhoto']);
+    Route::get('/admin/dashboard', [DashboardController::class, 'admin']);
+    Route::get('/faculty/dashboard', [DashboardController::class, 'faculty']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/admin/create-admin', [AuthController::class, 'createAdmin']);
     Route::get('/admin/pending-users', [AuthController::class, 'pendingUsers']);

@@ -4,53 +4,6 @@ import { useAuth } from '../auth/auth-context';
 import { EmptyState, LoadingState, StatusAlert } from '../components/Feedback';
 import { createTask, getRecommendations } from '../services/api';
 
-const fallbackCourses = [
-  {
-    id: 'cse-5101',
-    code: 'CSE 5101',
-    title: 'Machine Learning',
-    description: 'Strong AI coursework and database performance make this a strong fit.',
-    level: 'Advanced',
-    credits: 3,
-    faculty: 'Dr. Rahman',
-    prerequisites: ['CSE 4103', 'MATH 3201'],
-    score: 96,
-  },
-  {
-    id: 'cse-5103',
-    code: 'CSE 5103',
-    title: 'Cloud Computing',
-    description: 'Matches your network, systems, and backend development profile.',
-    level: 'Intermediate',
-    credits: 3,
-    faculty: 'Dr. Karim',
-    prerequisites: ['CSE 4105'],
-    score: 91,
-  },
-  {
-    id: 'cse-5201',
-    code: 'CSE 5201',
-    title: 'Distributed Systems',
-    description: 'Complements database, operating systems, and software architecture skills.',
-    level: 'Advanced',
-    credits: 3,
-    faculty: 'Dr. Islam',
-    prerequisites: ['CSE 4107', 'CSE 4205'],
-    score: 88,
-  },
-  {
-    id: 'mgt-3101',
-    code: 'MGT 3101',
-    title: 'Tech Entrepreneurship',
-    description: 'Broadens your engineering profile with startup and product thinking.',
-    level: 'Moderate',
-    credits: 2,
-    faculty: 'Prof. Hossain',
-    prerequisites: ['None'],
-    score: 82,
-  },
-];
-
 const levelTone = {
   Advanced: 'danger',
   Intermediate: 'warning',
@@ -67,9 +20,9 @@ const parseRecommendation = (item, index) => {
     title: courseTitle,
     description: item.description || 'Recommended from your academic profile.',
     level: item.recommendation_type || 'Recommended',
-    credits: 3,
-    faculty: item.target_user || 'Academic Advisor',
-    prerequisites: ['Advisor review'],
+    credits: Number(item.course?.credit_hours || 0),
+    faculty: item.course?.faculty || 'Academic Advisor',
+    prerequisites: item.source === 'rule_based' ? ['Not currently enrolled'] : ['Advisor review'],
     score: Math.round(Number(item.score || 0)) || 80,
   };
 };
@@ -102,7 +55,6 @@ function CourseRecommendationsPage() {
   }, [fetchRecommendations]);
 
   const courses = useMemo(() => {
-    if (!recommendations.length) return fallbackCourses;
     return recommendations.map(parseRecommendation);
   }, [recommendations]);
 
@@ -137,18 +89,18 @@ function CourseRecommendationsPage() {
 
   if (loading) {
     return (
-      <Layout title="Course Recommendations" subtitle="AI-generated study path based on your academic profile.">
+      <Layout title="Course Recommendations" subtitle="Database-backed course recommendations based on your academic profile.">
         <LoadingState message="Loading course recommendations..." />
       </Layout>
     );
   }
 
   return (
-    <Layout title="Course Recommendations" subtitle="AI-generated study path based on your academic profile.">
+    <Layout title="Course Recommendations" subtitle="Database-backed course recommendations based on your academic profile.">
       {error && (
         <StatusAlert
           variant="warning"
-          message={`${error} Showing sample recommendations for preview.`}
+          message={`${error} No sample data is shown.`}
           actionLabel="Try again"
           onAction={fetchRecommendations}
           onDismiss={() => setError('')}
@@ -165,9 +117,9 @@ function CourseRecommendationsPage() {
       <section className="recommendation-analysis mb-4">
         <div className="recommendation-analysis-icon" aria-hidden="true">AI</div>
         <div>
-          <h5>AI Analysis for {user?.name || 'Campus User'}</h5>
+          <h5>Course recommendations for {user?.name || 'Campus User'}</h5>
           <p>
-            Based on your academic profile, performance signals, and active campus work,
+            Based on advisor-created recommendations or active courses in your department,
             here are the recommended courses for your next semester.
           </p>
         </div>

@@ -106,6 +106,11 @@ export function AuthProvider({ children }) {
     }
   }, [clearSession, token]);
 
+  const updateUser = useCallback((updatedUser) => {
+    localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+    setUser(updatedUser);
+  }, []);
+
   const value = useMemo(() => ({
     user,
     initializing,
@@ -113,7 +118,8 @@ export function AuthProvider({ children }) {
     login,
     register,
     logout,
-  }), [initializing, login, logout, register, token, user]);
+    updateUser,
+  }), [initializing, login, logout, register, token, updateUser, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

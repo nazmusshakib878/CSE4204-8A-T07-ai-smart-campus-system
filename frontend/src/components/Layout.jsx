@@ -6,11 +6,6 @@ import { getDashboardPath } from '../utils/routes';
 import { getNotices } from '../services/api';
 
 const CAMPUS_LOGO_URL = 'https://nubtkhulna.ac.bd/ter/assets/img/adminica_logo_blue-trans.png';
-const getProfilePhotoKey = (profile) => {
-  const owner = profile?.id || profile?.email || profile?.student_id || profile?.varsity_id || profile?.university_id;
-  return owner ? `profile_photo_${owner}` : '';
-};
-
 const iconPaths = {
   home: 'M3 10.5 12 3l9 7.5M5 9v11h5v-6h4v6h5V9',
   dashboard: 'M4 4h6v6H4V4Zm10 0h6v10h-6V4ZM4 14h6v6H4v-6Zm10 4h6v2h-6v-2Z',
@@ -62,7 +57,7 @@ function Layout({ children, title, subtitle }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [flash, setFlash] = useState(null);
-  const [profilePhoto, setProfilePhoto] = useState('');
+  const profilePhoto = user?.profile_photo_url || '';
   const [unreadNotices, setUnreadNotices] = useState(0);
   const isFacultyUser = user?.role === 'faculty';
   const isAdminUser = user?.role === 'admin';
@@ -139,27 +134,6 @@ function Layout({ children, title, subtitle }) {
     };
   }, [isAuthenticated, user]);
 
-  useEffect(() => {
-    const profilePhotoKey = getProfilePhotoKey(user);
-    setProfilePhoto(profilePhotoKey ? localStorage.getItem(profilePhotoKey) || '' : '');
-
-    const syncProfilePhoto = (event) => {
-      if (!profilePhotoKey) {
-        setProfilePhoto('');
-        return;
-      }
-
-      if (event.type === 'profile-photo-updated' && event.detail?.key !== profilePhotoKey) return;
-      setProfilePhoto(localStorage.getItem(profilePhotoKey) || event.detail?.photo || '');
-    };
-
-    window.addEventListener('profile-photo-updated', syncProfilePhoto);
-    window.addEventListener('storage', syncProfilePhoto);
-    return () => {
-      window.removeEventListener('profile-photo-updated', syncProfilePhoto);
-      window.removeEventListener('storage', syncProfilePhoto);
-    };
-  }, [user]);
 
   useEffect(() => {
     if (!menuOpen) return undefined;

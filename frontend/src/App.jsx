@@ -21,6 +21,7 @@ import NoticeInboxPage from './pages/NoticeInboxPage';
 import NotFoundPage from './pages/NotFoundPage';
 import { AuthProvider } from './auth/AuthContext';
 import ProtectedRoute from './auth/ProtectedRoute';
+import RoleRoute from './auth/RoleRoute';
 import { useAuth } from './auth/auth-context';
 
 function DashboardEntry() {
@@ -41,19 +42,27 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardEntry />} />
             <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/functions" element={<FunctionsPage />} />
-            <Route path="/ai-assistant" element={<AiAssistantPage />} />
-            <Route path="/course-recommendations" element={<CourseRecommendationsPage />} />
             <Route path="/messages" element={<NoticeInboxPage />} />
-            <Route path="/notices/manage" element={<ManageNoticesPage />} />
-            <Route path="/faculty-dashboard" element={<FacultyDashboardPage />} />
-            <Route path="/student-monitoring" element={<StudentMonitoringPage />} />
-            <Route path="/academic-management" element={<AcademicManagementPage />} />
-            <Route path="/risk-alerts" element={<RiskAlertsPage />} />
-            <Route path="/admin" element={<AdminPage />} />
-            <Route path="/admin/users" element={<ManageUsersPage />} />
-            <Route path="/admin/notices" element={<ManageNoticesPage />} />
-            <Route path="/admin/departments" element={<ManageDepartmentsPage />} />
+            <Route element={<RoleRoute allowedRoles={['student']} />}>
+              <Route path="/functions" element={<FunctionsPage />} />
+              <Route path="/ai-assistant" element={<AiAssistantPage />} />
+              <Route path="/course-recommendations" element={<CourseRecommendationsPage />} />
+            </Route>
+            <Route element={<RoleRoute allowedRoles={['faculty']} />}>
+              <Route path="/faculty-dashboard" element={<FacultyDashboardPage />} />
+            </Route>
+            <Route element={<RoleRoute allowedRoles={['faculty', 'admin']} />}>
+              <Route path="/notices/manage" element={<ManageNoticesPage />} />
+              <Route path="/student-monitoring" element={<StudentMonitoringPage />} />
+              <Route path="/academic-management" element={<AcademicManagementPage />} />
+              <Route path="/risk-alerts" element={<RiskAlertsPage />} />
+            </Route>
+            <Route element={<RoleRoute allowedRoles={['admin']} />}>
+              <Route path="/admin" element={<AdminPage />} />
+              <Route path="/admin/users" element={<ManageUsersPage />} />
+              <Route path="/admin/notices" element={<ManageNoticesPage />} />
+              <Route path="/admin/departments" element={<ManageDepartmentsPage />} />
+            </Route>
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />

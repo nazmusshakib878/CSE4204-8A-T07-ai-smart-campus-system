@@ -9,6 +9,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -106,6 +107,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // 8. General fallback error
         $exceptions->render(function (Throwable $e, Request $request) {
+            if (($request->wantsJson() || $request->is('api/*')) && $e instanceof HttpExceptionInterface) {
+                return response()->json([
+                    'status' => false,
+                    'message' => $e->getStatusCode() === 403 ? 'You do not have permission to access this resource.' : ($e->getMessage() ?: 'Request failed.'),
+                ], $e->getStatusCode());
+            }
             if ($request->wantsJson() || $request->is('api/*')) {
                 return response()->json([
                     'status' => false,

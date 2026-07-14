@@ -24,6 +24,7 @@ class User extends Authenticatable
         'name',
         'email',
         'phone',
+        'profile_photo_path',
         'password',
         'role',
         'department',
@@ -38,10 +39,17 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+    protected $appends = ['profile_photo_url'];
+
     protected $hidden = [
         'password',
         'remember_token',
     ];
+
+    public function getProfilePhotoUrlAttribute(): ?string
+    {
+        return $this->profile_photo_path ? asset('storage/'.$this->profile_photo_path) : null;
+    }
 
     public function studentProfile(): HasOne
     {

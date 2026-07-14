@@ -159,7 +159,7 @@ function RegisterPage() {
                   value={form.name}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  placeholder="Ayesha Rahman"
+                  placeholder="Nazmus Shakib"
                   aria-invalid={Boolean(errors.name)}
                   aria-describedby={errors.name ? 'register-name-error' : undefined}
                   required

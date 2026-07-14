@@ -24,7 +24,7 @@ const activity = [
 
 function AdminPage() {
   return (
-    <Layout title="Admin Dashboard" subtitle="System overview - Dhaka University of Technology Campus">
+    <Layout title="Admin Dashboard" subtitle="System overview - Northern University of Business and Technology | Khulna">
       <div className="row g-4 mb-4">
         {stats.map((item) => (
           <div key={item.label} className="col-md-6 col-xl-3">

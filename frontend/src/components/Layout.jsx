@@ -70,7 +70,7 @@ function Layout({ children, title, subtitle }) {
     { to: '/functions', label: 'Campus Tools', icon: 'functions' },
     { to: '/ai-assistant', label: 'AI Assistant', icon: 'assistant' },
     { to: '/course-recommendations', label: 'Course Recommendations', icon: 'recommendations' },
-    { to: '/messages', label: unreadNotices > 0 ? `Messages (${unreadNotices})` : 'Messages', icon: 'messages' },
+    { to: '/messages', label: 'Messages', icon: 'messages', notificationCount: unreadNotices },
   ];
   const facultyNavItems = [
     { to: '/faculty-dashboard', label: 'Faculty Dashboard', icon: 'dashboard' },
@@ -78,7 +78,7 @@ function Layout({ children, title, subtitle }) {
     { to: '/academic-management', label: 'Academic Data', icon: 'academic' },
     { to: '/risk-alerts', label: 'Risk Alerts', icon: 'risk' },
     { to: '/notices/manage', label: 'Send Notices', icon: 'notices' },
-    { to: '/messages', label: unreadNotices > 0 ? `Messages (${unreadNotices})` : 'Messages', icon: 'messages' },
+    { to: '/messages', label: 'Messages', icon: 'messages', notificationCount: unreadNotices },
   ];
   const adminNavItems = [
     { to: '/admin', label: 'Dashboard', icon: 'dashboard' },
@@ -86,7 +86,7 @@ function Layout({ children, title, subtitle }) {
     { to: '/academic-management', label: 'Academic Data', icon: 'academic' },
     { to: '/admin/notices', label: 'Manage Notices', icon: 'notices' },
     { to: '/admin/departments', label: 'Manage Departments', icon: 'departments' },
-    { to: '/messages', label: unreadNotices > 0 ? `Messages (${unreadNotices})` : 'Messages', icon: 'messages' },
+    { to: '/messages', label: 'Messages', icon: 'messages', notificationCount: unreadNotices },
   ];
   const appNavItems = isAdminUser ? adminNavItems : isFacultyUser ? facultyNavItems : studentNavItems;
   const internalRoutes = ['/dashboard', '/profile', '/functions', '/ai-assistant', '/course-recommendations', '/messages', '/notices/manage', '/faculty-dashboard', '/student-monitoring', '/academic-management', '/risk-alerts', '/admin'];
@@ -123,11 +123,25 @@ function Layout({ children, title, subtitle }) {
         });
     };
 
+    const handleNoticeRead = () => {
+      setUnreadNotices((current) => Math.max(0, current - 1));
+      refreshUnread();
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') refreshUnread();
+    };
+
     refreshUnread();
-    window.addEventListener('notice-read-updated', refreshUnread);
+    const refreshTimer = window.setInterval(refreshUnread, 30000);
+    window.addEventListener('focus', refreshUnread);
+    window.addEventListener('notice-read-updated', handleNoticeRead);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
       active = false;
-      window.removeEventListener('notice-read-updated', refreshUnread);
+      window.clearInterval(refreshTimer);
+      window.removeEventListener('focus', refreshUnread);
+      window.removeEventListener('notice-read-updated', handleNoticeRead);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [isAuthenticated, user]);
 
@@ -229,7 +243,15 @@ function Layout({ children, title, subtitle }) {
                 className={({ isActive }) => `app-nav-link${isActive ? ' active' : ''}`}
               >
                 <NavigationIcon name={item.icon} />
-                <span>{item.label}</span>
+                <span className="app-nav-label">{item.label}</span>
+                {item.notificationCount > 0 && (
+                  <span
+                    className="app-notification-badge"
+                    aria-label={`${item.notificationCount} unread message${item.notificationCount === 1 ? '' : 's'}`}
+                  >
+                    {item.notificationCount > 99 ? '99+' : item.notificationCount}
+                  </span>
+                )}
               </NavLink>
             ))}
             <NavLink

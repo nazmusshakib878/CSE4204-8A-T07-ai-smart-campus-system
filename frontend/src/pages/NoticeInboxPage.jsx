@@ -7,7 +7,7 @@ function NoticeInboxPage(){
  const [notices,setNotices]=useState([]);const [selected,setSelected]=useState(null);const [meta,setMeta]=useState(null);const [page,setPage]=useState(1);const [loading,setLoading]=useState(true);const [error,setError]=useState('');
  const fetchNotices=useCallback(async()=>{setLoading(true);setError('');try{const r=await getNotices(page);setNotices((r.data.data||[]).map(normalize));setMeta(r.data.meta||null);}catch(e){setError(e.message);}finally{setLoading(false);}},[page]);
  useEffect(()=>{fetchNotices();},[fetchNotices]);
- const open=async n=>{setSelected(n);if(!n.is_read){try{await markNoticeRead(n.id);setNotices(v=>v.map(x=>x.id===n.id?{...x,is_read:true}:x));window.dispatchEvent(new Event('notice-read-updated'));}catch(e){setError(e.message);}}};
+ const open=async n=>{setSelected(n);if(!n.is_read){try{await markNoticeRead(n.id);const readNotice={...n,is_read:true};setSelected(readNotice);setNotices(v=>v.map(x=>x.id===n.id?readNotice:x));setMeta(current=>current?{...current,unread:Math.max(0,(current.unread||0)-1)}:current);window.dispatchEvent(new CustomEvent('notice-read-updated',{detail:{noticeId:n.id}}));}catch(e){setError(e.message);}}};
  const download=async n=>{try{await downloadNoticeAttachment(n.id,n.attachment_name||'notice-attachment.pdf');}catch(e){setError(e.message);}};
  const unread=notices.filter(n=>!n.is_read).length;
  return <Layout title="Messages" subtitle="Database-backed notices delivered to your account">

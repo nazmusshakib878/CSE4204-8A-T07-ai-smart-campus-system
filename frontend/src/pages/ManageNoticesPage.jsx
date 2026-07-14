@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import { ConfirmDialog, EmptyState, LoadingState, ModalDialog, StatusAlert } from '../components/Feedback';
-import { createNotice, deleteNotice, getDepartments, getNotices } from '../services/api';
+import { archiveNotice, createNotice, deleteNotice, downloadNoticeAttachment, getDepartments, getNotices, updateNotice } from '../services/api';
 import { useAuth } from '../auth/auth-context';
 
 const emptyForm = {
@@ -13,6 +13,7 @@ const emptyForm = {
   target_role: 'All',
   target_semester: '',
   attachment: null,
+  expires_at: '',
 };
 
 const normalizeNotice = (notice) => ({
@@ -36,6 +37,7 @@ function ManageNoticesPage() {
   const [selectedNotice, setSelectedNotice] = useState(null);
   const [noticeToDelete, setNoticeToDelete] = useState(null);
   const [form, setForm] = useState(emptyForm);
+  const [editingNotice, setEditingNotice] = useState(null);
 
   const fetchNotices = useCallback(async () => {
     setLoading(true);
@@ -77,6 +79,7 @@ function ManageNoticesPage() {
       target_department: isAdmin ? form.target_department : (user?.department || form.target_department),
       target_role: isAdmin ? form.target_role : 'Students',
       target_semester: form.target_semester.trim(),
+      expires_at: form.expires_at,
     };
 
     if (payload.audience !== 'Department') {
@@ -90,11 +93,13 @@ function ManageNoticesPage() {
     if (form.attachment) requestPayload.append('attachment', form.attachment);
 
     try {
-      const response = await createNotice(requestPayload);
-      setNotices((currentNotices) => [normalizeNotice(response.data.data), ...currentNotices]);
+      const response = editingNotice ? await updateNotice(editingNotice.id, requestPayload) : await createNotice(requestPayload);
+      const savedNotice = normalizeNotice(response.data.data);
+      setNotices((currentNotices) => editingNotice ? currentNotices.map((item) => item.id === savedNotice.id ? savedNotice : item) : [savedNotice, ...currentNotices]);
       setForm(emptyForm);
       setShowForm(false);
-      setFeedback({ variant: 'success', message: 'Notice published successfully.' });
+      setEditingNotice(null);
+      setFeedback({ variant: 'success', message: editingNotice ? 'Notice updated successfully.' : 'Notice published successfully.' });
     } catch (requestError) {
       setFeedback({ variant: 'danger', message: requestError.message || 'The notice could not be published.' });
     } finally {
@@ -122,6 +127,34 @@ function ManageNoticesPage() {
     }
   };
 
+  const editNotice = (notice) => {
+    setEditingNotice(notice);
+    setForm({
+      title: notice.title || '', description: notice.description || '', category: notice.category || 'Academic',
+      audience: notice.audience || 'All', target_department: notice.target_department || '',
+      target_role: notice.target_role || 'All', target_semester: notice.target_semester || '',
+      expires_at: notice.expires_at ? notice.expires_at.slice(0, 16) : '', attachment: null,
+    });
+    setShowForm(true);
+    setSelectedNotice(null);
+  };
+
+  const downloadAttachment = async (notice) => {
+    try {
+      await downloadNoticeAttachment(notice.id, notice.attachment_name || 'notice-attachment.pdf');
+    } catch (requestError) {
+      setFeedback({ variant: 'danger', message: requestError.message });
+    }
+  };
+  const handleArchive = async (notice) => {
+    try {
+      await archiveNotice(notice.id);
+      setNotices((items) => items.filter((item) => item.id !== notice.id));
+      setFeedback({ variant: 'success', message: 'Notice archived successfully.' });
+    } catch (requestError) {
+      setFeedback({ variant: 'danger', message: requestError.message });
+    }
+  };
   const requestDelete = (notice) => {
     setSelectedNotice(null);
     setNoticeToDelete(notice);
@@ -149,7 +182,7 @@ function ManageNoticesPage() {
 
         <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
           <span className="admin-total-count">{notices.length} notices total</span>
-          <button type="button" className="btn btn-primary px-4" onClick={() => setShowForm((open) => !open)}>
+          <button type="button" className="btn btn-primary px-4" onClick={() => { setShowForm((open) => !open); setEditingNotice(null); setForm(emptyForm); }}>
             {showForm ? 'Cancel' : '+ New Notice'}
           </button>
         </div>
@@ -267,10 +300,13 @@ function ManageNoticesPage() {
                   onChange={handleChange}
                 />
               </div>
-              <div className="col-12 d-flex justify-content-end">
+              <div className="col-md-6">
+                <label className="form-label fw-semibold" htmlFor="notice-expiry">Expiry date (optional)</label>
+                <input id="notice-expiry" name="expires_at" type="datetime-local" className="form-control" value={form.expires_at} onChange={handleChange} />
+              </div>`r`n              <div className="col-12 d-flex justify-content-end">
                 <button type="submit" className="btn btn-primary px-4" disabled={saving} aria-busy={saving}>
                   {saving && <span className="spinner-border spinner-border-sm me-2" aria-hidden="true" />}
-                  {saving ? 'Publishing...' : 'Publish'}
+                  {saving ? 'Saving...' : editingNotice ? 'Update notice' : 'Publish'}
                 </button>
               </div>
             </div>
@@ -288,15 +324,15 @@ function ManageNoticesPage() {
                     {notice.tags.map((tag) => <span key={tag} className="course-pill course-pill-primary">{tag}</span>)}
                   </div>
                   <h4>{notice.title}</h4>
-                  <small>{notice.date}</small>
+                  <small>{notice.date}</small><small className="d-block text-secondary">Email: {notice.email_delivery_status || 'not_configured'} | SMS: {notice.sms_delivery_status || 'not_configured'}</small>
                   {notice.attachment_url && (
-                    <a className="d-inline-block mt-2 text-primary fw-semibold" href={notice.attachment_url} target="_blank" rel="noreferrer">
-                      {notice.attachment_name || 'Open due list PDF'}
-                    </a>
+                    <button type="button" className="btn btn-sm btn-link px-0 d-block" onClick={() => downloadAttachment(notice)}>{notice.attachment_name || 'Download attachment'}</button>
                   )}
                 </div>
                 <div className="admin-notice-actions">
                   <button type="button" className="btn btn-sm btn-link text-decoration-none" onClick={() => setSelectedNotice(notice)}>View</button>
+                  <button type="button" className="btn btn-sm btn-link text-decoration-none" onClick={() => editNotice(notice)}>Edit</button>
+                  <button type="button" className="btn btn-sm btn-link text-warning text-decoration-none" onClick={() => handleArchive(notice)}>Archive</button>
                   {isAdmin && <button type="button" className="btn btn-sm btn-link text-danger text-decoration-none" onClick={() => requestDelete(notice)}>Delete</button>}
                 </div>
               </article>
@@ -316,9 +352,7 @@ function ManageNoticesPage() {
             <p className="text-secondary">{selectedNotice.description}</p>
             {selectedNotice.attachment_url && (
               <p>
-                <a className="text-primary fw-semibold" href={selectedNotice.attachment_url} target="_blank" rel="noreferrer">
-                  {selectedNotice.attachment_name || 'Open due list PDF'}
-                </a>
+                <button type="button" className="btn btn-outline-primary" onClick={() => downloadAttachment(selectedNotice)}>{selectedNotice.attachment_name || 'Download attachment'}</button>
               </p>
             )}
             <small className="text-secondary">

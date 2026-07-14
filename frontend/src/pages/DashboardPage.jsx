@@ -1,219 +1,25 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useAuth } from '../auth/auth-context';
-import { deleteTask, getTasks, getRecommendations, getLearningResources } from '../services/api';
-import { ConfirmDialog, EmptyState, LoadingState, StatusAlert } from '../components/Feedback';
-
-function DashboardPage() {
-  const { user: profile } = useAuth();
-  const [tasks, setTasks] = useState([]);
-  const [recommendations, setRecommendations] = useState([]);
-  const [resources, setResources] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [feedback, setFeedback] = useState(null);
-  const [taskToDelete, setTaskToDelete] = useState(null);
-  const [deletingTask, setDeletingTask] = useState(false);
-
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError('');
-
-    try {
-      const [tasksRes, recommendationsRes, resourcesRes] = await Promise.all([
-        getTasks(),
-        getRecommendations(),
-        getLearningResources()
-      ]);
-
-      setTasks(tasksRes.data.data || []);
-      setRecommendations(recommendationsRes.data.data || []);
-      setResources(resourcesRes.data.data || []);
-    } catch (requestError) {
-      setError(requestError.message || 'Dashboard data could not be loaded.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const handleDeleteTask = async () => {
-    if (!taskToDelete) return;
-
-    setDeletingTask(true);
-    setFeedback(null);
-
-    try {
-      await deleteTask(taskToDelete.id);
-      setTasks((currentTasks) => (
-        currentTasks.filter((task) => task.id !== taskToDelete.id)
-      ));
-      setFeedback({
-        variant: 'success',
-        message: `"${taskToDelete.title}" was deleted successfully.`,
-      });
-      setTaskToDelete(null);
-    } catch (requestError) {
-      setFeedback({
-        variant: 'danger',
-        message: requestError.message || 'The task could not be deleted. Please try again.',
-      });
-      setTaskToDelete(null);
-    } finally {
-      setDeletingTask(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <Layout title="Dashboard" subtitle="Preparing your personalized overview...">
-        <LoadingState message="Loading dashboard data..." />
-      </Layout>
-    );
-  }
-
-  return (
-    <>
-      <Layout
-        title={`Welcome back, ${profile?.name?.split(' ')[0] || 'Student'}`}
-        subtitle="Here is a clear view of your campus activity today."
-      >
-        {error && (
-          <StatusAlert
-            variant="danger"
-            message={error}
-            actionLabel="Try again"
-            onAction={fetchData}
-            onDismiss={() => setError('')}
-          />
-        )}
-        {feedback && (
-          <StatusAlert
-            variant={feedback.variant}
-            message={feedback.message}
-            onDismiss={() => setFeedback(null)}
-          />
-        )}
-
-        <div className="dashboard-welcome-panel student-dashboard-hero mb-4">
-          <div>
-            <span className="eyebrow-label">Today overview</span>
-            <h3>Stay on top of your campus work</h3>
-            <p>Track tasks, AI suggestions, and learning resources from one focused dashboard.</p>
-          </div>
-          <Link to="/functions" className="btn btn-light rounded-pill px-4">Open tools</Link>
-        </div>
-
-        <div className="row g-4 mb-4">
-          <div className="col-md-6 col-xl-3">
-            <div className="dashboard-stat-card student-stat-card stat-blue card border-0 shadow-sm rounded-4 p-4 h-100">
-              <p className="text-muted small mb-1">Academic role</p>
-              <h3 className="fw-bold text-dark text-capitalize mb-1">{profile?.role || 'Student'}</h3>
-              <small className="text-secondary">Authenticated account</small>
-            </div>
-          </div>
-          <div className="col-md-6 col-xl-3">
-            <div className="dashboard-stat-card student-stat-card stat-green card border-0 shadow-sm rounded-4 p-4 h-100">
-              <p className="text-muted small mb-1">Active tasks</p>
-              <h3 className="fw-bold text-dark mb-1">{tasks.length}</h3>
-              <small className="text-secondary">Available tasks</small>
-            </div>
-          </div>
-          <div className="col-md-6 col-xl-3">
-            <div className="dashboard-stat-card student-stat-card stat-violet card border-0 shadow-sm rounded-4 p-4 h-100">
-              <p className="text-muted small mb-1">Smart insights</p>
-              <h3 className="fw-bold text-dark mb-1">{recommendations.length}</h3>
-              <small className="text-secondary">AI suggestions</small>
-            </div>
-          </div>
-          <div className="col-md-6 col-xl-3">
-            <div className="dashboard-stat-card student-stat-card stat-amber card border-0 shadow-sm rounded-4 p-4 h-100">
-              <p className="text-muted small mb-1">Learning resources</p>
-              <h3 className="fw-bold text-dark mb-1">{resources.length}</h3>
-              <small className="text-secondary">Learning materials</small>
-            </div>
-          </div>
-        </div>
-
-        <div className="row g-4">
-          <div className="col-lg-8">
-            <div className="card student-dashboard-card border-0 shadow-sm rounded-4 p-4 h-100">
-              <div className="section-card-header d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                <h5 className="fw-bold text-dark mb-0">Recent activity</h5>
-                <Link to="/functions" className="text-primary small">View all</Link>
-              </div>
-              {recommendations.length > 0 ? (
-                <div className="list-group list-group-flush student-insight-list">
-                  {recommendations.slice(0, 3).map((item) => (
-                    <div key={item.id} className="list-group-item px-0 py-3">
-                      <div className="fw-semibold text-dark">{item.title}</div>
-                      <small className="text-secondary">{item.description}</small>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState
-                  title={error ? 'Recommendations unavailable' : 'No recommendations yet'}
-                  message={error
-                    ? 'Retry the dashboard request to load your recommendations.'
-                    : 'Personalized suggestions will appear here when they become available.'}
-                />
-              )}
-            </div>
-          </div>
-
-          <div className="col-lg-4">
-            <div className="card student-dashboard-card border-0 shadow-sm rounded-4 p-4 h-100">
-              <h5 className="fw-bold text-dark mb-3">Upcoming tasks</h5>
-              {tasks.length > 0 ? (
-                <div className="d-grid gap-3">
-                  {tasks.slice(0, 3).map((task) => (
-                    <div key={task.id} className="task-item student-task-item rounded-3 p-3 d-flex align-items-center justify-content-between gap-3">
-                      <div className="min-w-0">
-                        <div className="fw-semibold text-dark">{task.title}</div>
-                        <small className="text-secondary">{task.due_date || task.status}</small>
-                      </div>
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline-danger rounded-pill px-3 flex-shrink-0"
-                        aria-label={`Delete ${task.title}`}
-                        onClick={() => setTaskToDelete(task)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState
-                  title={error ? 'Tasks unavailable' : 'You are all caught up'}
-                  message={error
-                    ? 'Retry the dashboard request to load your tasks.'
-                    : 'There are no upcoming tasks to show.'}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      </Layout>
-
-      <ConfirmDialog
-        open={Boolean(taskToDelete)}
-        title="Delete this task?"
-        message={taskToDelete
-          ? `"${taskToDelete.title}" will be permanently removed. This action cannot be undone.`
-          : ''}
-        confirmLabel="Delete task"
-        loading={deletingTask}
-        onConfirm={handleDeleteTask}
-        onCancel={() => setTaskToDelete(null)}
-      />
-    </>
-  );
+import { deleteTask,getLearningResources,getRecommendations,getStudentDashboard,getTasks } from '../services/api';
+import { ConfirmDialog,EmptyState,LoadingState,StatusAlert } from '../components/Feedback';
+function DashboardPage(){
+ const {user}=useAuth();const [tasks,setTasks]=useState([]);const [resources,setResources]=useState([]);const [recommendations,setRecommendations]=useState([]);const [academic,setAcademic]=useState(null);const [loading,setLoading]=useState(true);const [error,setError]=useState('');const [feedback,setFeedback]=useState(null);const [taskToDelete,setTaskToDelete]=useState(null);const [deleting,setDeleting]=useState(false);
+ const fetchData=useCallback(async()=>{setLoading(true);setError('');try{const [t,r,n,a]=await Promise.all([getTasks(),getLearningResources(),getRecommendations(),getStudentDashboard()]);setTasks(t.data.data||[]);setResources(r.data.data||[]);setRecommendations(n.data.data||[]);setAcademic(a.data.data);}catch(e){setError(e.message||'Dashboard data could not be loaded.');}finally{setLoading(false);}},[]);
+ useEffect(()=>{fetchData();},[fetchData]);
+ const remove=async()=>{if(!taskToDelete)return;setDeleting(true);try{await deleteTask(taskToDelete.id);setTasks(v=>v.filter(t=>t.id!==taskToDelete.id));setFeedback({variant:'success',message:'Task deleted.'});}catch(e){setFeedback({variant:'danger',message:e.message});}finally{setTaskToDelete(null);setDeleting(false);}};
+ if(loading)return <Layout title="Dashboard" subtitle="Preparing your academic overview..."><LoadingState message="Loading student dashboard..."/></Layout>;
+ const summary=academic?.summary||{};
+ return <><Layout title={`Welcome back, ${user?.name?.split(' ')[0]||'Student'}`} subtitle="Your personal academic progress and campus work.">
+  {error&&<StatusAlert variant="danger" message={error} actionLabel="Try again" onAction={fetchData}/>} {feedback&&<StatusAlert variant={feedback.variant} message={feedback.message} onDismiss={()=>setFeedback(null)}/>}
+  <div className="dashboard-welcome-panel student-dashboard-hero mb-4"><div><span className="eyebrow-label">ACADEMIC OVERVIEW</span><h3>Stay on top of your semester</h3><p>Attendance, results, courses, classes and personal tasks from the campus database.</p></div><Link to="/functions" className="btn btn-light rounded-pill px-4">Open tools</Link></div>
+  <div className="row g-4 mb-4">{[['Registered courses',summary.registered_courses||0,'stat-blue'],['Attendance',`${summary.attendance_percentage||0}%`,'stat-green'],['Current CGPA',summary.current_cgpa??'Not recorded','stat-violet'],['Completed credits',summary.completed_credits||0,'stat-amber']].map(([label,value,tone])=><div key={label} className="col-md-6 col-xl-3"><div className={`dashboard-stat-card student-stat-card ${tone} card border-0 shadow-sm rounded-4 p-4 h-100`}><p className="text-muted small mb-1">{label}</p><h3 className="fw-bold text-dark mb-1">{value}</h3><small className="text-secondary">Personal academic record</small></div></div>)}</div>
+  <div className="row g-4 mb-4"><div className="col-xl-7"><section className="card student-dashboard-card border-0 shadow-sm rounded-4 p-4 h-100"><h5 className="fw-bold mb-3">Registered courses</h5>{academic?.courses?.length?<div className="list-group list-group-flush">{academic.courses.map(c=><div key={c.enrollment_id} className="list-group-item px-0 py-3 d-flex justify-content-between gap-3"><div><strong>{c.code} - {c.title}</strong><small className="d-block text-secondary">{c.semester} {c.year} | {c.faculty||'Faculty not assigned'}</small></div><span className="course-pill course-pill-primary">{c.credits} credits</span></div>)}</div>:<EmptyState title="No registered courses" message="Course enrolments will appear here."/ >}</section></div>
+  <div className="col-xl-5"><section className="card student-dashboard-card border-0 shadow-sm rounded-4 p-4 h-100"><h5 className="fw-bold mb-3">Upcoming classes</h5>{academic?.upcoming_classes?.length?<div className="d-grid gap-3">{academic.upcoming_classes.map(c=><div key={c.id} className="task-item rounded-3 p-3"><strong>{c.day} | {c.code}</strong><span className="d-block">{c.title}</span><small>{c.starts_at}-{c.ends_at} | {c.room||'Room not set'} | {c.class_type}</small></div>)}</div>:<EmptyState title="No class schedule" message="Configured classes for enrolled courses will appear here."/ >}</section></div></div>
+  <div className="row g-4 mb-4"><div className="col-xl-6"><section className="card student-dashboard-card border-0 shadow-sm rounded-4 p-4 h-100"><h5 className="fw-bold mb-3">Semester results and CGPA</h5>{academic?.semester_results?.length?<div className="d-grid gap-3">{academic.semester_results.map((r,i)=><div key={`${r.semester}-${r.year}-${i}`}><div className="d-flex justify-content-between"><span>{r.semester} {r.year}</span><strong>GPA {r.semester_gpa??'-'} | CGPA {r.cgpa??'-'}</strong></div><div className="faculty-progress-track progress-blue"><span style={{width:`${Math.min(100,Number(r.cgpa||0)*25)}%`}}/></div></div>)}</div>:<EmptyState title="No semester results" message="Recorded GPA and CGPA will appear here."/ >}</section></div>
+  <div className="col-xl-6"><section className="card student-dashboard-card border-0 shadow-sm rounded-4 p-4 h-100"><h5 className="fw-bold mb-3">Individual course performance</h5>{academic?.performance_chart?.courses?.length?<div className="d-grid gap-3">{academic.performance_chart.courses.map(c=><div key={c.course_id}><div className="d-flex justify-content-between"><span>{c.label}</span><strong>{c.attendance===null?'No attendance':`${c.attendance}%`}</strong></div><div className="faculty-progress-track progress-green"><span style={{width:`${c.attendance||0}%`}}/></div></div>)}</div>:<EmptyState title="No performance data" message="Course attendance data will build this chart."/ >}</section></div></div>
+  <div className="row g-4"><div className="col-lg-7"><section className="card student-dashboard-card border-0 shadow-sm rounded-4 p-4 h-100"><h5 className="fw-bold mb-3">Recommendations and resources</h5><p className="text-secondary">{recommendations.length} recommendations | {resources.length} learning resources</p>{recommendations.slice(0,3).map(x=><div key={x.id} className="border-top py-2"><strong>{x.title}</strong><small className="d-block">{x.description}</small></div>)}</section></div><div className="col-lg-5"><section className="card student-dashboard-card border-0 shadow-sm rounded-4 p-4 h-100"><h5 className="fw-bold mb-3">Personal tasks</h5>{tasks.length?<div className="d-grid gap-2">{tasks.slice(0,4).map(t=><div key={t.id} className="task-item rounded-3 p-3 d-flex justify-content-between"><div><strong>{t.title}</strong><small className="d-block">{t.due_date||t.status}</small></div><button className="btn btn-sm btn-outline-danger" onClick={()=>setTaskToDelete(t)}>Delete</button></div>)}</div>:<EmptyState title="No tasks" message="You are all caught up."/ >}</section></div></div>
+ </Layout><ConfirmDialog open={Boolean(taskToDelete)} title="Delete this task?" message={taskToDelete?.title||''} confirmLabel="Delete task" loading={deleting} onConfirm={remove} onCancel={()=>setTaskToDelete(null)}/></>;
 }
-
 export default DashboardPage;

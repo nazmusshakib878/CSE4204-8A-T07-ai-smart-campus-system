@@ -112,14 +112,11 @@ function Layout({ children, title, subtitle }) {
     }
 
     let active = true;
-    const readKey = `notice_read_ids_${user.id || user.email || 'guest'}`;
     const refreshUnread = () => {
       getNotices()
         .then((response) => {
           if (!active) return;
-          const notices = response.data.data || [];
-          const readIds = JSON.parse(localStorage.getItem(readKey) || '[]');
-          setUnreadNotices(notices.filter((notice) => !readIds.includes(String(notice.id))).length);
+          setUnreadNotices(response.data.meta?.unread || 0);
         })
         .catch(() => {
           if (active) setUnreadNotices(0);

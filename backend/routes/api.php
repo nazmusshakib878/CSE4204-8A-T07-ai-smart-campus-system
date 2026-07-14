@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\NoticeController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\RecommendationController;
 use App\Http\Controllers\Api\StudentMonitoringController;
+use App\Http\Controllers\Api\StudentDashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
@@ -33,6 +34,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/admin/departments/{department}', [DepartmentController::class, 'destroy']);
     Route::get('/faculty/student-monitoring', [StudentMonitoringController::class, 'index']);
     Route::post('/faculty/students/{student}/analyze-risk', [StudentMonitoringController::class, 'analyze']);
+    Route::get('/student/dashboard', [StudentDashboardController::class, 'show']);
+    Route::post('/notices/{notice}/read', [NoticeController::class, 'markRead']);
+    Route::patch('/notices/{notice}/archive', [NoticeController::class, 'archive']);
+    Route::get('/notices/{notice}/attachment', [NoticeController::class, 'download']);
 
     Route::get('/academic-management', [AcademicManagementController::class, 'index']);
     Route::post('/academic-management/courses', [AcademicManagementController::class, 'storeCourse']);

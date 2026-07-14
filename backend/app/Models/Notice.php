@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
 class Notice extends Model
@@ -13,6 +14,10 @@ class Notice extends Model
         'title',
         'description',
         'publish_date',
+        'expires_at',
+        'archived_at',
+        'email_delivery_status',
+        'sms_delivery_status',
         'category',
         'audience',
         'target_department',
@@ -34,6 +39,8 @@ class Notice extends Model
     {
         return [
             'publish_date' => 'datetime',
+            'expires_at' => 'datetime',
+            'archived_at' => 'datetime',
         ];
     }
 
@@ -42,8 +49,13 @@ class Notice extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function reads(): HasMany
+    {
+        return $this->hasMany(NoticeRead::class);
+    }
+
     public function getAttachmentUrlAttribute(): ?string
     {
-        return $this->attachment_path ? Storage::disk('public')->url($this->attachment_path) : null;
+        return $this->attachment_path ? url('/api/notices/'.$this->id.'/attachment') : null;
     }
 }

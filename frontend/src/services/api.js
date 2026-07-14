@@ -192,9 +192,9 @@ export const deleteTask = async (id) => {
   }
 };
 
-export const getNotices = async () => {
+export const getNotices = async (page = 1) => {
   try {
-    return await api.get('/notices');
+    return await api.get('/notices', { params: { page } });
   } catch (error) {
     throw createApiError(error);
   }
@@ -312,5 +312,38 @@ export const uploadProfilePhoto = async (photo) => {
 export const deleteProfilePhoto = async () => {
   try { return await api.delete('/profile/photo'); }
   catch (error) { throw createApiError(error); }
+};
+export const getStudentDashboard = async () => {
+  try { return await api.get('/student/dashboard'); }
+  catch (error) { throw createApiError(error); }
+};
+
+export const markNoticeRead = async (id) => {
+  try { return await api.post(`/notices/${id}/read`); }
+  catch (error) { throw createApiError(error); }
+};
+
+export const updateNotice = async (id, payload) => {
+  payload.append('_method', 'PUT');
+  try { return await api.post(`/notices/${id}`, payload); }
+  catch (error) { throw createApiError(error); }
+};
+
+export const archiveNotice = async (id) => {
+  try { return await api.patch(`/notices/${id}/archive`); }
+  catch (error) { throw createApiError(error); }
+};
+export const downloadNoticeAttachment = async (id, filename = 'notice-attachment.pdf') => {
+  try {
+    const response = await api.get(`/notices/${id}/attachment`, { responseType: 'blob' });
+    const url = URL.createObjectURL(response.data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  } catch (error) { throw createApiError(error); }
 };
 export default api;

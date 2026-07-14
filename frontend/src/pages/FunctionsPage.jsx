@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Layout from '../components/Layout';
 import { useAuth } from '../auth/auth-context';
 import { ConfirmDialog, EmptyState, LoadingState, StatusAlert } from '../components/Feedback';
-import { createLearningResource, createTask, deleteTask, getLearningResources, getTasks } from '../services/api';
+import { ordinalSemester } from '../utils/academic';
+import { createLearningResource, createTask, deleteTask, getLearningResources, getStudentDashboard, getTasks } from '../services/api';
 
 const toolCards = [
   {
@@ -25,7 +26,7 @@ const toolCards = [
     key: 'attendance',
     title: 'Attendance Records',
     desc: 'Monitor daily presence, class participation, and student consistency.',
-    badge: 'Soon',
+    badge: 'Live',
     icon: 'AR',
     tone: 'green',
   },
@@ -33,7 +34,7 @@ const toolCards = [
     key: 'gradebook',
     title: 'Gradebook',
     desc: 'Review marks, assignments, exam progress, and semester performance.',
-    badge: 'Soon',
+    badge: 'Live',
     icon: 'GB',
     tone: 'amber',
   },
@@ -62,6 +63,7 @@ function FunctionsPage() {
   const [activeTool, setActiveTool] = useState('tasks');
   const [tasks, setTasks] = useState([]);
   const [resources, setResources] = useState([]);
+  const [academicData, setAcademicData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [savingTask, setSavingTask] = useState(false);
   const [uploadingResource, setUploadingResource] = useState(false);
@@ -77,19 +79,21 @@ function FunctionsPage() {
     setError('');
 
     try {
-      const [tasksRes, resourcesRes] = await Promise.all([
+      const [tasksRes, resourcesRes, dashboardRes] = await Promise.all([
         getTasks(),
         getLearningResources(),
+        user?.role === 'student' ? getStudentDashboard() : Promise.resolve(null),
       ]);
 
       setTasks(tasksRes.data.data || []);
       setResources(resourcesRes.data.data || []);
+      setAcademicData(dashboardRes?.data?.data || null);
     } catch (requestError) {
       setError(requestError.message || 'Campus tools data could not be loaded.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.role]);
 
   useEffect(() => {
     fetchToolsData();
@@ -507,6 +511,110 @@ function FunctionsPage() {
       </div>
     </div>
   );
+  const renderStudentOnly = (title) => (
+    <div className="card border-0 shadow-sm rounded-4 p-4">
+      <EmptyState title={`${title} is available to students`} message="Sign in with a student account to view personal academic records." />
+    </div>
+  );
+
+  const renderAttendanceTool = () => {
+    if (user?.role !== 'student') return renderStudentOnly('Attendance Records');
+
+    const records = academicData?.attendance_records || [];
+    const courseSummary = academicData?.performance_chart?.courses || [];
+    const summary = academicData?.summary || {};
+
+    return (
+      <div className="row g-4">
+        <div className="col-xl-4">
+          <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <span className="eyebrow-label">Attendance overview</span>
+            <div className="d-flex align-items-end gap-2 my-3">
+              <strong className="display-5 text-success">{summary.attendance_percentage ?? 0}%</strong>
+              <span className="text-secondary mb-2">overall presence</span>
+            </div>
+            <div className="progress mb-4" role="progressbar" aria-label="Overall attendance" aria-valuenow={summary.attendance_percentage || 0} aria-valuemin="0" aria-valuemax="100" style={{ height: 10 }}>
+              <div className="progress-bar bg-success" style={{ width: `${summary.attendance_percentage || 0}%` }} />
+            </div>
+            <h6 className="fw-bold text-dark mb-3">Course-wise attendance</h6>
+            <div className="d-grid gap-3">
+              {courseSummary.length > 0 ? courseSummary.map((course) => (
+                <div key={course.course_id}>
+                  <div className="d-flex justify-content-between gap-3 small mb-1">
+                    <span className="fw-semibold text-dark">{course.label}</span>
+                    <span className="text-secondary">{course.attendance == null ? 'No records' : `${course.attendance}%`}</span>
+                  </div>
+                  <div className="progress" style={{ height: 6 }}>
+                    <div className="progress-bar bg-success" style={{ width: `${course.attendance || 0}%` }} />
+                  </div>
+                </div>
+              )) : <p className="text-secondary mb-0">No registered course attendance is available.</p>}
+            </div>
+          </div>
+        </div>
+        <div className="col-xl-8">
+          <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+              <div><span className="eyebrow-label">Daily records</span><h5 className="fw-bold text-dark mb-0">Attendance history</h5></div>
+              <span className="badge rounded-pill text-bg-success">{records.length} classes</span>
+            </div>
+            {records.length > 0 ? (
+              <div className="table-responsive">
+                <table className="table align-middle mb-0">
+                  <thead><tr><th>Date</th><th>Course</th><th>Title</th><th className="text-end">Status</th></tr></thead>
+                  <tbody>{records.map((record) => {
+                    const status = String(record.status || '').toLowerCase();
+                    const tone = status === 'present' ? 'success' : status === 'late' ? 'warning' : 'danger';
+                    return <tr key={record.id}><td>{record.attendance_date}</td><td className="fw-semibold">{record.course_code || '-'}</td><td>{record.course_title || '-'}</td><td className="text-end"><span className={`badge rounded-pill text-bg-${tone}`}>{status || 'unknown'}</span></td></tr>;
+                  })}</tbody>
+                </table>
+              </div>
+            ) : <EmptyState title="No attendance recorded yet" message="Attendance entered by faculty will appear here automatically." />}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderGradebookTool = () => {
+    if (user?.role !== 'student') return renderStudentOnly('Gradebook');
+
+    const grades = academicData?.gradebook || [];
+    const summary = academicData?.summary || {};
+    const semesterLabel = [summary.current_semester, ordinalSemester(summary.current_semester_number)].filter(Boolean).join(' - ');
+
+    return (
+      <div className="row g-4">
+        <div className="col-lg-4">
+          <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <span className="eyebrow-label">Academic standing</span>
+            <div className="my-3"><strong className="display-5 text-primary">{summary.current_cgpa ?? '--'}</strong><span className="text-secondary ms-2">CGPA</span></div>
+            <div className="border-top pt-3 d-grid gap-3">
+              <div><small className="text-secondary d-block">Current semester</small><strong className="text-dark">{semesterLabel || 'Not assigned'}</strong></div>
+              <div><small className="text-secondary d-block">Completed credits</small><strong className="text-dark">{summary.completed_credits || 0}</strong></div>
+              <div><small className="text-secondary d-block">Registered courses</small><strong className="text-dark">{summary.registered_courses || 0}</strong></div>
+            </div>
+          </div>
+        </div>
+        <div className="col-lg-8">
+          <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+              <div><span className="eyebrow-label">Published results</span><h5 className="fw-bold text-dark mb-0">Course grades</h5></div>
+              <span className="badge rounded-pill text-bg-primary">{grades.length} results</span>
+            </div>
+            {grades.length > 0 ? (
+              <div className="table-responsive">
+                <table className="table align-middle mb-0">
+                  <thead><tr><th>Course</th><th>Course title</th><th>Term</th><th>Credits</th><th className="text-end">Grade</th></tr></thead>
+                  <tbody>{grades.map((record) => <tr key={record.id}><td className="fw-semibold">{record.course_code || '-'}</td><td>{record.course_title || '-'}</td><td>{record.semester} {record.year}</td><td>{record.credits || '-'}</td><td className="text-end"><span className="badge rounded-pill text-bg-primary fs-6">{record.grade || '-'}</span></td></tr>)}</tbody>
+                </table>
+              </div>
+            ) : <EmptyState title="No grades published yet" message="Final course grades entered by faculty will appear here automatically." />}
+          </div>
+        </div>
+      </div>
+    );
+  };
   const renderComingSoonTool = () => (
     <div className="card border-0 shadow-sm rounded-4 p-4">
       <EmptyState
@@ -519,6 +627,8 @@ function FunctionsPage() {
   const renderActiveTool = () => {
     if (activeTool === 'tasks') return renderTasksTool();
     if (activeTool === 'resources') return renderResourcesTool();
+    if (activeTool === 'attendance') return renderAttendanceTool();
+    if (activeTool === 'gradebook') return renderGradebookTool();
     return renderComingSoonTool();
   };
 

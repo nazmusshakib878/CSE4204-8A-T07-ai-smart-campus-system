@@ -16,6 +16,8 @@ const emptyForm = {
   expires_at: '',
 };
 
+const deliveryLabel = (status) => ({ sent: 'Sent', partial: 'Partially sent', failed: 'Failed', pending: 'Pending', disabled: 'Disabled', no_recipients: 'No recipients', not_configured: 'Disabled' }[status] || 'Unknown');
+
 const normalizeNotice = (notice) => ({
   ...notice,
   date: (notice.publish_date || notice.created_at || '').slice(0, 10),
@@ -324,7 +326,7 @@ function ManageNoticesPage() {
                     {notice.tags.map((tag) => <span key={tag} className="course-pill course-pill-primary">{tag}</span>)}
                   </div>
                   <h4>{notice.title}</h4>
-                  <small>{notice.date}</small><small className="d-block text-secondary">Email: {notice.email_delivery_status || 'not_configured'} | SMS: {notice.sms_delivery_status || 'not_configured'}</small>
+                  <small>{notice.date}</small><small className="d-block text-secondary">Email: {deliveryLabel(notice.email_delivery_status)} | SMS: {deliveryLabel(notice.sms_delivery_status)}</small>
                   {notice.attachment_url && (
                     <button type="button" className="btn btn-sm btn-link px-0 d-block" onClick={() => downloadAttachment(notice)}>{notice.attachment_name || 'Download attachment'}</button>
                   )}

@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Course;
 use App\Models\Department;
+use App\Models\Notice;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -81,17 +84,37 @@ class DepartmentController extends Controller
         ], 201);
     }
 
+    public function updateStatus(Request $request, Department $department): JsonResponse
+    {
+        if ($response = $this->ensureAdmin($request)) return $response;
+
+        $data = $request->validate(['is_active' => ['required', 'boolean']]);
+        $department->update(['is_active' => $data['is_active']]);
+
+        return response()->json([
+            'status' => true,
+            'message' => $department->is_active ? 'Department activated successfully.' : 'Department archived successfully.',
+            'data' => $department->fresh(),
+        ]);
+    }
+
     public function destroy(Request $request, Department $department): JsonResponse
     {
-        if ($response = $this->ensureAdmin($request)) {
-            return $response;
+        if ($response = $this->ensureAdmin($request)) return $response;
+
+        $inUse = User::where('department', $department->name)->exists()
+            || Course::where('department', $department->name)->exists()
+            || Notice::where('target_department', $department->name)->exists();
+
+        if ($inUse) {
+            return response()->json([
+                'status' => false,
+                'message' => 'This department is in use and cannot be deleted. Archive it instead.',
+            ], 409);
         }
 
         $department->delete();
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Department deleted successfully.',
-        ]);
+        return response()->json(['status' => true, 'message' => 'Unused department deleted successfully.']);
     }
 }

@@ -57,7 +57,7 @@ Cron entry:
 * * * * * cd /var/www/ai-smart-campus/backend && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-Run `php artisan queue:work --tries=3 --timeout=90` under Supervisor/systemd if queued email/SMS delivery is enabled.
+Run `php artisan queue:work --tries=3 --timeout=90` under Supervisor/systemd when notice email/SMS delivery is enabled. Set `NOTICE_EMAIL_ENABLED=true` only after SMTP works. For SMS, also set `NOTICE_SMS_ENABLED=true`, `NOTICE_SMS_URL`, `NOTICE_SMS_TOKEN`, and the provider sender ID. The generic SMS endpoint receives JSON fields `to`, `message`, and `sender`.
 
 ## 6. CORS and rate limiting
 

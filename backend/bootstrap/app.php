@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\ApiRequestLogger;
+use App\Http\Middleware\EnsureAccountApproved;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\QueryException;
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->api(append: [ApiRequestLogger::class]);
+        $middleware->alias(['approved' => EnsureAccountApproved::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
 

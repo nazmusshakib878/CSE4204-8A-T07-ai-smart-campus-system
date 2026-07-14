@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import { EmptyState, LoadingState, StatusAlert } from '../components/Feedback';
-import { createDepartment, deleteDepartment, getAdminDepartments } from '../services/api';
+import { createDepartment, deleteDepartment, getAdminDepartments, updateDepartmentStatus } from '../services/api';
 
 const emptyForm = { name: '', code: '' };
 
@@ -12,7 +12,7 @@ function ManageDepartmentsPage() {
   const [feedback, setFeedback] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [deletingId, setDeletingId] = useState(null);
+  const [busyId, setBusyId] = useState(null);
 
   const fetchDepartments = useCallback(async () => {
     setLoading(true);
@@ -67,8 +67,19 @@ function ManageDepartmentsPage() {
     }
   };
 
+  const handleStatus = async (department) => {
+    setBusyId(department.id); setFeedback(null);
+    try {
+      const response = await updateDepartmentStatus(department.id, !department.is_active);
+      setDepartments((current) => current.map((item) => item.id === department.id ? response.data.data : item));
+      setFeedback({ variant: 'success', message: response.data.message });
+    } catch (error) { setFeedback({ variant: 'danger', message: error.message }); }
+    finally { setBusyId(null); }
+  };
+
   const handleDelete = async (department) => {
-    setDeletingId(department.id);
+    if (!window.confirm('Permanently delete this unused department?')) return;
+    setBusyId(department.id);
     setFeedback(null);
 
     try {
@@ -78,7 +89,7 @@ function ManageDepartmentsPage() {
     } catch (error) {
       setFeedback({ variant: 'danger', message: error.message || 'Department could not be deleted.' });
     } finally {
-      setDeletingId(null);
+      setBusyId(null);
     }
   };
 
@@ -151,15 +162,18 @@ function ManageDepartmentsPage() {
                   <tr key={department.id}>
                     <td><strong>{department.name}</strong></td>
                     <td>{department.code}</td>
-                    <td><span className="course-pill course-pill-primary">Active</span></td>
+                    <td><span className={`course-pill ${department.is_active ? "course-pill-primary" : ""}`}>{department.is_active ? "Active" : "Archived"}</span></td>
                     <td>
+                      <button type="button" className={`btn btn-sm me-2 ${department.is_active ? "btn-outline-warning" : "btn-outline-success"}`} onClick={() => handleStatus(department)} disabled={busyId === department.id}>
+                        {department.is_active ? 'Archive' : 'Activate'}
+                      </button>
                       <button
                         type="button"
                         className="btn btn-sm btn-outline-danger"
                         onClick={() => handleDelete(department)}
-                        disabled={deletingId === department.id}
+                        disabled={busyId === department.id}
                       >
-                        {deletingId === department.id ? 'Deleting...' : 'Delete'}
+                        {busyId === department.id ? 'Working...' : 'Delete unused'}
                       </button>
                     </td>
                   </tr>

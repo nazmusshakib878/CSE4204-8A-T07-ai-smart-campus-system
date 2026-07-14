@@ -8,6 +8,7 @@ use App\Models\Student;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -90,36 +91,40 @@ class AuthController extends Controller
             ]
         );
 
-        $user = User::create([
-            'name' => $validatedData['name'],
-            'email' => $validatedData['email'],
-            'phone' => $validatedData['phone'],
-            'password' => Hash::make($validatedData['password']),
-            'role' => $validatedData['role'],
-            'department' => $validatedData['department'],
-            'student_id' => $validatedData['role'] === 'student' ? $validatedData['student_id'] : null,
-            'faculty_id' => $validatedData['role'] === 'faculty' ? $validatedData['faculty_id'] : null,
-            'approval_status' => 'pending',
-        ]);
+        $user = DB::transaction(function () use ($validatedData) {
+            $user = User::create([
+                'name' => $validatedData['name'],
+                'email' => $validatedData['email'],
+                'phone' => $validatedData['phone'],
+                'password' => Hash::make($validatedData['password']),
+                'role' => $validatedData['role'],
+                'department' => $validatedData['department'],
+                'student_id' => $validatedData['role'] === 'student' ? $validatedData['student_id'] : null,
+                'faculty_id' => $validatedData['role'] === 'faculty' ? $validatedData['faculty_id'] : null,
+                'approval_status' => 'pending',
+            ]);
+    
+            if ($user->role === 'student') {
+                Student::firstOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'student_number' => $user->student_id,
+                        'department' => $user->department,
+                        'program' => $user->department,
+                    ]
+                );
+            } else {
+                Faculty::firstOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'department' => $user->department,
+                        'designation' => 'Faculty Member',
+                    ]
+                );
+            }
 
-        if ($user->role === 'student') {
-            Student::firstOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'student_number' => $user->student_id,
-                    'department' => $user->department,
-                    'program' => $user->department,
-                ]
-            );
-        } else {
-            Faculty::firstOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'department' => $user->department,
-                    'designation' => 'Faculty Member',
-                ]
-            );
-        }
+            return $user;
+        });
 
         return response()->json([
             'status' => true,
@@ -274,6 +279,10 @@ class AuthController extends Controller
         $user->update([
             'approval_status' => $validatedData['approval_status'],
         ]);
+
+        if ($validatedData['approval_status'] === 'rejected') {
+            $user->tokens()->delete();
+        }
 
         return response()->json([
             'status' => true,

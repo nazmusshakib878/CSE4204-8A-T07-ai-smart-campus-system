@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 class ProfileController extends Controller {
  public function update(Request $request): JsonResponse {
-  $data=$request->validate(['name'=>['required','string','min:2','max:255'],'phone'=>['nullable','string','max:20','regex:/^\+?[0-9]{10,15}$/'],'department'=>['nullable','string','max:255','exists:departments,name']]);
+  $data=$request->validate(['name'=>['required','string','min:2','max:255'],'phone'=>['nullable','string','max:20','regex:/^\+?[0-9]{10,15}$/']]);
   $user=$request->user();$user->update($data);
   $user->studentProfile?->update(['department'=>$user->department,'program'=>$user->department]);
   $user->facultyProfile?->update(['department'=>$user->department]);
@@ -17,6 +17,8 @@ class ProfileController extends Controller {
  public function password(Request $request): JsonResponse {
   $data=$request->validate(['current_password'=>['required','current_password'],'password'=>['required','confirmed',Password::min(8)->letters()->mixedCase()->numbers()->symbols()]]);
   $request->user()->update(['password'=>Hash::make($data['password'])]);
+  $currentTokenId=$request->user()->currentAccessToken()?->id;
+  $request->user()->tokens()->when($currentTokenId,fn($query)=>$query->where('id','!=',$currentTokenId))->delete();
   return response()->json(['status'=>true,'message'=>'Password changed successfully.']);
  }
  public function uploadPhoto(Request $request): JsonResponse {

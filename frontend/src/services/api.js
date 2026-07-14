@@ -129,6 +129,11 @@ export const createDepartment = async (payload) => {
   }
 };
 
+export const updateDepartmentStatus = async (id, isActive) => {
+  try { return await api.patch(`/admin/departments/${id}/status`, { is_active: isActive }); }
+  catch (error) { throw createApiError(error); }
+};
+
 export const deleteDepartment = async (id) => {
   try {
     return await api.delete(`/admin/departments/${id}`);

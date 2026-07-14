@@ -99,9 +99,13 @@ class AcademicManagementController extends Controller
     {
         if ($response = $this->ensureAdmin($request)) return $response;
 
+        if ($course->enrollments()->exists() || $course->academicRecords()->exists() || $course->attendanceRecords()->exists() || $course->courseRecommendations()->exists()) {
+            return response()->json(['status' => false, 'message' => 'This course has academic history and cannot be deleted. Mark it inactive instead.'], 409);
+        }
+
         $course->delete();
 
-        return response()->json(['status' => true, 'message' => 'Course deleted successfully.']);
+        return response()->json(['status' => true, 'message' => 'Unused course deleted successfully.']);
     }
 
     public function workspace(Request $request, Course $course): JsonResponse

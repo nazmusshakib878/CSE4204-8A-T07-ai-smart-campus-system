@@ -17,7 +17,7 @@ Route::post('/register', [AuthController::class, 'register'])->middleware('throt
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:auth');
 Route::get('/departments', [DepartmentController::class, 'index']);
 
-Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
+Route::middleware(['auth:sanctum', 'approved', 'throttle:api'])->group(function () {
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::put('/profile/password', [ProfileController::class, 'password']);
@@ -31,6 +31,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::patch('/admin/users/{user}/approval', [AuthController::class, 'updateApprovalStatus']);
     Route::get('/admin/departments', [DepartmentController::class, 'adminIndex']);
     Route::post('/admin/departments', [DepartmentController::class, 'store']);
+    Route::patch('/admin/departments/{department}/status', [DepartmentController::class, 'updateStatus']);
     Route::delete('/admin/departments/{department}', [DepartmentController::class, 'destroy']);
     Route::get('/faculty/student-monitoring', [StudentMonitoringController::class, 'index']);
     Route::post('/faculty/students/{student}/analyze-risk', [StudentMonitoringController::class, 'analyze']);

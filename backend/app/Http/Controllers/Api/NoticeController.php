@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
+use App\Jobs\DeliverNoticeNotifications;
 use App\Models\Notice;
 use App\Models\NoticeRead;
 use Illuminate\Database\Eloquent\Builder;
@@ -19,7 +20,10 @@ class NoticeController extends Controller {
  }
  public function store(Request $request):JsonResponse {
   if(!$this->isStaff($request))return $this->forbidden();$data=$request->validate($this->rules());$this->scopeFacultyNotice($request,$data);$this->storeAttachment($request,$data);
-  $notice=Notice::create([...$data,'user_id'=>$request->user()->id,'publish_date'=>$data['publish_date']??now(),'email_delivery_status'=>'not_configured','sms_delivery_status'=>'not_configured']);
+  $emailStatus=config('notice_delivery.email_enabled')?'pending':'disabled';
+  $smsStatus=config('notice_delivery.sms_enabled')?'pending':'disabled';
+  $notice=Notice::create([...$data,'user_id'=>$request->user()->id,'publish_date'=>$data['publish_date']??now(),'email_delivery_status'=>$emailStatus,'sms_delivery_status'=>$smsStatus]);
+  if($emailStatus==='pending'||$smsStatus==='pending')DeliverNoticeNotifications::dispatch($notice->id);
   return response()->json(['message'=>'Notice published successfully.','data'=>$notice->load('author:id,name,role,department')],201);
  }
  public function show(Request $request,string $id):JsonResponse {$notice=Notice::with('author:id,name,role,department')->findOrFail($id);if(!$this->canAccess($request,$notice))return $this->forbidden();return response()->json(['data'=>$notice]);}

@@ -88,7 +88,7 @@ class AcademicManagementTest extends TestCase
             ->putJson("/api/academic-management/courses/{$course->id}/students/{$student->id}/performance", [
                 'semester' => 'Spring',
                 'year' => 2026,
-                'semester_gpa' => 3.65,
+                'current_semester' => 8,
                 'cgpa' => 3.55,
                 'completed_credits' => 110,
             ])->assertOk();
@@ -96,7 +96,8 @@ class AcademicManagementTest extends TestCase
         $this->assertDatabaseHas('course_enrollments', ['course_id' => $course->id, 'student_id' => $student->id]);
         $this->assertDatabaseHas('attendance_records', ['course_id' => $course->id, 'student_id' => $student->id, 'status' => 'present']);
         $this->assertDatabaseHas('academic_records', ['course_id' => $course->id, 'student_id' => $student->id, 'grade' => 'A-']);
-        $this->assertDatabaseHas('performance_metrics', ['student_id' => $student->id, 'semester_gpa' => 3.65, 'cgpa' => 3.55]);
+        $this->assertDatabaseHas('performance_metrics', ['student_id' => $student->id, 'cgpa' => 3.55]);
+        $this->assertDatabaseHas('students', ['id' => $student->id, 'current_semester' => 8]);
 
         $this->actingAs($facultyUser, 'sanctum')
             ->getJson("/api/academic-management/courses/{$course->id}/workspace")

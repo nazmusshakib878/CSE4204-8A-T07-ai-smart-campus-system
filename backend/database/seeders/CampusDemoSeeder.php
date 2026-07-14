@@ -24,7 +24,7 @@ class CampusDemoSeeder extends Seeder {
    ['email'=>'student2@nubtkhulna.ac.bd','name'=>'Lubna Akter','phone'=>'01700000012','id'=>'CSE2026999002'],
    ['email'=>'student3@nubtkhulna.ac.bd','name'=>'Nasrin Akter','phone'=>'01700000013','id'=>'CSE2026999003'],
   ];
-  $students=collect($studentData)->map(function($data)use($password){$user=User::updateOrCreate(['email'=>$data['email']],['name'=>$data['name'],'phone'=>$data['phone'],'password'=>$password,'role'=>'student','department'=>'Computer Science & Engineering','student_id'=>$data['id'],'faculty_id'=>null,'admin_id'=>null,'approval_status'=>'approved']);return Student::updateOrCreate(['user_id'=>$user->id],['student_number'=>$data['id'],'department'=>$user->department,'program'=>'BSc in CSE']);});
+  $students=collect($studentData)->map(function($data)use($password){$user=User::updateOrCreate(['email'=>$data['email']],['name'=>$data['name'],'phone'=>$data['phone'],'password'=>$password,'role'=>'student','department'=>'Computer Science & Engineering','student_id'=>$data['id'],'faculty_id'=>null,'admin_id'=>null,'approval_status'=>'approved']);return Student::updateOrCreate(['user_id'=>$user->id],['student_number'=>$data['id'],'department'=>$user->department,'program'=>'BSc in CSE','current_semester'=>8]);});
   $courses=collect([
    ['course_code'=>'CSE-4103','title'=>'Artificial Intelligence','credit_hours'=>3,'description'=>'Core AI concepts and applications'],
    ['course_code'=>'CSE-4105','title'=>'Computer Networks','credit_hours'=>3,'description'=>'Network architecture and protocols'],

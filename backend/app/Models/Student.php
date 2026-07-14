@@ -16,7 +16,13 @@ class Student extends Model
         'student_number',
         'department',
         'program',
+        'current_semester',
     ];
+
+    protected function casts(): array
+    {
+        return ['current_semester' => 'integer'];
+    }
 
     public function user(): BelongsTo
     {

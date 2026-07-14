@@ -135,6 +135,7 @@ class AcademicManagementController extends Controller
                     'name' => $student->user?->name,
                     'email' => $student->user?->email,
                     'department' => $student->department ?: $student->user?->department,
+                    'current_semester' => $student->current_semester,
                 ],
                 'attendance_percentage' => $attendance->count()
                     ? (int) round($present * 100 / $attendance->count())
@@ -154,7 +155,6 @@ class AcademicManagementController extends Controller
                     'id' => $metric->id,
                     'semester' => $metric->semester,
                     'year' => $metric->year,
-                    'semester_gpa' => $metric->semester_gpa,
                     'cgpa' => $metric->cgpa,
                     'completed_credits' => $metric->completed_credits,
                 ]),
@@ -177,7 +177,7 @@ class AcademicManagementController extends Controller
         $data = $request->validate([
             'student_ids' => ['required', 'array', 'min:1'],
             'student_ids.*' => ['integer', Rule::exists('students', 'id')],
-            'semester' => ['required', 'string', 'max:50'],
+            'semester' => ['required', Rule::in(['Spring', 'Fall'])],
             'year' => ['required', 'integer', 'min:2020', 'max:2100'],
         ]);
 
@@ -243,7 +243,7 @@ class AcademicManagementController extends Controller
         if ($response = $this->ensureCourseAccess($request, $course)) return $response;
 
         $data = $request->validate([
-            'semester' => ['required', 'string', 'max:50'],
+            'semester' => ['required', Rule::in(['Spring', 'Fall'])],
             'year' => ['required', 'integer', 'min:2020', 'max:2100'],
             'records' => ['required', 'array', 'min:1'],
             'records.*.student_id' => ['required', 'integer', Rule::exists('students', 'id')],
@@ -274,12 +274,15 @@ class AcademicManagementController extends Controller
         $this->assertEnrolledStudents($course, [$student->id]);
 
         $data = $request->validate([
-            'semester' => ['required', 'string', 'max:50'],
+            'semester' => ['required', Rule::in(['Spring', 'Fall'])],
             'year' => ['required', 'integer', 'min:2020', 'max:2100'],
-            'semester_gpa' => ['required', 'numeric', 'min:0', 'max:4'],
+            'current_semester' => ['required', 'integer', 'min:1', 'max:8'],
             'cgpa' => ['required', 'numeric', 'min:0', 'max:4'],
             'completed_credits' => ['required', 'integer', 'min:0', 'max:300'],
         ]);
+
+        $student->update(['current_semester' => $data['current_semester']]);
+        unset($data['current_semester']);
 
         $metric = PerformanceMetric::updateOrCreate(
             ['student_id' => $student->id, 'semester' => $data['semester'], 'year' => $data['year']],
@@ -288,7 +291,7 @@ class AcademicManagementController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Semester GPA and CGPA updated successfully.',
+            'message' => 'CGPA and current semester updated successfully.',
             'data' => $metric,
         ]);
     }

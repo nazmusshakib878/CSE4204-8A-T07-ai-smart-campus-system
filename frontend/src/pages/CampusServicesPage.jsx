@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Layout from '../components/Layout';
+import RoutineWorkspace from '../components/RoutineWorkspace';
+import AcademicCalendar from '../components/AcademicCalendar';
 import { useAuth } from '../auth/auth-context';
 import { EmptyState, LoadingState, StatusAlert } from '../components/Feedback';
 import {
-  borrowLibraryBook, createCampusService, downloadAttendanceReport, getAcademicManagement,
-  getCampusServices, openStudentTranscript, returnLibraryLoan, updateCampusService,
+  borrowLibraryBook, createCampusService, getAcademicManagement,
+  getCampusServices, returnLibraryLoan, updateCampusService,
 } from '../services/api';
 
 const YEAR = new Date().getFullYear();
-const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const initialForms = {
   exam: { course_id: '', semester: 'Spring', year: YEAR, exam_type: 'Midterm', exam_date: '', starts_at: '10:00', ends_at: '12:00', room: '' },
   schedule: { course_id: '', semester: 'Spring', year: YEAR, day_of_week: 0, starts_at: '09:00', ends_at: '10:30', room: '', class_type: 'lecture' },
@@ -32,7 +33,7 @@ function CampusServicesPage() {
   const [academic, setAcademic] = useState({ courses: [], students: [] });
   const [forms, setForms] = useState(initialForms);
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState('');
+  const [, setBusy] = useState('');
   const [feedback, setFeedback] = useState(null);
 
   const load = useCallback(async () => {
@@ -82,18 +83,9 @@ function CampusServicesPage() {
     <section className="academic-management-hero mb-4"><div><span>UNIVERSITY OPERATIONS</span><h3>Connected campus service center</h3><p>Role-based services backed by verified university records.</p></div><div className="academic-summary"><strong>{tabs.length}</strong><span>Active services</span></div></section>
     <div className="academic-tabs mb-4">{tabs.map(([key, label]) => <button type="button" key={key} className={tab === key ? 'is-active' : ''} onClick={() => setTab(key)}>{label}</button>)}</div>
 
-    {tab === 'routines' && <div className="row g-4">
-      {isAdmin && <div className="col-xl-4"><section className="faculty-panel h-100"><h4>Publish Routine</h4>
-        <Field label="Course"><select className="form-select" value={forms.exam.course_id} onChange={(e) => { setField('exam', 'course_id', e.target.value); setField('schedule', 'course_id', e.target.value); }}><option value="">Select course</option>{academic.courses.map((c) => <option key={c.id} value={c.id}>{c.course_code} - {c.title}</option>)}</select></Field>
-        <div className="row g-2"><div className="col-6"><Field label="Semester"><select className="form-select" value={forms.exam.semester} onChange={(e) => setField('exam', 'semester', e.target.value)}><option>Spring</option><option>Fall</option></select></Field></div><div className="col-6"><Field label="Year"><input type="number" className="form-control" value={forms.exam.year} onChange={(e) => setField('exam', 'year', Number(e.target.value))} /></Field></div></div>
-        <h6 className="mt-3">Exam</h6><Field label="Type"><input className="form-control" value={forms.exam.exam_type} onChange={(e) => setField('exam', 'exam_type', e.target.value)} /></Field><Field label="Date"><input type="date" className="form-control" value={forms.exam.exam_date} onChange={(e) => setField('exam', 'exam_date', e.target.value)} /></Field><div className="row g-2"><div className="col"><input type="time" className="form-control" value={forms.exam.starts_at} onChange={(e) => setField('exam', 'starts_at', e.target.value)} /></div><div className="col"><input type="time" className="form-control" value={forms.exam.ends_at} onChange={(e) => setField('exam', 'ends_at', e.target.value)} /></div></div><button type="button" className="btn btn-primary w-100 mt-2" onClick={() => submit('exam', 'exams')} disabled={busy === 'exam'}>Save Exam</button>
-        <h6 className="mt-4">Weekly class</h6><Field label="Day"><select className="form-select" value={forms.schedule.day_of_week} onChange={(e) => setField('schedule', 'day_of_week', Number(e.target.value))}>{DAYS.map((d, i) => <option value={i} key={d}>{d}</option>)}</select></Field><button type="button" className="btn btn-outline-primary w-100" onClick={() => submit('schedule', 'schedules', { ...forms.schedule, course_id: forms.exam.course_id, semester: forms.exam.semester, year: forms.exam.year })}>Save Class Routine</button>
-      </section></div>}
-      <div className={isAdmin ? 'col-xl-8' : 'col-12'}><div className="row g-4"><div className="col-lg-6"><section className="faculty-panel h-100"><h4>Class Routine</h4>{list(data?.schedules, 'No classes scheduled', (item) => <article className="service-record" key={item.id}><strong>{item.course_code} - {item.course_title}</strong><span>{DAYS[item.day_of_week]} | {String(item.starts_at).slice(0, 5)}–{String(item.ends_at).slice(0, 5)} | {item.room || 'Room TBA'}</span></article>)}</section></div><div className="col-lg-6"><section className="faculty-panel h-100"><h4>Exam Routine</h4>{list(data?.exams, 'No exams published', (item) => <article className="service-record" key={item.id}><strong>{item.exam_type}: {item.course_code}</strong><span>{item.exam_date} | {String(item.starts_at).slice(0, 5)}–{String(item.ends_at).slice(0, 5)} | {item.room || 'Room TBA'}</span></article>)}</section></div></div>
-      {isStudent && <div className="d-flex flex-wrap gap-2 mt-4"><button className="btn btn-primary" onClick={() => action('transcript', openStudentTranscript)}>Open Transcript / PDF</button><button className="btn btn-outline-success" onClick={() => action('attendance-export', downloadAttendanceReport)}>Download Attendance CSV</button></div>}</div>
-    </div>}
+    {tab === 'routines' && <RoutineWorkspace user={user} data={data} academic={academic} reload={load} setFeedback={setFeedback} />}
 
-    {tab === 'calendar' && <div className="row g-4">{isAdmin && <div className="col-xl-4"><section className="faculty-panel"><h4>Add Academic Event</h4>{[['title', 'Title', 'text'], ['starts_on', 'Start date', 'date'], ['ends_on', 'End date', 'date']].map(([key, label, type]) => <Field key={key} label={label}><input type={type} className="form-control" value={forms.event[key]} onChange={(e) => setField('event', key, e.target.value)} /></Field>)}<Field label="Audience"><select className="form-select" value={forms.event.audience} onChange={(e) => setField('event', 'audience', e.target.value)}><option value="all">Everyone</option><option value="student">Students</option><option value="faculty">Faculty</option></select></Field><button className="btn btn-primary w-100" onClick={() => submit('event', 'events')}>Publish Event</button></section></div>}<div className={isAdmin ? 'col-xl-8' : 'col-12'}><section className="faculty-panel"><h4>Academic Calendar</h4>{list(data?.events, 'No upcoming academic events', (item) => <article className="service-record" key={item.id}><span className="badge text-bg-primary">{item.event_type}</span><strong>{item.title}</strong><span>{item.starts_on}{item.ends_on ? ` to ${item.ends_on}` : ''}</span><p>{item.description}</p></article>)}</section></div></div>}
+    {tab === 'calendar' && <AcademicCalendar user={user} data={data} reload={load} setFeedback={setFeedback} />}
 
     {tab === 'fees' && <div className="row g-4">{isAdmin && <div className="col-xl-4"><section className="faculty-panel"><h4>Update Student Fee</h4><Field label="Student"><select className="form-select" value={forms.fee.student_id} onChange={(e) => setField('fee', 'student_id', e.target.value)}><option value="">Select student</option>{academic.students.map((s) => <option key={s.id} value={s.id}>{s.student_number} - {s.name}</option>)}</select></Field>{[['amount_due', 'Amount due'], ['amount_paid', 'Amount paid']].map(([key, label]) => <Field key={key} label={label}><input type="number" min="0" className="form-control" value={forms.fee[key]} onChange={(e) => setField('fee', key, Number(e.target.value))} /></Field>)}<Field label="Due date"><input type="date" className="form-control" value={forms.fee.due_date} onChange={(e) => setField('fee', 'due_date', e.target.value)} /></Field><button className="btn btn-primary w-100" onClick={() => submit('fee', 'fees')}>Save Fee Status</button></section></div>}<div className={isAdmin ? 'col-xl-8' : 'col-12'}><section className="faculty-panel"><h4>{isStudent ? 'My Fee Status' : 'Student Fee Records'}</h4>{list(data?.fees, 'No fee records', (item) => <article className="service-record" key={item.id}><div><strong>{item.student_name || `${item.semester} ${item.year}`}</strong><span className={`badge ms-2 ${item.status === 'paid' ? 'text-bg-success' : item.status === 'partial' ? 'text-bg-warning' : 'text-bg-danger'}`}>{item.status}</span></div><span>Due: ৳{item.amount_due} | Paid: ৳{item.amount_paid} | Balance: ৳{Number(item.amount_due) - Number(item.amount_paid)}</span></article>)}</section></div></div>}
 

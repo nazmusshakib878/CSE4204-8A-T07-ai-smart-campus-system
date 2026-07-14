@@ -48,27 +48,65 @@ class CampusOperationsController extends Controller
 
     public function storeSchedule(Request $request): JsonResponse
     {
-        $this->admin($request);
-        $data = $request->validate(['course_id' => ['required', 'exists:courses,id'], 'semester' => ['required', Rule::in(['Spring', 'Fall'])], 'year' => ['required', 'integer', 'min:2020', 'max:2100'], 'day_of_week' => ['required', 'integer', 'min:0', 'max:6'], 'starts_at' => ['required', 'date_format:H:i'], 'ends_at' => ['required', 'date_format:H:i', 'after:starts_at'], 'room' => ['nullable', 'string', 'max:100'], 'class_type' => ['required', Rule::in(['lecture', 'lab'])]]);
-        DB::table('course_schedules')->updateOrInsert(array_intersect_key($data, array_flip(['course_id', 'day_of_week', 'starts_at'])), [...$data, 'updated_at' => now(), 'created_at' => now()]);
-        return response()->json(['status' => true, 'message' => 'Class routine saved successfully.'], 201);
+        $this->admin($request); $data = $this->scheduleData($request); $this->assertScheduleAvailable($data);
+        $id = DB::table('course_schedules')->insertGetId([...$data, 'created_at' => now(), 'updated_at' => now()]);
+        return response()->json(['status' => true, 'message' => 'Class routine created successfully.', 'data' => ['id' => $id]], 201);
     }
+
+    public function updateSchedule(Request $request, int $schedule): JsonResponse
+    {
+        $this->admin($request); abort_unless(DB::table('course_schedules')->where('id', $schedule)->exists(), 404);
+        $data = $this->scheduleData($request); $this->assertScheduleAvailable($data, $schedule);
+        DB::table('course_schedules')->where('id', $schedule)->update([...$data, 'updated_at' => now()]);
+        return response()->json(['status' => true, 'message' => 'Class routine updated successfully.']);
+    }
+
+    public function destroySchedule(Request $request, int $schedule): JsonResponse
+    {
+        $this->admin($request); abort_unless(DB::table('course_schedules')->where('id', $schedule)->delete(), 404);
+        return response()->json(['status' => true, 'message' => 'Class routine deleted successfully.']);
+    }
+
     public function storeExam(Request $request): JsonResponse
     {
-        $this->admin($request);
-        $data = $request->validate(['course_id' => ['required', 'exists:courses,id'], 'semester' => ['required', Rule::in(['Spring', 'Fall'])], 'year' => ['required', 'integer', 'min:2020', 'max:2100'], 'exam_type' => ['required', 'string', 'max:40'], 'exam_date' => ['required', 'date'], 'starts_at' => ['required', 'date_format:H:i'], 'ends_at' => ['required', 'date_format:H:i', 'after:starts_at'], 'room' => ['nullable', 'string', 'max:100']]);
-        $id = DB::table('exam_routines')->updateOrInsert(array_intersect_key($data, array_flip(['course_id', 'semester', 'year', 'exam_type'])), [...$data, 'updated_at' => now(), 'created_at' => now()]);
-        return response()->json(['status' => true, 'message' => 'Exam routine saved successfully.', 'data' => $id], 201);
+        $this->admin($request); $data = $this->examData($request); $this->assertExamAvailable($data);
+        $id = DB::table('exam_routines')->insertGetId([...$data, 'created_at' => now(), 'updated_at' => now()]);
+        return response()->json(['status' => true, 'message' => 'Exam routine created successfully.', 'data' => ['id' => $id]], 201);
+    }
+
+    public function updateExam(Request $request, int $exam): JsonResponse
+    {
+        $this->admin($request); abort_unless(DB::table('exam_routines')->where('id', $exam)->exists(), 404);
+        $data = $this->examData($request); $this->assertExamAvailable($data, $exam);
+        DB::table('exam_routines')->where('id', $exam)->update([...$data, 'updated_at' => now()]);
+        return response()->json(['status' => true, 'message' => 'Exam routine updated successfully.']);
+    }
+
+    public function destroyExam(Request $request, int $exam): JsonResponse
+    {
+        $this->admin($request); abort_unless(DB::table('exam_routines')->where('id', $exam)->delete(), 404);
+        return response()->json(['status' => true, 'message' => 'Exam routine deleted successfully.']);
     }
 
     public function storeEvent(Request $request): JsonResponse
     {
-        $this->admin($request);
-        $data = $request->validate(['title' => ['required', 'string', 'max:255'], 'description' => ['nullable', 'string', 'max:2000'], 'starts_on' => ['required', 'date'], 'ends_on' => ['nullable', 'date', 'after_or_equal:starts_on'], 'event_type' => ['required', 'string', 'max:40'], 'audience' => ['required', Rule::in(['all', 'student', 'faculty', 'admin'])]]);
+        $this->admin($request); $data = $this->eventData($request);
         $id = DB::table('academic_events')->insertGetId([...$data, 'created_by' => $request->user()->id, 'created_at' => now(), 'updated_at' => now()]);
-        return response()->json(['status' => true, 'message' => 'Academic event created.', 'data' => ['id' => $id]], 201);
+        return response()->json(['status' => true, 'message' => 'Academic event created successfully.', 'data' => ['id' => $id]], 201);
     }
 
+    public function updateEvent(Request $request, int $event): JsonResponse
+    {
+        $this->admin($request); abort_unless(DB::table('academic_events')->where('id', $event)->exists(), 404);
+        DB::table('academic_events')->where('id', $event)->update([...$this->eventData($request), 'updated_at' => now()]);
+        return response()->json(['status' => true, 'message' => 'Academic event updated successfully.']);
+    }
+
+    public function destroyEvent(Request $request, int $event): JsonResponse
+    {
+        $this->admin($request); abort_unless(DB::table('academic_events')->where('id', $event)->delete(), 404);
+        return response()->json(['status' => true, 'message' => 'Academic event deleted successfully.']);
+    }
     public function storeFee(Request $request): JsonResponse
     {
         $this->admin($request);
@@ -106,10 +144,16 @@ class CampusOperationsController extends Controller
     {
         $this->admin($request);
         $data = $request->validate(['status' => ['required', Rule::in(['approved', 'rejected'])], 'admin_note' => ['nullable', 'string', 'max:2000']]);
-        abort_unless(DB::table('faculty_leaves')->where('id', $leave)->where('status', 'pending')->update([...$data, 'reviewed_by' => $request->user()->id, 'updated_at' => now()]), 404);
-        return response()->json(['status' => true, 'message' => 'Leave application reviewed.']);
+        $record = DB::table('faculty_leaves')->where('id', $leave)->where('status', 'pending')->first();
+        abort_unless($record, 404);
+        DB::table('faculty_leaves')->where('id', $leave)->update([...$data, 'reviewed_by' => $request->user()->id, 'updated_at' => now()]);
+        $affected = 0;
+        if ($data['status'] === 'approved') {
+            $days = collect(\Carbon\CarbonPeriod::create($record->starts_on, $record->ends_on))->map(fn ($date) => $date->dayOfWeek)->unique();
+            $affected = DB::table('course_schedules')->join('courses', 'courses.id', '=', 'course_schedules.course_id')->where('courses.faculty_id', $record->faculty_id)->whereIn('course_schedules.day_of_week', $days)->count();
+        }
+        return response()->json(['status' => true, 'message' => 'Leave application reviewed.'.($affected ? " Warning: {$affected} recurring class slot(s) may need rescheduling." : ''), 'affected_classes' => $affected]);
     }
-
     public function storeReschedule(Request $request): JsonResponse
     {
         abort_unless($request->user()->role === 'faculty', 403);
@@ -154,6 +198,42 @@ class CampusOperationsController extends Controller
         return response()->json(['status' => true, 'message' => 'Book returned successfully.']);
     }
 
+    private function scheduleData(Request $request): array
+    {
+        return $request->validate(['course_id' => ['required', 'exists:courses,id'], 'semester' => ['required', Rule::in(['Spring', 'Fall'])], 'year' => ['required', 'integer', 'min:2020', 'max:2100'], 'section' => ['nullable', 'string', 'max:50'], 'day_of_week' => ['required', 'integer', 'min:0', 'max:6'], 'starts_at' => ['required', 'date_format:H:i'], 'ends_at' => ['required', 'date_format:H:i', 'after:starts_at'], 'room' => ['required', 'string', 'max:100'], 'class_type' => ['required', Rule::in(['lecture', 'lab'])]]);
+    }
+
+    private function examData(Request $request): array
+    {
+        return $request->validate(['course_id' => ['required', 'exists:courses,id'], 'semester' => ['required', Rule::in(['Spring', 'Fall'])], 'year' => ['required', 'integer', 'min:2020', 'max:2100'], 'section' => ['nullable', 'string', 'max:50'], 'exam_type' => ['required', 'string', 'max:40'], 'exam_date' => ['required', 'date'], 'starts_at' => ['required', 'date_format:H:i'], 'ends_at' => ['required', 'date_format:H:i', 'after:starts_at'], 'room' => ['required', 'string', 'max:100']]);
+    }
+
+    private function eventData(Request $request): array
+    {
+        $request->merge(['is_all_day' => $request->has('is_all_day') ? $request->boolean('is_all_day') : true, 'recurrence' => $request->input('recurrence', 'none')]);
+        return $request->validate(['title' => ['required', 'string', 'max:255'], 'description' => ['nullable', 'string', 'max:2000'], 'starts_on' => ['required', 'date'], 'ends_on' => ['nullable', 'date', 'after_or_equal:starts_on'], 'event_type' => ['required', Rule::in(['academic', 'holiday', 'exam', 'registration', 'deadline', 'orientation'])], 'audience' => ['required', Rule::in(['all', 'student', 'faculty', 'admin'])], 'is_all_day' => ['required', 'boolean'], 'recurrence' => ['required', Rule::in(['none', 'weekly', 'monthly', 'yearly'])]]);
+    }
+
+    private function assertScheduleAvailable(array $data, ?int $ignore = null): void
+    {
+        $facultyId = DB::table('courses')->where('id', $data['course_id'])->value('faculty_id');
+        $conflict = DB::table('course_schedules')->join('courses', 'courses.id', '=', 'course_schedules.course_id')
+            ->where('course_schedules.semester', $data['semester'])->where('course_schedules.year', $data['year'])->where('course_schedules.day_of_week', $data['day_of_week'])
+            ->where('course_schedules.starts_at', '<', $data['ends_at'])->where('course_schedules.ends_at', '>', $data['starts_at'])
+            ->when($ignore, fn ($q) => $q->where('course_schedules.id', '!=', $ignore))
+            ->where(fn ($q) => $q->where('course_schedules.room', $data['room'])->when($facultyId, fn ($same) => $same->orWhere('courses.faculty_id', $facultyId))->when($data['section'] ?? null, fn ($same) => $same->orWhere('course_schedules.section', $data['section'])))->first();
+        if ($conflict) throw \Illuminate\Validation\ValidationException::withMessages(['starts_at' => ['This time conflicts with another class for the same room or faculty member.']]);
+    }
+
+    private function assertExamAvailable(array $data, ?int $ignore = null): void
+    {
+        $facultyId = DB::table('courses')->where('id', $data['course_id'])->value('faculty_id');
+        $conflict = DB::table('exam_routines')->join('courses', 'courses.id', '=', 'exam_routines.course_id')
+            ->where('exam_routines.exam_date', $data['exam_date'])->where('exam_routines.starts_at', '<', $data['ends_at'])->where('exam_routines.ends_at', '>', $data['starts_at'])
+            ->when($ignore, fn ($q) => $q->where('exam_routines.id', '!=', $ignore))
+            ->where(fn ($q) => $q->where('exam_routines.room', $data['room'])->when($facultyId, fn ($same) => $same->orWhere('courses.faculty_id', $facultyId))->when($data['section'] ?? null, fn ($same) => $same->orWhere('exam_routines.section', $data['section'])))->first();
+        if ($conflict) throw \Illuminate\Validation\ValidationException::withMessages(['starts_at' => ['This time conflicts with another exam for the same room or faculty member.']]);
+    }
     private function admin(Request $request): void
     {
         abort_unless($request->user()->role === 'admin', 403);

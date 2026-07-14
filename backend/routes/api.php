@@ -44,8 +44,14 @@ Route::middleware(['auth:sanctum', 'approved', 'throttle:api'])->group(function 
     Route::get('/students/{student}/attendance-export', [AcademicExportController::class, 'attendance']);
     Route::get('/campus-services', [CampusOperationsController::class, 'index']);
     Route::post('/campus-services/exams', [CampusOperationsController::class, 'storeExam']);
+    Route::put('/campus-services/exams/{exam}', [CampusOperationsController::class, 'updateExam']);
+    Route::delete('/campus-services/exams/{exam}', [CampusOperationsController::class, 'destroyExam']);
     Route::post('/campus-services/schedules', [CampusOperationsController::class, 'storeSchedule']);
+    Route::put('/campus-services/schedules/{schedule}', [CampusOperationsController::class, 'updateSchedule']);
+    Route::delete('/campus-services/schedules/{schedule}', [CampusOperationsController::class, 'destroySchedule']);
     Route::post('/campus-services/events', [CampusOperationsController::class, 'storeEvent']);
+    Route::put('/campus-services/events/{event}', [CampusOperationsController::class, 'updateEvent']);
+    Route::delete('/campus-services/events/{event}', [CampusOperationsController::class, 'destroyEvent']);
     Route::post('/campus-services/fees', [CampusOperationsController::class, 'storeFee']);
     Route::post('/campus-services/tickets', [CampusOperationsController::class, 'storeTicket']);
     Route::patch('/campus-services/tickets/{ticket}', [CampusOperationsController::class, 'updateTicket']);

@@ -50,7 +50,32 @@ class CampusOperationsTest extends TestCase
         $this->postJson('/api/campus-services/events', [])->assertForbidden();
     }
 
-    public function test_unassigned_faculty_cannot_browse_department_students(): void
+    public function test_admin_manages_routines_and_conflicts_are_rejected(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $facultyUser = User::factory()->create(['role' => 'faculty']);
+        $faculty = Faculty::create(['user_id' => $facultyUser->id]);
+        $first = Course::create(['faculty_id' => $faculty->id, 'course_code' => 'CSE-301', 'title' => 'Networks', 'department' => 'CSE', 'credit_hours' => 3]);
+        $second = Course::create(['faculty_id' => $faculty->id, 'course_code' => 'CSE-302', 'title' => 'Systems', 'department' => 'CSE', 'credit_hours' => 3]);
+        Sanctum::actingAs($admin);
+        $payload = ['course_id' => $first->id, 'semester' => 'Fall', 'year' => 2026, 'section' => '8A', 'day_of_week' => 1, 'starts_at' => '09:00', 'ends_at' => '10:30', 'room' => '405', 'class_type' => 'lecture'];
+        $id = $this->postJson('/api/campus-services/schedules', $payload)->assertCreated()->json('data.id');
+        $this->postJson('/api/campus-services/schedules', [...$payload, 'course_id' => $second->id, 'starts_at' => '10:00', 'ends_at' => '11:00', 'room' => '406'])->assertUnprocessable()->assertJsonValidationErrors('starts_at');
+        $this->putJson("/api/campus-services/schedules/{$id}", [...$payload, 'starts_at' => '11:00', 'ends_at' => '12:30'])->assertOk();
+        $this->deleteJson("/api/campus-services/schedules/{$id}")->assertOk();
+    }
+
+    public function test_admin_can_edit_and_delete_academic_calendar_event(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']); Sanctum::actingAs($admin);
+        $payload = ['title' => 'Semester Begins', 'starts_on' => '2026-08-01', 'ends_on' => null, 'description' => 'First day', 'event_type' => 'academic', 'audience' => 'all', 'is_all_day' => true, 'recurrence' => 'none'];
+        $id = $this->postJson('/api/campus-services/events', $payload)->assertCreated()->json('data.id');
+        $this->putJson("/api/campus-services/events/{$id}", [...$payload, 'title' => 'Classes Begin'])->assertOk();
+        $this->assertDatabaseHas('academic_events', ['id' => $id, 'title' => 'Classes Begin']);
+        $this->deleteJson("/api/campus-services/events/{$id}")->assertOk();
+        $this->assertDatabaseMissing('academic_events', ['id' => $id]);
+     }
+     public function test_unassigned_faculty_cannot_browse_department_students(): void
     {
         $facultyUser = User::factory()->create(['role' => 'faculty', 'department' => 'CSE']);
         Faculty::create(['user_id' => $facultyUser->id, 'faculty_number' => 'F-2']);

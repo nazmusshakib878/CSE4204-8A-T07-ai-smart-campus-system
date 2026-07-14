@@ -354,6 +354,8 @@ export const downloadNoticeAttachment = async (id, filename = 'notice-attachment
 export const getCampusServices = async () => { try { return await api.get('/campus-services'); } catch (error) { throw createApiError(error); } };
 export const createCampusService = async (resource, payload) => { try { return await api.post(`/campus-services/${resource}`, payload); } catch (error) { throw createApiError(error); } };
 export const updateCampusService = async (resource, id, payload) => { try { return await api.patch(`/campus-services/${resource}/${id}`, payload); } catch (error) { throw createApiError(error); } };
+export const replaceCampusService = async (resource, id, payload) => { try { return await api.put(`/campus-services/${resource}/${id}`, payload); } catch (error) { throw createApiError(error); } };
+export const deleteCampusService = async (resource, id) => { try { return await api.delete(`/campus-services/${resource}/${id}`); } catch (error) { throw createApiError(error); } };
 export const borrowLibraryBook = async (id) => { try { return await api.post(`/campus-services/books/${id}/borrow`); } catch (error) { throw createApiError(error); } };
 export const returnLibraryLoan = async (id) => { try { return await api.patch(`/campus-services/loans/${id}/return`); } catch (error) { throw createApiError(error); } };
 export const saveCourseAssessments = async (courseId, payload) => { try { return await api.put(`/academic-management/courses/${courseId}/assessments`, payload); } catch (error) { throw createApiError(error); } };

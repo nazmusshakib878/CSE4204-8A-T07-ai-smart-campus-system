@@ -18,6 +18,7 @@ const iconPaths = {
   assistant: 'M12 3 10.7 7.1a5 5 0 0 1-3.2 3.2L3.5 12l4 1.7a5 5 0 0 1 3.2 3.2L12 21l1.7-4.1a5 5 0 0 1 3.2-3.2L21 12l-4.1-1.7a5 5 0 0 1-3.2-3.2L12 3Z',
   recommendations: 'M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H7a3 3 0 0 0-3 3V5.5Zm0 0V21m4-13h8m-8 4h8m-8 4h5',
   monitoring: 'M4 19V9m5 10V5m5 14v-7m5 7V3',
+  academic: 'M4 5h16v14H4V5Zm4 4h8m-8 4h8m-8 4h5',
   risk: 'M12 3 22 20H2L12 3Zm0 6v5m0 3h.01',
   admin: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87m0-7.26a4 4 0 0 1 0 7.75',
   users: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm11 10v-2a3 3 0 0 0-2-2.83M16 3.13a4 4 0 0 1 0 7.75',
@@ -79,6 +80,7 @@ function Layout({ children, title, subtitle }) {
   const facultyNavItems = [
     { to: '/faculty-dashboard', label: 'Faculty Dashboard', icon: 'dashboard' },
     { to: '/student-monitoring', label: 'Student Monitoring', icon: 'monitoring' },
+    { to: '/academic-management', label: 'Academic Data', icon: 'academic' },
     { to: '/risk-alerts', label: 'Risk Alerts', icon: 'risk' },
     { to: '/notices/manage', label: 'Send Notices', icon: 'notices' },
     { to: '/messages', label: unreadNotices > 0 ? `Messages (${unreadNotices})` : 'Messages', icon: 'messages' },
@@ -86,12 +88,13 @@ function Layout({ children, title, subtitle }) {
   const adminNavItems = [
     { to: '/admin', label: 'Dashboard', icon: 'dashboard' },
     { to: '/admin/users', label: 'Manage Users', icon: 'users' },
+    { to: '/academic-management', label: 'Academic Data', icon: 'academic' },
     { to: '/admin/notices', label: 'Manage Notices', icon: 'notices' },
     { to: '/admin/departments', label: 'Manage Departments', icon: 'departments' },
     { to: '/messages', label: unreadNotices > 0 ? `Messages (${unreadNotices})` : 'Messages', icon: 'messages' },
   ];
   const appNavItems = isAdminUser ? adminNavItems : isFacultyUser ? facultyNavItems : studentNavItems;
-  const internalRoutes = ['/dashboard', '/profile', '/functions', '/ai-assistant', '/course-recommendations', '/messages', '/notices/manage', '/faculty-dashboard', '/student-monitoring', '/risk-alerts', '/admin'];
+  const internalRoutes = ['/dashboard', '/profile', '/functions', '/ai-assistant', '/course-recommendations', '/messages', '/notices/manage', '/faculty-dashboard', '/student-monitoring', '/academic-management', '/risk-alerts', '/admin'];
   const useInternalLayout = isAuthenticated
     && internalRoutes.some((route) => location.pathname.startsWith(route));
   const currentSection = location.pathname === '/profile'
@@ -396,7 +399,7 @@ function Layout({ children, title, subtitle }) {
 
       <footer className="bg-white border-top py-4 mt-4">
         <div className="footer-content container d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
-          <small className="text-secondary">© 2026 Northern University of Business and Technology, Khulna</small>
+          <small className="text-secondary">Â© 2026 Northern University of Business and Technology, Khulna</small>
         </div>
       </footer>
     </div>

@@ -11,6 +11,8 @@ class PerformanceMetric extends Model
 
     protected $fillable = [
         'student_id',
+                'semester',
+        'year',
         'cgpa',
         'semester_gpa',
         'completed_credits',

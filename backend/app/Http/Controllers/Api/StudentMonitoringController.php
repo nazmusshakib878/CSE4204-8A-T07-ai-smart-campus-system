@@ -139,6 +139,7 @@ class StudentMonitoringController extends Controller
             return $query->where(function (Builder $students) use ($courseIds) {
                 $students
                     ->whereHas('academicRecords', fn (Builder $records) => $records->whereIn('course_id', $courseIds))
+                    ->orWhereHas('enrollments', fn (Builder $enrollments) => $enrollments->whereIn('course_id', $courseIds))
                     ->orWhereHas('attendanceRecords', fn (Builder $records) => $records->whereIn('course_id', $courseIds));
             });
         }

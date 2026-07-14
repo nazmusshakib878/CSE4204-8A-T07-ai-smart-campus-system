@@ -13,6 +13,7 @@ import FacultyDashboardPage from './pages/FacultyDashboardPage';
 import StudentMonitoringPage from './pages/StudentMonitoringPage';
 import RiskAlertsPage from './pages/RiskAlertsPage';
 import AdminPage from './pages/AdminPage';
+import AcademicManagementPage from './pages/AcademicManagementPage';
 import ManageUsersPage from './pages/ManageUsersPage';
 import ManageNoticesPage from './pages/ManageNoticesPage';
 import ManageDepartmentsPage from './pages/ManageDepartmentsPage';
@@ -47,6 +48,7 @@ function App() {
             <Route path="/notices/manage" element={<ManageNoticesPage />} />
             <Route path="/faculty-dashboard" element={<FacultyDashboardPage />} />
             <Route path="/student-monitoring" element={<StudentMonitoringPage />} />
+            <Route path="/academic-management" element={<AcademicManagementPage />} />
             <Route path="/risk-alerts" element={<RiskAlertsPage />} />
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/admin/users" element={<ManageUsersPage />} />

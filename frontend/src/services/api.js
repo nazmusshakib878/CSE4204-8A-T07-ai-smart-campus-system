@@ -232,4 +232,54 @@ export const analyzeStudentRisk = async (studentDatabaseId) => {
   }
 };
 
+export const getAcademicManagement = async () => {
+  try { return await api.get('/academic-management'); }
+  catch (error) { throw createApiError(error); }
+};
+
+export const createCourse = async (payload) => {
+  try { return await api.post('/academic-management/courses', payload); }
+  catch (error) { throw createApiError(error); }
+};
+
+export const updateCourse = async (id, payload) => {
+  try { return await api.put(`/academic-management/courses/${id}`, payload); }
+  catch (error) { throw createApiError(error); }
+};
+
+export const deleteCourse = async (id) => {
+  try { return await api.delete(`/academic-management/courses/${id}`); }
+  catch (error) { throw createApiError(error); }
+};
+
+export const getCourseWorkspace = async (courseId) => {
+  try { return await api.get(`/academic-management/courses/${courseId}/workspace`); }
+  catch (error) { throw createApiError(error); }
+};
+
+export const enrollCourseStudents = async (courseId, payload) => {
+  try { return await api.post(`/academic-management/courses/${courseId}/enrollments`, payload); }
+  catch (error) { throw createApiError(error); }
+};
+
+export const removeCourseEnrollment = async (courseId, enrollmentId) => {
+  try { return await api.delete(`/academic-management/courses/${courseId}/enrollments/${enrollmentId}`); }
+  catch (error) { throw createApiError(error); }
+};
+
+export const saveCourseAttendance = async (courseId, payload) => {
+  try { return await api.put(`/academic-management/courses/${courseId}/attendance`, payload); }
+  catch (error) { throw createApiError(error); }
+};
+
+export const saveCourseGrades = async (courseId, payload) => {
+  try { return await api.put(`/academic-management/courses/${courseId}/grades`, payload); }
+  catch (error) { throw createApiError(error); }
+};
+
+export const saveStudentPerformance = async (courseId, studentId, payload) => {
+  try { return await api.put(`/academic-management/courses/${courseId}/students/${studentId}/performance`, payload); }
+  catch (error) { throw createApiError(error); }
+};
+
 export default api;

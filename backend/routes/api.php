@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AcademicManagementController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CampusTaskController;
 use App\Http\Controllers\Api\DepartmentController;
@@ -24,6 +25,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/admin/departments/{department}', [DepartmentController::class, 'destroy']);
     Route::get('/faculty/student-monitoring', [StudentMonitoringController::class, 'index']);
     Route::post('/faculty/students/{student}/analyze-risk', [StudentMonitoringController::class, 'analyze']);
+
+    Route::get('/academic-management', [AcademicManagementController::class, 'index']);
+    Route::post('/academic-management/courses', [AcademicManagementController::class, 'storeCourse']);
+    Route::put('/academic-management/courses/{course}', [AcademicManagementController::class, 'updateCourse']);
+    Route::delete('/academic-management/courses/{course}', [AcademicManagementController::class, 'destroyCourse']);
+    Route::get('/academic-management/courses/{course}/workspace', [AcademicManagementController::class, 'workspace']);
+    Route::post('/academic-management/courses/{course}/enrollments', [AcademicManagementController::class, 'enroll']);
+    Route::delete('/academic-management/courses/{course}/enrollments/{enrollment}', [AcademicManagementController::class, 'unenroll']);
+    Route::put('/academic-management/courses/{course}/attendance', [AcademicManagementController::class, 'saveAttendance']);
+    Route::put('/academic-management/courses/{course}/grades', [AcademicManagementController::class, 'saveGrades']);
+    Route::put('/academic-management/courses/{course}/students/{student}/performance', [AcademicManagementController::class, 'savePerformance']);
 
     Route::apiResource('learning-resources', LearningResourceController::class)
         ->parameters(['learning-resources' => 'id']);

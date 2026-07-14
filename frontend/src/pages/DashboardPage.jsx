@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+﻿import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useAuth } from '../auth/auth-context';
@@ -99,7 +99,7 @@ function DashboardPage() {
           />
         )}
 
-        <div className="dashboard-welcome-panel mb-4">
+        <div className="dashboard-welcome-panel student-dashboard-hero mb-4">
           <div>
             <span className="eyebrow-label">Today overview</span>
             <h3>Stay on top of your campus work</h3>
@@ -110,28 +110,28 @@ function DashboardPage() {
 
         <div className="row g-4 mb-4">
           <div className="col-md-6 col-xl-3">
-            <div className="dashboard-stat-card stat-blue card border-0 shadow-sm rounded-4 p-4 h-100">
+            <div className="dashboard-stat-card student-stat-card stat-blue card border-0 shadow-sm rounded-4 p-4 h-100">
               <p className="text-muted small mb-1">Academic role</p>
               <h3 className="fw-bold text-dark text-capitalize mb-1">{profile?.role || 'Student'}</h3>
               <small className="text-secondary">Authenticated account</small>
             </div>
           </div>
           <div className="col-md-6 col-xl-3">
-            <div className="dashboard-stat-card stat-green card border-0 shadow-sm rounded-4 p-4 h-100">
+            <div className="dashboard-stat-card student-stat-card stat-green card border-0 shadow-sm rounded-4 p-4 h-100">
               <p className="text-muted small mb-1">Active tasks</p>
               <h3 className="fw-bold text-dark mb-1">{tasks.length}</h3>
               <small className="text-secondary">Available tasks</small>
             </div>
           </div>
           <div className="col-md-6 col-xl-3">
-            <div className="dashboard-stat-card stat-violet card border-0 shadow-sm rounded-4 p-4 h-100">
+            <div className="dashboard-stat-card student-stat-card stat-violet card border-0 shadow-sm rounded-4 p-4 h-100">
               <p className="text-muted small mb-1">Smart insights</p>
               <h3 className="fw-bold text-dark mb-1">{recommendations.length}</h3>
               <small className="text-secondary">AI suggestions</small>
             </div>
           </div>
           <div className="col-md-6 col-xl-3">
-            <div className="dashboard-stat-card stat-amber card border-0 shadow-sm rounded-4 p-4 h-100">
+            <div className="dashboard-stat-card student-stat-card stat-amber card border-0 shadow-sm rounded-4 p-4 h-100">
               <p className="text-muted small mb-1">Learning resources</p>
               <h3 className="fw-bold text-dark mb-1">{resources.length}</h3>
               <small className="text-secondary">Learning materials</small>
@@ -141,13 +141,13 @@ function DashboardPage() {
 
         <div className="row g-4">
           <div className="col-lg-8">
-            <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <div className="card student-dashboard-card border-0 shadow-sm rounded-4 p-4 h-100">
               <div className="section-card-header d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                 <h5 className="fw-bold text-dark mb-0">Recent activity</h5>
                 <Link to="/functions" className="text-primary small">View all</Link>
               </div>
               {recommendations.length > 0 ? (
-                <div className="list-group list-group-flush">
+                <div className="list-group list-group-flush student-insight-list">
                   {recommendations.slice(0, 3).map((item) => (
                     <div key={item.id} className="list-group-item px-0 py-3">
                       <div className="fw-semibold text-dark">{item.title}</div>
@@ -167,12 +167,12 @@ function DashboardPage() {
           </div>
 
           <div className="col-lg-4">
-            <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <div className="card student-dashboard-card border-0 shadow-sm rounded-4 p-4 h-100">
               <h5 className="fw-bold text-dark mb-3">Upcoming tasks</h5>
               {tasks.length > 0 ? (
                 <div className="d-grid gap-3">
                   {tasks.slice(0, 3).map((task) => (
-                    <div key={task.id} className="task-item rounded-3 bg-light p-3 d-flex align-items-center justify-content-between gap-3">
+                    <div key={task.id} className="task-item student-task-item rounded-3 p-3 d-flex align-items-center justify-content-between gap-3">
                       <div className="min-w-0">
                         <div className="fw-semibold text-dark">{task.title}</div>
                         <small className="text-secondary">{task.due_date || task.status}</small>

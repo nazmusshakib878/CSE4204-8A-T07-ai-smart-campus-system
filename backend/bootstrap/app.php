@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\ApiRequestLogger;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\QueryException;
@@ -21,7 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->api(append: [ApiRequestLogger::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
 

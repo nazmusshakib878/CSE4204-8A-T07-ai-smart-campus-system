@@ -1,11 +1,24 @@
-# Database
+# Database backup and recovery
 
-This directory is reserved for project-level database artifacts such as:
+Executable migrations and seeders live in `backend/database`. Do not commit production database dumps.
 
-- reviewed SQL schema exports;
-- sample data that is safe to commit;
-- database setup and recovery notes.
+## Create a backup
 
-Laravel's executable migrations and seeders live in `backend/database`, which is the framework-standard location. Database design reports are indexed under `documentation`.
+From repository root on Windows:
 
-Do not commit local database files, credentials, or production data.
+```powershell
+.\scripts\backup-database.ps1
+```
+
+Backups are written to `database/backups`, which is ignored by Git. The script reads database settings from `backend/.env` and uses `MYSQL_PWD` temporarily rather than placing the password in the process arguments.
+
+## Verify and restore
+
+Record checksum and size, copy the encrypted backup off-server, and test restore in staging:
+
+```powershell
+Get-FileHash .\database\backups\ai_smart_campus-*.sql
+mysql -h 127.0.0.1 -u root -p ai_smart_campus_staging < backup.sql
+```
+
+Use least-privilege credentials, retention rules, encrypted offsite storage, and a documented recovery owner.

@@ -19,6 +19,7 @@ return [
     */
 
     'default' => env('LOG_CHANNEL', 'stack'),
+    'api_channel' => env('LOG_API_CHANNEL', 'daily'),
 
     /*
     |--------------------------------------------------------------------------

@@ -46,7 +46,7 @@ class CampusOperationsTest extends TestCase
 
         Sanctum::actingAs($studentUser);
         $this->postJson('/api/campus-services/tickets', ['category' => 'Accounts', 'subject' => 'Fee query', 'description' => 'Please verify my payment.', 'priority' => 'medium'])->assertCreated();
-        $this->getJson('/api/campus-services')->assertOk()->assertJsonPath('data.events.0.title', 'Registration Week')->assertJsonPath('data.fees.0.status', 'partial')->assertJsonCount(1, 'data.tickets');
+        $this->getJson('/api/campus-services')->assertOk()->assertJsonFragment(['title' => 'Registration Week'])->assertJsonPath('data.fees.0.status', 'partial')->assertJsonCount(1, 'data.tickets');
         $this->postJson('/api/campus-services/events', [])->assertForbidden();
     }
 

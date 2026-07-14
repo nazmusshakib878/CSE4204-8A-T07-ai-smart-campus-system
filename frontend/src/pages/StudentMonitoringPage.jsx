@@ -53,7 +53,7 @@ function StudentMonitoringPage() {
 
   const filteredStudents = useMemo(() => (
     monitoring.students.filter((student) => (
-      `${student.name} ${student.id}`.toLowerCase().includes(query.trim().toLowerCase())
+      `${student.id} ${student.name}`.toLowerCase().includes(query.trim().toLowerCase())
     ))
   ), [monitoring.students, query]);
 
@@ -199,7 +199,7 @@ function StudentMonitoringPage() {
               <input
                 type="search"
                 className="form-control"
-                placeholder="Search name or ID..."
+                placeholder="Search University ID or name..."
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
               />
@@ -218,7 +218,7 @@ function StudentMonitoringPage() {
                 <tbody>
                   {filteredStudents.map((student) => (
                     <tr key={student.database_id}>
-                      <td>{student.id}</td>
+                      <td><strong>{student.id}</strong></td>
                       <td><strong>{student.name}</strong><small className="d-block text-secondary">{student.department}</small></td>
                       <td>
                         <div className="attendance-cell">

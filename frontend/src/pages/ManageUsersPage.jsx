@@ -14,6 +14,7 @@ const emptyAdminForm = {
 
 const formatRole = (role) => (role ? `${role.charAt(0).toUpperCase()}${role.slice(1)}` : 'User');
 const formatDate = (date) => (date ? date.slice(0, 10) : 'Pending');
+const universityId = (user) => user.student_id || user.faculty_id || user.admin_id || 'Not assigned';
 
 function ManageUsersPage() {
   const [filter, setFilter] = useState('All');
@@ -63,7 +64,7 @@ function ManageUsersPage() {
       setUsers((currentUsers) => currentUsers.filter((item) => item.id !== user.id));
       setFeedback({
         variant: decision === 'approved' ? 'success' : 'warning',
-        message: `${user.name} was ${decision}.`,
+        message: `${universityId(user)} (${user.name}) was ${decision}.`,
       });
     } catch (error) {
       setFeedback({ variant: 'danger', message: error.message || 'User approval status could not be updated.' });
@@ -183,7 +184,7 @@ function ManageUsersPage() {
             <table className="table faculty-table admin-user-table align-middle mb-0">
               <thead>
                 <tr>
-                  <th>Name</th>
+                  <th>University ID</th><th>Name</th>
                   <th>Email</th>
                   <th>Phone</th>
                   <th>Role</th>
@@ -194,7 +195,7 @@ function ManageUsersPage() {
               </thead>
               <tbody>
                 {visibleUsers.map((user) => (
-                  <tr key={user.id}>
+                  <tr key={user.id}><td><strong>{universityId(user)}</strong></td>
                     <td>
                       <div className="admin-user-cell">
                         <span>{user.name.charAt(0)}</span>

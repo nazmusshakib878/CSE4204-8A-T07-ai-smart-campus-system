@@ -14,6 +14,7 @@ const iconPaths = {
   recommendations: 'M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H7a3 3 0 0 0-3 3V5.5Zm0 0V21m4-13h8m-8 4h8m-8 4h5',
   monitoring: 'M4 19V9m5 10V5m5 14v-7m5 7V3',
   academic: 'M4 5h16v14H4V5Zm4 4h8m-8 4h8m-8 4h5',
+  services: 'M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z',
   risk: 'M12 3 22 20H2L12 3Zm0 6v5m0 3h.01',
   admin: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87m0-7.26a4 4 0 0 1 0 7.75',
   users: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm11 10v-2a3 3 0 0 0-2-2.83M16 3.13a4 4 0 0 1 0 7.75',
@@ -68,6 +69,7 @@ function Layout({ children, title, subtitle }) {
   const studentNavItems = [
     { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
     { to: '/functions', label: 'Campus Tools', icon: 'functions' },
+    { to: '/campus-services', label: 'Campus Services', icon: 'services' },
     { to: '/ai-assistant', label: 'AI Assistant', icon: 'assistant' },
     { to: '/course-recommendations', label: 'Course Recommendations', icon: 'recommendations' },
     { to: '/messages', label: 'Messages', icon: 'messages', notificationCount: unreadNotices },
@@ -76,6 +78,7 @@ function Layout({ children, title, subtitle }) {
     { to: '/faculty-dashboard', label: 'Faculty Dashboard', icon: 'dashboard' },
     { to: '/student-monitoring', label: 'Student Monitoring', icon: 'monitoring' },
     { to: '/academic-management', label: 'Academic Data', icon: 'academic' },
+    { to: '/campus-services', label: 'Campus Services', icon: 'services' },
     { to: '/risk-alerts', label: 'Risk Alerts', icon: 'risk' },
     { to: '/notices/manage', label: 'Send Notices', icon: 'notices' },
     { to: '/messages', label: 'Messages', icon: 'messages', notificationCount: unreadNotices },
@@ -84,12 +87,13 @@ function Layout({ children, title, subtitle }) {
     { to: '/admin', label: 'Dashboard', icon: 'dashboard' },
     { to: '/admin/users', label: 'Manage Users', icon: 'users' },
     { to: '/academic-management', label: 'Academic Data', icon: 'academic' },
+    { to: '/campus-services', label: 'Campus Services', icon: 'services' },
     { to: '/admin/notices', label: 'Manage Notices', icon: 'notices' },
     { to: '/admin/departments', label: 'Manage Departments', icon: 'departments' },
     { to: '/messages', label: 'Messages', icon: 'messages', notificationCount: unreadNotices },
   ];
   const appNavItems = isAdminUser ? adminNavItems : isFacultyUser ? facultyNavItems : studentNavItems;
-  const internalRoutes = ['/dashboard', '/profile', '/functions', '/ai-assistant', '/course-recommendations', '/messages', '/notices/manage', '/faculty-dashboard', '/student-monitoring', '/academic-management', '/risk-alerts', '/admin'];
+  const internalRoutes = ['/dashboard', '/campus-services', '/profile', '/functions', '/ai-assistant', '/course-recommendations', '/messages', '/notices/manage', '/faculty-dashboard', '/student-monitoring', '/academic-management', '/risk-alerts', '/admin'];
   const useInternalLayout = isAuthenticated
     && internalRoutes.some((route) => location.pathname.startsWith(route));
   const currentSection = location.pathname === '/profile'

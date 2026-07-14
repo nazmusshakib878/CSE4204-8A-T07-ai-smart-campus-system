@@ -351,4 +351,15 @@ export const downloadNoticeAttachment = async (id, filename = 'notice-attachment
     URL.revokeObjectURL(url);
   } catch (error) { throw createApiError(error); }
 };
+export const getCampusServices = async () => { try { return await api.get('/campus-services'); } catch (error) { throw createApiError(error); } };
+export const createCampusService = async (resource, payload) => { try { return await api.post(`/campus-services/${resource}`, payload); } catch (error) { throw createApiError(error); } };
+export const updateCampusService = async (resource, id, payload) => { try { return await api.patch(`/campus-services/${resource}/${id}`, payload); } catch (error) { throw createApiError(error); } };
+export const borrowLibraryBook = async (id) => { try { return await api.post(`/campus-services/books/${id}/borrow`); } catch (error) { throw createApiError(error); } };
+export const returnLibraryLoan = async (id) => { try { return await api.patch(`/campus-services/loans/${id}/return`); } catch (error) { throw createApiError(error); } };
+export const saveCourseAssessments = async (courseId, payload) => { try { return await api.put(`/academic-management/courses/${courseId}/assessments`, payload); } catch (error) { throw createApiError(error); } };
+export const openStudentTranscript = async () => { try { const popup = window.open('', '_blank'); const response = await api.get('/student/transcript', { responseType: 'blob' }); const url = URL.createObjectURL(response.data); if (popup) popup.location.href = url; else window.open(url, '_blank', 'noopener,noreferrer'); window.setTimeout(() => URL.revokeObjectURL(url), 60000); return response; } catch (error) { throw createApiError(error); } };
+export const downloadAttendanceReport = async () => {
+  try { const response = await api.get('/student/attendance-export', { responseType: 'blob' }); const url = URL.createObjectURL(response.data); const link = document.createElement('a'); link.href = url; link.download = 'attendance-report.csv'; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url); }
+  catch (error) { throw createApiError(error); }
+};
 export default api;

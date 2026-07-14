@@ -4138,3 +4138,9 @@ footer {
   background: #ef4444;
   box-shadow: 0 4px 12px rgba(127, 29, 29, 0.35);
 }
+
+.campus-service-list { display: grid; gap: .85rem; }
+.service-record { display: grid; gap: .4rem; padding: 1rem; border: 1px solid #e1e8f2; border-radius: .9rem; background: #f9fbff; }
+.service-record strong { color: #172033; }
+.service-record > span:not(.badge), .service-record p { color: #64748b; margin: 0; }
+.service-record .btn { justify-self: start; }

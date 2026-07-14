@@ -144,7 +144,7 @@ class StudentMonitoringController extends Controller
             });
         }
 
-        return $query->whereHas('user', fn (Builder $users) => $users->where('department', $user->department));
+        return $query->whereRaw('1 = 0');
     }
 
     private function formatStudent(Student $student): array

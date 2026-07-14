@@ -19,6 +19,7 @@ import ManageNoticesPage from './pages/ManageNoticesPage';
 import ManageDepartmentsPage from './pages/ManageDepartmentsPage';
 import NoticeInboxPage from './pages/NoticeInboxPage';
 import NotFoundPage from './pages/NotFoundPage';
+import CampusServicesPage from './pages/CampusServicesPage';
 import { AuthProvider } from './auth/AuthContext';
 import ProtectedRoute from './auth/ProtectedRoute';
 import RoleRoute from './auth/RoleRoute';
@@ -43,6 +44,7 @@ function App() {
             <Route path="/dashboard" element={<DashboardEntry />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/messages" element={<NoticeInboxPage />} />
+            <Route path="/campus-services" element={<CampusServicesPage />} />
             <Route element={<RoleRoute allowedRoles={['student']} />}>
               <Route path="/functions" element={<FunctionsPage />} />
               <Route path="/ai-assistant" element={<AiAssistantPage />} />

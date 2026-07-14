@@ -38,6 +38,11 @@ class Course extends Model
             ->withTimestamps();
     }
 
+    public function assessmentRecords(): HasMany
+    {
+        return $this->hasMany(AssessmentRecord::class);
+    }
+
     public function academicRecords(): HasMany
     {
         return $this->hasMany(AcademicRecord::class);

@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\AcademicManagementController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AcademicExportController;
+use App\Http\Controllers\Api\CampusOperationsController;
 use App\Http\Controllers\Api\CampusTaskController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\DashboardController;
@@ -36,6 +38,24 @@ Route::middleware(['auth:sanctum', 'approved', 'throttle:api'])->group(function 
     Route::get('/faculty/student-monitoring', [StudentMonitoringController::class, 'index']);
     Route::post('/faculty/students/{student}/analyze-risk', [StudentMonitoringController::class, 'analyze']);
     Route::get('/student/dashboard', [StudentDashboardController::class, 'show']);
+    Route::get('/student/transcript', [AcademicExportController::class, 'transcript']);
+    Route::get('/student/attendance-export', [AcademicExportController::class, 'attendance']);
+    Route::get('/students/{student}/transcript', [AcademicExportController::class, 'transcript']);
+    Route::get('/students/{student}/attendance-export', [AcademicExportController::class, 'attendance']);
+    Route::get('/campus-services', [CampusOperationsController::class, 'index']);
+    Route::post('/campus-services/exams', [CampusOperationsController::class, 'storeExam']);
+    Route::post('/campus-services/schedules', [CampusOperationsController::class, 'storeSchedule']);
+    Route::post('/campus-services/events', [CampusOperationsController::class, 'storeEvent']);
+    Route::post('/campus-services/fees', [CampusOperationsController::class, 'storeFee']);
+    Route::post('/campus-services/tickets', [CampusOperationsController::class, 'storeTicket']);
+    Route::patch('/campus-services/tickets/{ticket}', [CampusOperationsController::class, 'updateTicket']);
+    Route::post('/campus-services/leaves', [CampusOperationsController::class, 'storeLeave']);
+    Route::patch('/campus-services/leaves/{leave}', [CampusOperationsController::class, 'reviewLeave']);
+    Route::post('/campus-services/reschedules', [CampusOperationsController::class, 'storeReschedule']);
+    Route::patch('/campus-services/reschedules/{reschedule}', [CampusOperationsController::class, 'reviewReschedule']);
+    Route::post('/campus-services/books', [CampusOperationsController::class, 'storeBook']);
+    Route::post('/campus-services/books/{book}/borrow', [CampusOperationsController::class, 'borrowBook']);
+    Route::patch('/campus-services/loans/{loan}/return', [CampusOperationsController::class, 'returnLoan']);
     Route::post('/notices/{notice}/read', [NoticeController::class, 'markRead']);
     Route::patch('/notices/{notice}/archive', [NoticeController::class, 'archive']);
     Route::get('/notices/{notice}/attachment', [NoticeController::class, 'download']);
@@ -48,6 +68,7 @@ Route::middleware(['auth:sanctum', 'approved', 'throttle:api'])->group(function 
     Route::post('/academic-management/courses/{course}/enrollments', [AcademicManagementController::class, 'enroll']);
     Route::delete('/academic-management/courses/{course}/enrollments/{enrollment}', [AcademicManagementController::class, 'unenroll']);
     Route::put('/academic-management/courses/{course}/attendance', [AcademicManagementController::class, 'saveAttendance']);
+    Route::put('/academic-management/courses/{course}/assessments', [AcademicManagementController::class, 'saveAssessments']);
     Route::put('/academic-management/courses/{course}/grades', [AcademicManagementController::class, 'saveGrades']);
     Route::put('/academic-management/courses/{course}/students/{student}/performance', [AcademicManagementController::class, 'savePerformance']);
 

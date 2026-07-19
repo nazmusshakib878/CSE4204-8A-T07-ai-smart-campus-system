@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/auth-context';
 import { StatusAlert } from './Feedback';
 import { getDashboardPath } from '../utils/routes';
-import { getNotices } from '../services/api';
+import { getNotices, getPendingUsers } from '../services/api';
 
 const CAMPUS_LOGO_URL = 'https://nubtkhulna.ac.bd/ter/assets/img/adminica_logo_blue-trans.png';
 const iconPaths = {
@@ -60,6 +60,7 @@ function Layout({ children, title, subtitle }) {
   const [flash, setFlash] = useState(null);
   const profilePhoto = user?.profile_photo_url || '';
   const [unreadNotices, setUnreadNotices] = useState(0);
+  const [pendingApprovals, setPendingApprovals] = useState(0);
   const isFacultyUser = user?.role === 'faculty';
   const isAdminUser = user?.role === 'admin';
   const publicNavItems = [
@@ -85,7 +86,7 @@ function Layout({ children, title, subtitle }) {
   ];
   const adminNavItems = [
     { to: '/admin', label: 'Dashboard', icon: 'dashboard' },
-    { to: '/admin/users', label: 'Manage Users', icon: 'users' },
+    { to: '/admin/users', label: 'Manage Users', icon: 'users', notificationCount: pendingApprovals, notificationLabel: 'pending user request' },
     { to: '/admin/all-users', label: 'All Users', icon: 'admin' },
     { to: '/academic-management', label: 'Academic Data', icon: 'academic' },
     { to: '/campus-services', label: 'Campus Services', icon: 'services' },
@@ -151,6 +152,39 @@ function Layout({ children, title, subtitle }) {
   }, [isAuthenticated, user]);
 
 
+  useEffect(() => {
+    if (!isAuthenticated || !isAdminUser) {
+      setPendingApprovals(0);
+      return undefined;
+    }
+
+    let active = true;
+    const refreshPendingApprovals = () => {
+      getPendingUsers()
+        .then((response) => {
+          if (active) setPendingApprovals((response.data.data || []).length);
+        })
+        .catch(() => {
+          if (active) setPendingApprovals(0);
+        });
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') refreshPendingApprovals();
+    };
+
+    refreshPendingApprovals();
+    const refreshTimer = window.setInterval(refreshPendingApprovals, 30000);
+    window.addEventListener('focus', refreshPendingApprovals);
+    window.addEventListener('pending-users-updated', refreshPendingApprovals);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      active = false;
+      window.clearInterval(refreshTimer);
+      window.removeEventListener('focus', refreshPendingApprovals);
+      window.removeEventListener('pending-users-updated', refreshPendingApprovals);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isAdminUser, isAuthenticated]);
   useEffect(() => {
     if (!menuOpen) return undefined;
 
@@ -252,7 +286,7 @@ function Layout({ children, title, subtitle }) {
                 {item.notificationCount > 0 && (
                   <span
                     className="app-notification-badge"
-                    aria-label={`${item.notificationCount} unread message${item.notificationCount === 1 ? '' : 's'}`}
+                    aria-label={`${item.notificationCount} ${item.notificationLabel || 'unread message'}${item.notificationCount === 1 ? '' : 's'}`}
                   >
                     {item.notificationCount > 99 ? '99+' : item.notificationCount}
                   </span>

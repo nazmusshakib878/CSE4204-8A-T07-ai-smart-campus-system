@@ -62,6 +62,7 @@ function ManageUsersPage() {
     try {
       await updateUserApproval(user.id, decision);
       setUsers((currentUsers) => currentUsers.filter((item) => item.id !== user.id));
+      window.dispatchEvent(new Event('pending-users-updated'));
       setFeedback({
         variant: decision === 'approved' ? 'success' : 'warning',
         message: `${universityId(user)} (${user.name}) was ${decision}.`,

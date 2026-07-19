@@ -15,6 +15,7 @@ import RiskAlertsPage from './pages/RiskAlertsPage';
 import AdminPage from './pages/AdminPage';
 import AcademicManagementPage from './pages/AcademicManagementPage';
 import ManageUsersPage from './pages/ManageUsersPage';
+import AllUsersPage from './pages/AllUsersPage';
 import ManageNoticesPage from './pages/ManageNoticesPage';
 import ManageDepartmentsPage from './pages/ManageDepartmentsPage';
 import NoticeInboxPage from './pages/NoticeInboxPage';
@@ -62,6 +63,7 @@ function App() {
             <Route element={<RoleRoute allowedRoles={['admin']} />}>
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/admin/users" element={<ManageUsersPage />} />
+              <Route path="/admin/all-users" element={<AllUsersPage />} />
               <Route path="/admin/notices" element={<ManageNoticesPage />} />
               <Route path="/admin/departments" element={<ManageDepartmentsPage />} />
             </Route>

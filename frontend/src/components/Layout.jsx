@@ -86,6 +86,7 @@ function Layout({ children, title, subtitle }) {
   const adminNavItems = [
     { to: '/admin', label: 'Dashboard', icon: 'dashboard' },
     { to: '/admin/users', label: 'Manage Users', icon: 'users' },
+    { to: '/admin/all-users', label: 'All Users', icon: 'admin' },
     { to: '/academic-management', label: 'Academic Data', icon: 'academic' },
     { to: '/campus-services', label: 'Campus Services', icon: 'services' },
     { to: '/admin/notices', label: 'Manage Notices', icon: 'notices' },

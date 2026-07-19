@@ -30,6 +30,7 @@ Route::middleware(['auth:sanctum', 'approved', 'throttle:api'])->group(function 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/admin/create-admin', [AuthController::class, 'createAdmin']);
     Route::get('/admin/pending-users', [AuthController::class, 'pendingUsers']);
+    Route::get('/admin/all-users', [AuthController::class, 'allUsers']);
     Route::patch('/admin/users/{user}/approval', [AuthController::class, 'updateApprovalStatus']);
     Route::get('/admin/departments', [DepartmentController::class, 'adminIndex']);
     Route::post('/admin/departments', [DepartmentController::class, 'store']);

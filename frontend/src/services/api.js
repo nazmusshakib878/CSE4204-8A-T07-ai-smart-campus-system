@@ -88,6 +88,13 @@ export const createAdmin = async (payload) => {
   }
 };
 
+export const getAllUsers = async (params = {}) => {
+  try {
+    return await api.get('/admin/all-users', { params });
+  } catch (error) {
+    throw createApiError(error);
+  }
+};
 export const getPendingUsers = async () => {
   try {
     return await api.get('/admin/pending-users');

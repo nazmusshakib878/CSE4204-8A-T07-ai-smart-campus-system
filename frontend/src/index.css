@@ -4150,3 +4150,126 @@ footer {
 @media(max-width:575.98px){.calendar-toolbar{align-items:stretch;flex-direction:column;min-width:700px;text-align:left}.exam-routine-grid>article{grid-template-columns:1fr}.routine-actions{justify-content:flex-start}}
 @media print{.app-sidebar,.app-topbar,.page-heading,.academic-management-hero,.academic-tabs,.no-print{display:none!important}.app-workspace,.app-content{margin:0!important;padding:0!important}.faculty-panel{box-shadow:none!important;border:1px solid #bbb!important}.weekly-routine-grid{grid-template-columns:repeat(7,1fr);overflow:visible}.routine-day{min-height:180px;padding:.35rem}.routine-slot{font-size:10px;padding:.35rem}.calendar-weekdays,.academic-month-grid{grid-template-columns:repeat(7,1fr);min-width:0}.calendar-day{min-height:100px}.calendar-event{font-size:9px}}
 .calendar-day.is-weekly-holiday:not(.is-outside){background:#fff7f7}.calendar-day.is-weekly-holiday .calendar-date{color:#dc2626}.calendar-day.is-weekly-holiday.is-today .calendar-date{color:#fff}
+.all-users-layout {
+  display: grid;
+  grid-template-columns: minmax(250px, 290px) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.all-users-tree {
+  position: sticky;
+  top: 92px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+.all-users-tree-heading h5,
+.all-users-summary h4 {
+  margin: 0.25rem 0 0;
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.all-users-tree details {
+  margin-top: 0.5rem;
+}
+
+.all-users-tree summary {
+  padding: 0.55rem 0.65rem;
+  border-radius: 0.65rem;
+  color: #334155;
+  cursor: pointer;
+  font-weight: 750;
+  list-style-position: inside;
+}
+
+.all-users-tree summary:hover {
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.all-users-tree-branch {
+  margin-left: 0.75rem;
+  padding-left: 0.65rem;
+  border-left: 1px solid #dbe5f4;
+}
+
+.all-users-tree-button {
+  display: block;
+  width: 100%;
+  margin-top: 0.3rem;
+  padding: 0.5rem 0.65rem;
+  border: 0;
+  border-radius: 0.6rem;
+  color: #52627a;
+  background: transparent;
+  text-align: left;
+  font-weight: 650;
+}
+
+.all-users-tree-button:hover,
+.all-users-tree-button:focus-visible,
+.all-users-tree-button.is-active {
+  color: #fff;
+  background: #2458cf;
+}
+
+.all-users-section-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.3rem;
+  margin: 0.25rem 0 0.5rem 0.75rem;
+}
+
+.all-users-tree-button.is-compact {
+  margin: 0;
+  padding: 0.4rem 0.5rem;
+  text-align: center;
+  font-size: 0.78rem;
+}
+
+.all-users-results {
+  min-width: 0;
+}
+
+.all-users-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.all-users-summary p {
+  margin: 0.4rem 0 0;
+  color: #64748b;
+}
+
+.all-users-count {
+  flex: 0 0 auto;
+  padding: 0.55rem 0.8rem;
+  border-radius: 999px;
+  color: #1d4ed8;
+  background: #eaf1ff;
+  font-weight: 800;
+}
+
+.admin-user-cell small {
+  display: block;
+  margin-top: 0.15rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+@media (max-width: 991.98px) {
+  .all-users-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .all-users-tree {
+    position: static;
+    max-height: 520px;
+  }
+}

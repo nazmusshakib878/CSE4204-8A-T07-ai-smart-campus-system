@@ -259,6 +259,72 @@ class AuthController extends Controller
         ]);
     }
 
+    public function allUsers(Request $request): JsonResponse
+    {
+        if ($response = $this->ensureAdmin($request)) {
+            return $response;
+        }
+
+        $validated = $request->validate([
+            'role' => ['nullable', Rule::in(['student', 'faculty'])],
+            'department' => ['nullable', 'string', 'max:50'],
+            'semester' => ['nullable', 'integer', 'between:1,8'],
+            'section' => ['nullable', Rule::in(['A', 'B', 'C'])],
+        ]);
+
+        $departmentNames = [
+            'CSE' => 'Computer Science & Engineering',
+            'EEE' => 'Electrical & Electronic Engineering',
+            'BBA' => 'Business Administration',
+            'English' => 'English',
+            'Civil' => 'Civil Engineering',
+        ];
+
+        $query = User::query()
+            ->with(['studentProfile', 'facultyProfile'])
+            ->whereIn('role', ['student', 'faculty'])
+            ->where('approval_status', 'approved');
+
+        if (! empty($validated['role'])) {
+            $query->where('role', $validated['role']);
+        }
+
+        if (! empty($validated['department'])) {
+            if ($validated['department'] === 'Other') {
+                $query->whereNotIn('department', array_values($departmentNames));
+            } elseif (isset($departmentNames[$validated['department']])) {
+                $query->where('department', $departmentNames[$validated['department']]);
+            }
+        }
+
+        if (! empty($validated['semester'])) {
+            $query->whereHas('studentProfile', fn ($studentQuery) => $studentQuery
+                ->where('current_semester', $validated['semester']));
+        }
+
+        if (! empty($validated['section'])) {
+            $query->whereRaw('1 = 0');
+        }
+
+        $users = $query->orderBy('role')->orderBy('name')->get()->map(fn (User $user) => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'role' => $user->role,
+            'department' => $user->department,
+            'university_id' => $user->student_id ?: $user->faculty_id,
+            'semester' => $user->studentProfile?->current_semester,
+            'section' => null,
+            'designation' => $user->facultyProfile?->designation,
+            'profile_photo_url' => $user->profile_photo_url,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'data' => $users,
+        ]);
+    }
     public function updateApprovalStatus(Request $request, User $user): JsonResponse
     {
         if ($response = $this->ensureAdmin($request)) {

@@ -1,0 +1,13 @@
+backend/vendor
+backend/node_modules
+frontend/node_modules
+backend/storage/logs
+backend/storage/framework/cache
+backend/storage/framework/sessions
+backend/storage/framework/views
+backend/database/database.sqlite
+.git
+.github
+screenshots
+documentation
+database/backups

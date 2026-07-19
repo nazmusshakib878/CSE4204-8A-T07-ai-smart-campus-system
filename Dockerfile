@@ -27,7 +27,7 @@ RUN set -eux; \
         'APP_ENV=production' \
         'APP_KEY=' \
         'APP_DEBUG=false' \
-        'APP_URL=https://ai-smart-campus-system.onrender.com' \
+        'APP_URL=https://ai-smart-campus-system-ce9i.onrender.com' \
         'APP_LOCALE=en' \
         'APP_FALLBACK_LOCALE=en' \
         'BCRYPT_ROUNDS=12' \
@@ -43,7 +43,7 @@ RUN set -eux; \
         'CACHE_STORE=file' \
         'QUEUE_CONNECTION=sync' \
         'FILESYSTEM_DISK=public' \
-        'CORS_ALLOWED_ORIGINS=https://ai-smart-campus-system.onrender.com' \
+        'CORS_ALLOWED_ORIGINS=https://ai-smart-campus-system-ce9i.onrender.com' \
         'CORS_MAX_AGE=3600' \
         'CORS_SUPPORTS_CREDENTIALS=false' \
         'API_RATE_LIMIT=60' \

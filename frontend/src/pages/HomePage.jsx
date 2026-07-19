@@ -19,7 +19,7 @@ function HomePage() {
       ? {
           title: 'System Overview',
           leftLabel: 'Active Students',
-          leftValue: '8,400',
+          leftValue: '8,400+',
           rightLabel: 'System Alerts',
           rightValue: '7',
         }

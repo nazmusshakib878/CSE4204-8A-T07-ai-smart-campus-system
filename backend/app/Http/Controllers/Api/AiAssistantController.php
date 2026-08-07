@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Student;
 use App\Services\OpenAiCampusAssistant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -40,7 +41,7 @@ class AiAssistantController extends Controller
         return response()->json(['status' => true, 'data' => $answer]);
     }
 
-    private function studentContext($student): array
+    private function studentContext(Student $student): array
     {
         $student->load([
             'user:id,name,department',

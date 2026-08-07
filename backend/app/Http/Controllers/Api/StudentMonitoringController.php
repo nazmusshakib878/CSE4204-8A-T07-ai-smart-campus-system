@@ -78,8 +78,11 @@ class StudentMonitoringController extends Controller
                 'baseline_reasons' => $record['baseline_reasons'],
             ]);
         } catch (RuntimeException $exception) {
-            $status = str_contains($exception->getMessage(), 'OPENAI_API_KEY') ? 503 : 502;
-            return response()->json(['status' => false, 'message' => $exception->getMessage()], $status);
+            $missingConfiguration = str_contains($exception->getMessage(), 'OPENAI_API_KEY');
+            return response()->json([
+                'status' => false,
+                'message' => $missingConfiguration ? 'OpenAI is not configured for this environment.' : 'AI analysis is temporarily unavailable. Please try again.',
+            ], $missingConfiguration ? 503 : 502);
         }
 
         $alert = RiskAlert::create([

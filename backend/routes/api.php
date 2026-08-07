@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AcademicManagementController;
+use App\Http\Controllers\Api\AiAssistantController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AcademicExportController;
 use App\Http\Controllers\Api\CampusOperationsController;
@@ -39,6 +40,7 @@ Route::middleware(['auth:sanctum', 'approved', 'throttle:api'])->group(function 
     Route::get('/faculty/student-monitoring', [StudentMonitoringController::class, 'index']);
     Route::post('/faculty/students/{student}/analyze-risk', [StudentMonitoringController::class, 'analyze']);
     Route::get('/student/dashboard', [StudentDashboardController::class, 'show']);
+    Route::post('/ai/assistant', [AiAssistantController::class, 'ask']);
     Route::get('/student/transcript', [AcademicExportController::class, 'transcript']);
     Route::get('/student/attendance-export', [AcademicExportController::class, 'attendance']);
     Route::get('/students/{student}/transcript', [AcademicExportController::class, 'transcript']);

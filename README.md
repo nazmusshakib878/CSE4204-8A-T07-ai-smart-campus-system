@@ -1,6 +1,21 @@
 # AI Smart Campus System
 
-Academic management and student-success platform for Northern University of Business and Technology, Khulna. The system uses a React frontend, Laravel API, MySQL, role-based authorization, academic monitoring, notices, and optional OpenAI risk analysis.
+Academic management and student-success platform for Northern University of Business and Technology, Khulna. The system uses a React frontend, Laravel API, MySQL, role-based authorization, academic monitoring, notices, and optional OpenAI assistance.
+
+## AI features
+
+- Student AI Assistant: student-only guidance based on trusted academic and campus context assembled by Laravel.
+- AI Academic Risk Analysis: structured academic-risk decision support for faculty/admin monitoring.
+
+Both use React → Laravel → MySQL context → OpenAI Responses API → backend response validation → React display. Configure the backend environment only:
+
+```dotenv
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4.1-mini
+OPENAI_TIMEOUT=30
+```
+
+Add these values to `backend/.env` locally or Render backend Environment settings in production. Never commit or expose an API key in frontend code, documentation, screenshots, or `.env.example`. See [Week 8 AI integration](documentation/WEEK8_AI_INTEGRATION.md) for details.
 
 ## Repository structure
 

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -17,9 +18,11 @@ class OpenAiRiskAnalyzer
             throw new RuntimeException('OpenAI is not configured. Add OPENAI_API_KEY to backend/.env.');
         }
 
+        try {
         $response = Http::withToken($apiKey)
             ->acceptJson()
             ->timeout((int) config('services.openai.timeout', 30))
+            ->connectTimeout(10)
             ->retry(2, 500)
             ->post('https://api.openai.com/v1/responses', [
                 'model' => $model,
@@ -58,12 +61,16 @@ class OpenAiRiskAnalyzer
                     ],
                 ],
             ]);
+        } catch (ConnectionException $exception) {
+            report($exception);
+            throw new RuntimeException('OpenAI could not analyze this student right now.', 0, $exception);
+        }
 
         try {
             $response->throw();
         } catch (RequestException $exception) {
-            $message = $response->json('error.message') ?: 'OpenAI could not analyze this student right now.';
-            throw new RuntimeException($message, $response->status(), $exception);
+            report($exception);
+            throw new RuntimeException('OpenAI could not analyze this student right now.', $response->status(), $exception);
         }
 
         $json = $response->json('output_text');

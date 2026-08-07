@@ -252,6 +252,14 @@ export const analyzeStudentRisk = async (studentDatabaseId) => {
   }
 };
 
+export const askAiAssistant = async (question) => {
+  try {
+    return await api.post('/ai/assistant', { question });
+  } catch (error) {
+    throw createApiError(error);
+  }
+};
+
 export const getAcademicManagement = async () => {
   try { return await api.get('/academic-management'); }
   catch (error) { throw createApiError(error); }

@@ -1,131 +1,88 @@
 # Week 8 — AI Integration
 
-## Feature
+## AI features
 
-AI-assisted Student Academic Risk Analysis for faculty members.
+### Student AI Smart Campus Assistant
 
-The system combines real attendance, CGPA, missed-class, course, and score data with an OpenAI analysis. The AI returns a structured risk score, risk level, reasons, prediction, and supportive action advice.
+Purpose: personalized academic and campus guidance for authenticated students.
 
-## Required workflow
+`POST /api/ai/assistant` accepts only `{ "question": "..." }` from a Sanctum-authenticated student. Laravel trims and validates the question (required, string, maximum 1,000 characters), builds trusted context from MySQL, calls OpenAI, validates the returned text, and sends a predictable response:
 
-```text
-Faculty clicks "Analyze with AI"
-        |
-        v
-React frontend
-POST /api/faculty/students/{student}/analyze-risk
-        |
-        v
-Laravel validates login, role, and course ownership
-        |
-        v
-Laravel collects attendance + CGPA + course scores from MySQL
-        |
-        v
-OpenAI Responses API receives a bounded academic-risk prompt
-        |
-        v
-Structured JSON response (score, level, reasons, advice)
-        |
-        v
-Laravel stores the result in risk_alerts
-        |
-        v
-React refreshes Student Monitoring and Risk Alerts
+```json
+{"status": true, "data": {"answer": "...", "model": "gpt-4.1-mini"}}
 ```
 
-This implements: `User Input → Backend → AI API → AI Response → Frontend`.
+The browser never sends academic values or an API key. Available context may include name, department, program, semester, courses, attendance percentage, recorded course results, latest CGPA, open tasks, and relevant recent notices. Passwords, tokens, credentials, and unnecessary personal data are excluded.
+
+System prompt: the backend identifies the assistant as the NUBTK AI Smart Campus Assistant; it must use provided context where relevant, avoid invented university facts, provide concise supportive educational guidance, protect private data, and avoid claims of official academic decisions. Risk predictions are decision support, never final administrative decisions.
+
+Example prompt: `How can I improve this semester?`
+
+### AI-Assisted Student Academic Risk Analysis
+
+Purpose: help faculty/admin identify students who may require academic support. It remains a separate, structured feature using attendance, missed classes, CGPA, courses, and course scores. The analyzer returns a risk score, risk level, prediction, reasons, and advice, and stores the result in `risk_alerts`.
+
+## Workflow
+
+```text
+User
+  ↓
+React Frontend
+  ↓
+Laravel Backend
+  ↓
+MySQL Context
+  ↓
+OpenAI Responses API
+  ↓
+Response Validation
+  ↓
+Frontend Display
+```
+
+For risk analysis, the authenticated faculty/admin must also be authorized to access the student.
 
 ## Source-code map
 
-- `app/Services/OpenAiRiskAnalyzer.php` — OpenAI request, prompt, JSON schema, response parsing
-- `app/Http/Controllers/Api/StudentMonitoringController.php` — access control, data aggregation, charts, AI endpoint
-- `app/Models/RiskAlert.php` — persisted AI analysis
-- `routes/api.php` — authenticated faculty endpoints
-- `frontend/src/pages/StudentMonitoringPage.jsx` — live monitoring and AI action
-- `frontend/src/pages/RiskAlertsPage.jsx` — saved AI alerts and faculty follow-up
-- `frontend/src/services/api.js` — frontend/backend requests
-- `tests/Feature/StudentMonitoringTest.php` — filtering, access, AI mock, persistence tests
+- `backend/app/Services/OpenAiCampusAssistant.php` — system prompt, Responses API request, timeout/retry, response parsing.
+- `backend/app/Http/Controllers/Api/AiAssistantController.php` — student authorization, input validation, and trusted context.
+- `backend/app/Services/OpenAiRiskAnalyzer.php` — specialized strict JSON risk analysis.
+- `backend/app/Http/Controllers/Api/StudentMonitoringController.php` — monitoring authorization, aggregation, and persisted risk alerts.
+- `frontend/src/pages/AiAssistantPage.jsx` — real loading, answer, and error states.
+- `frontend/src/services/api.js` — authenticated assistant request.
+- `backend/tests/Feature/AiAssistantTest.php` — mocked assistant feature tests.
 
-## API endpoints
+## OpenAI configuration and security
 
-`GET /api/faculty/student-monitoring` returns the authenticated faculty member's course students, charts, and risk summary.
-
-`POST /api/faculty/students/{studentDatabaseId}/analyze-risk` sends that student's academic indicators from Laravel to OpenAI and stores the structured response.
-
-## Prompt engineering
-
-The backend prompt:
-
-- Gives the model one role: academic early-warning assistant
-- Supplies only academic indicators
-- Prohibits protected/personal-trait inference
-- Defines the 0–100 risk scale
-- Requests concise and supportive advice
-- Uses strict JSON schema output
-- Limits output to 350 tokens
-- Uses low temperature for consistent results
-
-Example input:
-
-```text
-attendance_percentage: 62
-missed_classes: 12
-cgpa: 2.45
-course_scores: CSE 4103 = 58
-baseline_risk_score: 68
-```
-
-Example structured response:
-
-```json
-{
-  "risk_score": 72,
-  "risk_level": "high",
-  "prediction": "The student is likely to need academic support.",
-  "reasons": ["Attendance is below target", "CGPA trend needs attention"],
-  "advice": "Schedule an advising meeting and provide focused learning resources."
-}
-```
-
-## Setup
-
-Add the real key only to `backend/.env`:
+Selected platform: OpenAI Responses API. The model is the value of `OPENAI_MODEL`.
 
 ```dotenv
-OPENAI_API_KEY=your_real_key_here
+OPENAI_API_KEY=
 OPENAI_MODEL=gpt-4.1-mini
 OPENAI_TIMEOUT=30
 ```
 
-Never put the key in React, Git, screenshots, or `.env.example`.
+Set these only in `backend/.env` during local development or the Render backend service Environment settings for deployment. Do not put keys in React, Git, documentation, screenshots, or `.env.example`.
 
-Run `php artisan config:clear`, `php artisan migrate`, the backend server, and the frontend development server.
+## Error handling and limitations
 
-## Database and access control
+- Empty/invalid questions return JSON validation errors; unauthenticated and wrong-role requests are denied.
+- Missing configuration, timeouts, network failures, invalid OpenAI payloads, rate limits, and temporary upstream failures return a friendly message without raw provider internals.
+- Calls use a bounded timeout and two limited retries. There is no infinite retry loop.
+- AI is optional: normal campus functions, baseline risk monitoring, and alerts remain available if OpenAI is unavailable.
+- Guidance reflects only available records and is not an official university decision.
 
-Monitoring reads `students`, `faculty`, `courses`, `academic_records`, `attendance_records`, `performance_metrics`, and `risk_alerts`.
-
-- New registrations create student/faculty profile rows.
-- A migration backfills profiles for existing users.
-- Sanctum authentication is required.
-- Student accounts receive HTTP 403.
-- Faculty can access only assigned-course students; same-department fallback is used before courses are assigned.
-- Administrators can view all students.
-- The API key never reaches the browser.
-- A deterministic baseline score remains visible when AI is not configured.
-- AI is decision support; faculty makes the final academic decision.
+Future improvements: approved knowledge-base retrieval, carefully retained conversation history, and additional context only after it exists in the campus database.
 
 ## Verification
 
-Backend: `php artisan test`
+```powershell
+cd backend
+php artisan test
 
-Frontend: `npm run lint` and `npm run build`
+cd ../frontend
+npm run lint
+npm run build
+```
 
-The backend suite mocks OpenAI and verifies structured output, persistence, faculty filtering, and access denial.
-
-## Official documentation
-
-- Responses API: https://developers.openai.com/api/reference/resources/responses/methods/create
-- Text generation: https://developers.openai.com/api/docs/guides/text
-- Structured outputs: https://developers.openai.com/api/docs/guides/structured-outputs
+OpenAI tests use Laravel HTTP fakes and never issue paid requests.

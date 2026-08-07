@@ -15,18 +15,31 @@ class AiAssistantTest extends TestCase
     public function test_student_can_request_a_validated_ai_response(): void
     {
         $student = $this->student();
-        config(['services.openai.api_key' => 'test-key', 'services.openai.model' => 'gpt-4.1-mini']);
-        Http::fake(['api.openai.com/v1/responses' => Http::response(['output_text' => 'Your attendance is currently available in your dashboard.'])]);
+        config(['services.gemini.api_key' => 'test-key', 'services.gemini.model' => 'gemini-3.6-flash']);
+        Http::fake([
+            'generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent' => Http::response([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                ['text' => 'Your attendance is currently available in your dashboard.'],
+                            ],
+                        ],
+                    ],
+                ],
+            ]),
+        ]);
 
         $this->actingAs($student, 'sanctum')->postJson('/api/ai/assistant', ['question' => ' How is my progress? '])
             ->assertOk()->assertJsonPath('status', true)
             ->assertJsonPath('data.answer', 'Your attendance is currently available in your dashboard.')
-            ->assertJsonPath('data.model', 'gpt-4.1-mini');
+            ->assertJsonPath('data.model', 'gemini-3.6-flash');
 
-        Http::assertSent(fn ($request) => $request->url() === 'https://api.openai.com/v1/responses'
-            && str_contains($request['input'], 'How is my progress?')
-            && str_contains($request['input'], 'BSc in CSE')
-            && ! str_contains($request['input'], 'password'));
+        Http::assertSent(fn ($request) => $request->url() === 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent'
+            && $request->hasHeader('x-goog-api-key', 'test-key')
+            && str_contains($request['contents'][0]['parts'][0]['text'], 'How is my progress?')
+            && str_contains($request['contents'][0]['parts'][0]['text'], 'BSc in CSE')
+            && ! str_contains($request['contents'][0]['parts'][0]['text'], 'password'));
     }
 
     public function test_empty_question_is_rejected(): void
@@ -47,18 +60,26 @@ class AiAssistantTest extends TestCase
         $this->postJson('/api/ai/assistant', ['question' => 'Help'])->assertUnauthorized();
     }
 
-    public function test_openai_failure_is_safe(): void
+    public function test_gemini_api_failure_is_safe(): void
     {
-        config(['services.openai.api_key' => 'test-key']);
-        Http::fake(['api.openai.com/v1/responses' => Http::response(['error' => ['message' => 'private upstream detail']], 429)]);
+        config(['services.gemini.api_key' => 'test-key']);
+        Http::fake(['generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent' => Http::response(['error' => ['message' => 'private upstream detail']], 500)]);
         $this->actingAs($this->student(), 'sanctum')->postJson('/api/ai/assistant', ['question' => 'Help'])
             ->assertStatus(503)->assertJsonPath('message', 'AI Assistant is temporarily unavailable. Please try again.');
     }
 
-    public function test_invalid_openai_response_is_safe(): void
+    public function test_gemini_rate_limit_is_safe(): void
     {
-        config(['services.openai.api_key' => 'test-key']);
-        Http::fake(['api.openai.com/v1/responses' => Http::response(['output' => []])]);
+        config(['services.gemini.api_key' => 'test-key']);
+        Http::fake(['generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent' => Http::response(['error' => ['message' => 'rate limited']], 429)]);
+        $this->actingAs($this->student(), 'sanctum')->postJson('/api/ai/assistant', ['question' => 'Help'])
+            ->assertStatus(503)->assertJsonPath('message', 'AI Assistant is temporarily unavailable. Please try again.');
+    }
+
+    public function test_invalid_gemini_response_is_safe(): void
+    {
+        config(['services.gemini.api_key' => 'test-key']);
+        Http::fake(['generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent' => Http::response(['candidates' => []])]);
         $this->actingAs($this->student(), 'sanctum')->postJson('/api/ai/assistant', ['question' => 'Help'])
             ->assertStatus(503)->assertJsonPath('message', 'AI Assistant is temporarily unavailable. Please try again.');
     }

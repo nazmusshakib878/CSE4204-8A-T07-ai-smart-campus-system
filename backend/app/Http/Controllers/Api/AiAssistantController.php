@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Student;
-use App\Services\OpenAiCampusAssistant;
+use App\Services\GeminiCampusAssistant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -12,7 +12,7 @@ use RuntimeException;
 
 class AiAssistantController extends Controller
 {
-    public function ask(Request $request, OpenAiCampusAssistant $assistant): JsonResponse
+    public function ask(Request $request, GeminiCampusAssistant $assistant): JsonResponse
     {
         if ($request->user()?->role !== 'student') {
             return response()->json(['status' => false, 'message' => 'Student access is required.'], 403);

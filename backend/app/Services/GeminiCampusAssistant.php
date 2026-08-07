@@ -14,6 +14,7 @@ You are the AI Smart Campus Assistant for university students.
 
 Use only the supplied student academic and campus context when relevant.
 Give clear, concise and practical academic guidance.
+Prefer short paragraphs or 3 to 5 bullets when helpful.
 Never invent university-specific information.
 If information is unavailable, clearly say so.
 Protect private information.
@@ -33,9 +34,8 @@ PROMPT;
         try {
             $response = Http::acceptJson()
                 ->asJson()
-                ->timeout((int) config('services.gemini.timeout', 30))
-                ->connectTimeout(10)
-                ->retry(2, 500)
+                ->timeout((int) config('services.gemini.timeout', 20))
+                ->connectTimeout(5)
                 ->withHeaders(['x-goog-api-key' => $apiKey])
                 ->post(sprintf('https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent', $model), [
                     'systemInstruction' => [
@@ -52,8 +52,8 @@ PROMPT;
                         ],
                     ],
                     'generationConfig' => [
-                        'temperature' => 0.3,
-                        'maxOutputTokens' => 500,
+                        'temperature' => 0.2,
+                        'maxOutputTokens' => 320,
                     ],
                 ]);
 
@@ -95,7 +95,8 @@ PROMPT;
 
     private function buildPrompt(string $question, array $context): string
     {
-        return "Student context:\n".
+        return "Answer briefly and practically using only the context below.\n\n".
+            "Student context:\n".
             json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).
             "\n\nStudent question:\n".
             $question;

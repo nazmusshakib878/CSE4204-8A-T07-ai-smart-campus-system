@@ -172,6 +172,14 @@ export const createLearningResource = async (payload) => {
   }
 };
 
+export const deleteLearningResource = async (id) => {
+  try {
+    return await api.delete(`/learning-resources/${id}`);
+  } catch (error) {
+    throw createApiError(error);
+  }
+};
+
 export const getTasks = async () => {
   try {
     return await api.get('/tasks');

@@ -88,6 +88,8 @@ function Layout({ children, title, subtitle }) {
     { to: '/admin', label: 'Dashboard', icon: 'dashboard' },
     { to: '/admin/users', label: 'Manage Users', icon: 'users', notificationCount: pendingApprovals, notificationLabel: 'pending user request' },
     { to: '/admin/all-users', label: 'All Users', icon: 'admin' },
+    { to: '/student-monitoring', label: 'Student Monitoring', icon: 'monitoring' },
+    { to: '/risk-alerts', label: 'Risk Alerts', icon: 'risk' },
     { to: '/academic-management', label: 'Academic Data', icon: 'academic' },
     { to: '/campus-services', label: 'Campus Services', icon: 'services' },
     { to: '/admin/notices', label: 'Manage Notices', icon: 'notices' },

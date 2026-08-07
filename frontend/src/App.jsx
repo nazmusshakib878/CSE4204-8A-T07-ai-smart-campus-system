@@ -46,8 +46,10 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/messages" element={<NoticeInboxPage />} />
             <Route path="/campus-services" element={<CampusServicesPage />} />
-            <Route element={<RoleRoute allowedRoles={['student']} />}>
+            <Route element={<RoleRoute allowedRoles={['student', 'faculty', 'admin']} />}>
               <Route path="/functions" element={<FunctionsPage />} />
+            </Route>
+            <Route element={<RoleRoute allowedRoles={['student']} />}>
               <Route path="/ai-assistant" element={<AiAssistantPage />} />
               <Route path="/course-recommendations" element={<CourseRecommendationsPage />} />
             </Route>

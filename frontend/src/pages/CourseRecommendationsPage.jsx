@@ -19,7 +19,7 @@ const parseRecommendation = (item, index) => {
     code,
     title: courseTitle,
     description: item.description || 'Recommended from your academic profile.',
-    level: item.recommendation_type || 'Recommended',
+    level: item.recommendation_type || 'Course Recommendation',
     credits: Number(item.course?.credit_hours || 0),
     faculty: item.course?.faculty || 'Academic Advisor',
     prerequisites: item.source === 'rule_based' ? ['Not currently enrolled'] : ['Advisor review'],
@@ -64,8 +64,8 @@ function CourseRecommendationsPage() {
 
     try {
       await createTask({
-        title: `Add ${course.code} - ${course.title} to next semester`,
-        description: `Recommended course with ${course.score}% match. Prerequisites: ${course.prerequisites.join(', ')}.`,
+        title: `Add ${course.code} - ${course.title} to study plan`,
+        description: `Study plan item with ${course.score}% match. Prerequisites: ${course.prerequisites.join(', ')}.`,
         assigned_to: user?.name || '',
         due_date: '',
         status: 'pending',
@@ -75,7 +75,7 @@ function CourseRecommendationsPage() {
       setAddedCourses((currentCourses) => [...new Set([...currentCourses, course.id])]);
       setFeedback({
         variant: 'success',
-        message: `${course.title} was added as a next-semester planning task.`,
+        message: 'Course added to your study plan.',
       });
     } catch (requestError) {
       setFeedback({
@@ -115,12 +115,12 @@ function CourseRecommendationsPage() {
       )}
 
       <section className="recommendation-analysis mb-4">
-        <div className="recommendation-analysis-icon" aria-hidden="true">AI</div>
+        <div className="recommendation-analysis-icon" aria-hidden="true">SR</div>
         <div>
           <h5>Course recommendations for {user?.name || 'Campus User'}</h5>
           <p>
             Based on advisor-created recommendations or active courses in your department,
-            here are the recommended courses for your next semester.
+            here are the recommended courses for your study plan.
           </p>
         </div>
       </section>
@@ -170,7 +170,7 @@ function CourseRecommendationsPage() {
                     aria-busy={isAdding}
                   >
                     {isAdding && <span className="spinner-border spinner-border-sm me-2" aria-hidden="true" />}
-                    {isAdded ? 'Added to Next Semester' : isAdding ? 'Adding...' : 'Add to Next Semester'}
+                    {isAdded ? 'Added to Study Plan' : isAdding ? 'Adding...' : 'Add to Study Plan'}
                   </button>
                 </article>
               </div>

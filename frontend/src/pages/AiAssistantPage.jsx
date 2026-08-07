@@ -18,7 +18,7 @@ function AiAssistantPage() {
           <div>
             <span className="eyebrow-label text-primary">Smart guidance</span>
             <h3>How can I help with your study today?</h3>
-            <p>Use the assistant for concepts, planning, recommendations, and quick academic direction.</p>
+            <p>This assistant is ready for future AI integration. For now, use the prompts to explore the planned experience.</p>
           </div>
         </div>
 
@@ -26,8 +26,8 @@ function AiAssistantPage() {
           <div className="col-lg-8">
             <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
               <div className="assistant-response rounded-4 p-4 mb-3">
-                <span className="assistant-message-label">Assistant preview</span>
-                <p className="mb-0">Ask a question and your answer will appear here. Try asking for a topic explanation, study routine, or improvement advice.</p>
+                <span className="assistant-message-label">Future response area</span>
+                <p className="mb-0">Questions, suggested replies, and AI responses will appear here after the external integration is connected.</p>
               </div>
               <div className="assistant-composer input-group">
                 <label className="visually-hidden" htmlFor="assistant-question">Question for the AI assistant</label>

@@ -11,21 +11,28 @@ function AiAssistantPage() {
   const prompts = [
     'Explain my academic progress',
     'Create a study plan for this week',
-    'Which areas should I improve?',
-    'Summarize my academic tasks',
+    'Which academic areas should I improve?',
     'How can I improve my attendance?',
-    'Explain my weak courses',
   ];
 
   const submit = async (event) => {
     event?.preventDefault();
     const trimmedQuestion = question.trim();
-    if (!trimmedQuestion || loading) return;
+
+    if (!trimmedQuestion) {
+      setError('Please enter a question.');
+      return;
+    }
+
+    if (loading) return;
+
     setLoading(true);
     setError('');
+    setAnswer('');
+
     try {
       const response = await askAiAssistant(trimmedQuestion);
-      setAnswer(response.data?.data?.answer || '');
+      setAnswer(response?.data?.data?.answer || '');
     } catch (requestError) {
       setError(requestError.message || 'AI Assistant is temporarily unavailable. Please try again.');
     } finally {
@@ -78,7 +85,10 @@ function AiAssistantPage() {
                     key={prompt}
                     type="button"
                     className="btn btn-outline-secondary text-start"
-                    onClick={() => setQuestion(prompt)}
+                    onClick={() => {
+                      setQuestion(prompt);
+                      setError('');
+                    }}
                     disabled={loading}
                   >
                     {prompt}

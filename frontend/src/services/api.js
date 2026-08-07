@@ -254,7 +254,7 @@ export const analyzeStudentRisk = async (studentDatabaseId) => {
 
 export const askAiAssistant = async (question) => {
   try {
-    return await api.post('/ai/assistant', { question });
+    return await api.post('/ai/assistant', { question: String(question).trim() });
   } catch (error) {
     throw createApiError(error);
   }

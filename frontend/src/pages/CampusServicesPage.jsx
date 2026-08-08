@@ -10,11 +10,12 @@ import {
 } from '../services/api';
 
 const YEAR = new Date().getFullYear();
+const CURRENT_TERM = new Date().getMonth() < 6 ? 'Spring' : 'Fall';
 const initialForms = {
-  exam: { course_id: '', semester: 'Spring', year: YEAR, exam_type: 'Midterm', exam_date: '', starts_at: '10:00', ends_at: '12:00', room: '' },
-  schedule: { course_id: '', semester: 'Spring', year: YEAR, day_of_week: 0, starts_at: '09:00', ends_at: '10:30', room: '', class_type: 'lecture' },
+  exam: { course_id: '', semester: CURRENT_TERM, year: YEAR, exam_type: 'Midterm', exam_date: '', starts_at: '10:00', ends_at: '12:00', room: '' },
+  schedule: { course_id: '', semester: CURRENT_TERM, year: YEAR, day_of_week: 0, starts_at: '09:00', ends_at: '10:30', room: '', class_type: 'lecture' },
   event: { title: '', description: '', starts_on: '', ends_on: '', event_type: 'academic', audience: 'all' },
-  fee: { student_id: '', semester: 'Spring', year: YEAR, amount_due: '', amount_paid: 0, due_date: '', reference: '' },
+  fee: { student_id: '', semester: CURRENT_TERM, year: YEAR, amount_due: '', amount_paid: 0, due_date: '', reference: '' },
   ticket: { category: 'Academic', subject: '', description: '', priority: 'medium' },
   leave: { starts_on: '', ends_on: '', reason: '' },
   reschedule: { course_id: '', original_date: '', new_date: '', starts_at: '09:00', ends_at: '10:30', room: '', reason: '' },

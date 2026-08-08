@@ -21,8 +21,10 @@ const parseRecommendation = (item, index) => {
     description: item.description || 'Recommended from your academic profile.',
     level: item.recommendation_type || 'Course Recommendation',
     credits: Number(item.course?.credit_hours || 0),
-    faculty: item.course?.faculty || 'Academic Advisor',
-    prerequisites: item.source === 'rule_based' ? ['Not currently enrolled'] : ['Advisor review'],
+    faculty: item.course?.faculty?.user?.name || item.course?.faculty || 'Academic Advisor',
+    prerequisites: item.recommended_semester
+      ? ['Recommended for Semester ' + item.recommended_semester]
+      : item.source === 'advisor' ? ['Advisor review'] : ['Not currently enrolled'],
     score: Math.round(Number(item.score || 0)) || 80,
   };
 };
@@ -30,6 +32,7 @@ const parseRecommendation = (item, index) => {
 function CourseRecommendationsPage() {
   const { user } = useAuth();
   const [recommendations, setRecommendations] = useState([]);
+  const [recommendationMeta, setRecommendationMeta] = useState({ source: '', model: null, message: null });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [feedback, setFeedback] = useState(null);
@@ -43,6 +46,11 @@ function CourseRecommendationsPage() {
     try {
       const response = await getRecommendations();
       setRecommendations(response.data.data || []);
+      setRecommendationMeta({
+        source: response.data.source || '',
+        model: response.data.model || null,
+        message: response.data.message || null,
+      });
     } catch (requestError) {
       setError(requestError.message || 'Course recommendations could not be loaded.');
     } finally {
@@ -119,8 +127,11 @@ function CourseRecommendationsPage() {
         <div>
           <h5>Course recommendations for {user?.name || 'Campus User'}</h5>
           <p>
-            Based on advisor-created recommendations or active courses in your department,
-            here are the recommended courses for your study plan.
+            {recommendationMeta.source === 'ai'
+              ? 'Gemini personalized these courses from your verified profile and eligible course catalog.'
+              : recommendationMeta.source === 'advisor'
+                ? 'These recommendations were created by an authorized academic advisor.'
+                : 'Smart matching ranked active courses using your department, semester and enrollment status.'}
           </p>
         </div>
       </section>
@@ -180,7 +191,7 @@ function CourseRecommendationsPage() {
       ) : (
         <EmptyState
           title="No course recommendations yet"
-          message="Recommendations will appear here when the API has course data."
+          message={recommendationMeta.message || 'No eligible courses are available right now. Check your department, semester, or enrollment status.'}
         />
       )}
     </Layout>

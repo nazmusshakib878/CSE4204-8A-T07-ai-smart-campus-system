@@ -4,8 +4,9 @@ import { EmptyState } from './Feedback';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const YEAR = new Date().getFullYear();
-const blankSchedule = { course_id: '', semester: 'Spring', year: YEAR, section: '', day_of_week: 0, starts_at: '09:00', ends_at: '10:30', room: '', class_type: 'lecture' };
-const blankExam = { course_id: '', semester: 'Spring', year: YEAR, section: '', exam_type: 'Midterm', exam_date: '', starts_at: '10:00', ends_at: '12:00', room: '' };
+const CURRENT_TERM = new Date().getMonth() < 6 ? 'Spring' : 'Fall';
+const blankSchedule = { course_id: '', semester: CURRENT_TERM, year: YEAR, section: '', day_of_week: 0, starts_at: '09:00', ends_at: '10:30', room: '', class_type: 'lecture' };
+const blankExam = { course_id: '', semester: CURRENT_TERM, year: YEAR, section: '', exam_type: 'Midterm', exam_date: '', starts_at: '10:00', ends_at: '12:00', room: '' };
 
 const time = (value) => String(value || '').slice(0, 5);
 
@@ -16,7 +17,7 @@ export default function RoutineWorkspace({ user, data, academic, reload, setFeed
   const [exam, setExam] = useState(blankExam);
   const [editing, setEditing] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [filters, setFilters] = useState({ semester: 'Spring', year: YEAR, department: '', faculty: '', section: '', course: '' });
+  const [filters, setFilters] = useState({ semester: CURRENT_TERM, year: YEAR, department: '', faculty: '', section: '', course: '' });
   const courses = useMemo(() => academic?.courses || [], [academic?.courses]);
   const courseMap = useMemo(() => Object.fromEntries(courses.map((course) => [String(course.id), course])), [courses]);
   const departments = [...new Set(courses.map((course) => course.department).filter(Boolean))];
@@ -43,8 +44,8 @@ export default function RoutineWorkspace({ user, data, academic, reload, setFeed
   };
   const edit = (kind, item) => {
     setMode(kind); setEditing(item.id);
-    if (kind === 'class') setSchedule({ course_id: item.course_id, semester: item.semester || 'Spring', year: item.year || YEAR, section: item.section || '', day_of_week: item.day_of_week, starts_at: time(item.starts_at), ends_at: time(item.ends_at), room: item.room || '', class_type: item.class_type || 'lecture' });
-    else setExam({ course_id: item.course_id, semester: item.semester || 'Spring', year: item.year || YEAR, section: item.section || '', exam_type: item.exam_type, exam_date: item.exam_date, starts_at: time(item.starts_at), ends_at: time(item.ends_at), room: item.room || '' });
+    if (kind === 'class') setSchedule({ course_id: item.course_id, semester: item.semester || CURRENT_TERM, year: item.year || YEAR, section: item.section || '', day_of_week: item.day_of_week, starts_at: time(item.starts_at), ends_at: time(item.ends_at), room: item.room || '', class_type: item.class_type || 'lecture' });
+    else setExam({ course_id: item.course_id, semester: item.semester || CURRENT_TERM, year: item.year || YEAR, section: item.section || '', exam_type: item.exam_type, exam_date: item.exam_date, starts_at: time(item.starts_at), ends_at: time(item.ends_at), room: item.room || '' });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const remove = async (resource, id) => {

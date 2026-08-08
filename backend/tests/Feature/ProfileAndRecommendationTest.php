@@ -22,6 +22,7 @@ class ProfileAndRecommendationTest extends TestCase {
   $this->deleteJson('/api/profile/photo')->assertOk()->assertJsonPath('user.profile_photo_url',null);Storage::disk('public')->assertMissing($path);
  }
  public function test_student_receives_real_rule_based_courses_when_no_advisor_recommendation_exists():void {
+  config(['services.gemini.api_key'=>null]);
   $user=User::factory()->create(['role'=>'student','department'=>'Computer Science & Engineering']);Student::create(['user_id'=>$user->id,'student_number'=>'S-100','department'=>$user->department]);
   $course=Course::create(['course_code'=>'CSE-500','title'=>'Machine Learning','department'=>$user->department,'is_active'=>true]);
   Sanctum::actingAs($user);

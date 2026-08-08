@@ -17,6 +17,7 @@ class Student extends Model
         'department',
         'program',
         'current_semester',
+        'section',
     ];
 
     protected function casts(): array

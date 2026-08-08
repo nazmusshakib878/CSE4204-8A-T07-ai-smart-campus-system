@@ -65,7 +65,7 @@ class AiAssistantTest extends TestCase
         config(['services.gemini.api_key' => 'test-key']);
         Http::fake(['generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent' => Http::response(['error' => ['message' => 'private upstream detail']], 500)]);
         $this->actingAs($this->student(), 'sanctum')->postJson('/api/ai/assistant', ['question' => 'Help'])
-            ->assertStatus(503)->assertJsonPath('message', 'AI Assistant is temporarily unavailable. Please try again.');
+            ->assertOk()->assertJsonPath('data.model', 'campus-data-fallback')->assertJsonPath('data.fallback', true);
     }
 
     public function test_gemini_rate_limit_is_safe(): void
@@ -73,7 +73,7 @@ class AiAssistantTest extends TestCase
         config(['services.gemini.api_key' => 'test-key']);
         Http::fake(['generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent' => Http::response(['error' => ['message' => 'rate limited']], 429)]);
         $this->actingAs($this->student(), 'sanctum')->postJson('/api/ai/assistant', ['question' => 'Help'])
-            ->assertStatus(503)->assertJsonPath('message', 'AI Assistant is temporarily unavailable. Please try again.');
+            ->assertOk()->assertJsonPath('data.model', 'campus-data-fallback')->assertJsonPath('data.fallback', true);
     }
 
     public function test_invalid_gemini_response_is_safe(): void
@@ -81,7 +81,7 @@ class AiAssistantTest extends TestCase
         config(['services.gemini.api_key' => 'test-key']);
         Http::fake(['generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent' => Http::response(['candidates' => []])]);
         $this->actingAs($this->student(), 'sanctum')->postJson('/api/ai/assistant', ['question' => 'Help'])
-            ->assertStatus(503)->assertJsonPath('message', 'AI Assistant is temporarily unavailable. Please try again.');
+            ->assertOk()->assertJsonPath('data.model', 'campus-data-fallback')->assertJsonPath('data.fallback', true);
     }
 
     private function student(): User

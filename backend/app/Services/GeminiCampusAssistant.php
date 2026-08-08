@@ -9,6 +9,8 @@ use Throwable;
 
 class GeminiCampusAssistant
 {
+    public function __construct(private readonly CampusAssistantFallback $fallback) {}
+
     private const SYSTEM_PROMPT = <<<'PROMPT'
 You are the AI Smart Campus Assistant for university students.
 
@@ -28,7 +30,7 @@ PROMPT;
         $model = (string) config('services.gemini.model', 'gemini-3.6-flash');
 
         if ($apiKey === '') {
-            throw new RuntimeException('AI Assistant is temporarily unavailable. Please try again.');
+            return $this->fallback->answer($question, $context);
         }
 
         try {
@@ -52,8 +54,8 @@ PROMPT;
                         ],
                     ],
                     'generationConfig' => [
-                        'temperature' => 0.2,
-                        'maxOutputTokens' => 320,
+                        'temperature' => 0.45,
+                        'maxOutputTokens' => 900,
                     ],
                 ]);
 
@@ -64,7 +66,7 @@ PROMPT;
                     'error_message' => $response->json('error.message'),
                 ]);
 
-                throw new RuntimeException('AI Assistant is temporarily unavailable. Please try again.');
+                return $this->fallback->answer($question, $context);
             }
         } catch (Throwable $exception) {
             if (! $exception instanceof RuntimeException) {
@@ -75,7 +77,7 @@ PROMPT;
                 ]);
             }
 
-            throw new RuntimeException('AI Assistant is temporarily unavailable. Please try again.');
+            return $this->fallback->answer($question, $context);
         }
 
         $answer = $this->extractAnswer($response->json());
@@ -84,7 +86,7 @@ PROMPT;
                 'model' => $model,
             ]);
 
-            throw new RuntimeException('AI Assistant is temporarily unavailable. Please try again.');
+            return $this->fallback->answer($question, $context);
         }
 
         return [

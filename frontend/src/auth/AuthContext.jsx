@@ -59,8 +59,14 @@ export function AuthProvider({ children }) {
         localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
         setUser(currentUser);
       })
-      .catch(() => {
-        if (active) clearSession();
+      .catch((error) => {
+        if (!active) return;
+
+        // An expired or rejected account must be signed out. Temporary network
+        // failures should not destroy an otherwise valid local session.
+        if (error.status === 401 || error.status === 403) {
+          clearSession();
+        }
       })
       .finally(() => {
         if (active) setInitializing(false);

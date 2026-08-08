@@ -8,6 +8,7 @@ function AuthPageLayout({ eyebrow, title, subtitle, children }) {
           src={campusImage}
           alt="Northern University campus"
           className="auth-story-image"
+          decoding="async"
         />
         <div className="auth-story-overlay" />
         <div className="auth-story-content">

@@ -78,7 +78,7 @@ function HomePage() {
 
           <div className="col-lg-5">
             <div className="card border-0 shadow-lg rounded-4 overflow-hidden position-relative">
-              <img src={campusImg} alt="NUBTK Campus" className="img-fluid w-100" style={{ height: '420px', objectFit: 'cover' }} />
+              <img src={campusImg} alt="NUBTK Campus" decoding="async" className="img-fluid w-100" style={{ height: '420px', objectFit: 'cover' }} />
 
               {isAuthenticated && (
                 <div className="position-absolute bottom-0 start-0 w-100 p-3 p-lg-4" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }}>

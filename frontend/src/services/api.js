@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  timeout: Number(import.meta.env.VITE_API_TIMEOUT_MS) || 15000,
   headers: {
     Accept: 'application/json',
   },
@@ -29,6 +30,10 @@ api.interceptors.response.use(
 );
 
 const normalizeError = (error) => {
+  if (error.code === 'ECONNABORTED') {
+    return 'The server took too long to respond. Please try again.';
+  }
+
   if (error.response) {
     const data = error.response.data;
     if (data?.message && typeof data.message === 'string') {

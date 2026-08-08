@@ -1,32 +1,34 @@
-import React from 'react';
+import { lazy, Suspense } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
-import RegisterPage from './pages/RegisterPage';
-import DashboardPage from './pages/DashboardPage';
-import ProfilePage from './pages/ProfilePage';
-import FunctionsPage from './pages/FunctionsPage';
-import AiAssistantPage from './pages/AiAssistantPage';
-import CourseRecommendationsPage from './pages/CourseRecommendationsPage';
-import FacultyDashboardPage from './pages/FacultyDashboardPage';
-import StudentMonitoringPage from './pages/StudentMonitoringPage';
-import RiskAlertsPage from './pages/RiskAlertsPage';
-import AdminPage from './pages/AdminPage';
-import AcademicManagementPage from './pages/AcademicManagementPage';
-import ManageUsersPage from './pages/ManageUsersPage';
-import AllUsersPage from './pages/AllUsersPage';
-import ManageNoticesPage from './pages/ManageNoticesPage';
-import ManageDepartmentsPage from './pages/ManageDepartmentsPage';
-import NoticeInboxPage from './pages/NoticeInboxPage';
-import NotFoundPage from './pages/NotFoundPage';
-import CampusServicesPage from './pages/CampusServicesPage';
 import { AuthProvider } from './auth/AuthContext';
 import ProtectedRoute from './auth/ProtectedRoute';
 import RoleRoute from './auth/RoleRoute';
 import { useAuth } from './auth/auth-context';
+import { LoadingState } from './components/Feedback';
+
+const HomePage = lazy(() => import('./pages/HomePage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const FunctionsPage = lazy(() => import('./pages/FunctionsPage'));
+const AiAssistantPage = lazy(() => import('./pages/AiAssistantPage'));
+const CourseRecommendationsPage = lazy(() => import('./pages/CourseRecommendationsPage'));
+const FacultyDashboardPage = lazy(() => import('./pages/FacultyDashboardPage'));
+const StudentMonitoringPage = lazy(() => import('./pages/StudentMonitoringPage'));
+const RiskAlertsPage = lazy(() => import('./pages/RiskAlertsPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
+const AcademicManagementPage = lazy(() => import('./pages/AcademicManagementPage'));
+const ManageUsersPage = lazy(() => import('./pages/ManageUsersPage'));
+const AllUsersPage = lazy(() => import('./pages/AllUsersPage'));
+const ManageNoticesPage = lazy(() => import('./pages/ManageNoticesPage'));
+const ManageDepartmentsPage = lazy(() => import('./pages/ManageDepartmentsPage'));
+const NoticeInboxPage = lazy(() => import('./pages/NoticeInboxPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const CampusServicesPage = lazy(() => import('./pages/CampusServicesPage'));
 
 function DashboardEntry() {
   const { user } = useAuth();
@@ -38,7 +40,8 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <Routes>
+        <Suspense fallback={<LoadingState message="Loading page..." fullPage />}>
+          <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -76,7 +79,8 @@ function App() {
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+          </Routes>
+        </Suspense>
       </AuthProvider>
     </Router>
   );

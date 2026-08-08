@@ -41,6 +41,22 @@ const validatePassword = (password) => {
   return '';
 };
 
+const validateResetPassword = (password) => {
+  if (!password) return 'Please create a new password.';
+  if (password.length > 255) return 'Passwords cannot exceed 255 characters.';
+  if (
+    password.length < 8
+    || !/[a-z]/.test(password)
+    || !/[A-Z]/.test(password)
+    || !/\d/.test(password)
+    || !/[^A-Za-z0-9]/.test(password)
+  ) {
+    return 'Use at least 8 characters with uppercase, lowercase, a number, and a symbol.';
+  }
+
+  return '';
+};
+
 export const validateLoginForm = ({ email, password }) => {
   const errors = {};
   const emailError = validateEmail(email);
@@ -50,6 +66,33 @@ export const validateLoginForm = ({ email, password }) => {
     errors.password = 'Please enter your password.';
   } else if (password.length > 255) {
     errors.password = 'Passwords cannot exceed 255 characters.';
+  }
+
+  return errors;
+};
+
+export const validateForgotPasswordForm = ({ email }) => {
+  const errors = {};
+  const emailError = validateEmail(email);
+
+  if (emailError) errors.email = emailError;
+
+  return errors;
+};
+
+export const validateResetPasswordForm = ({ email, token, password, password_confirmation: passwordConfirmation }) => {
+  const errors = {};
+  const emailError = validateEmail(email);
+  const passwordError = validateResetPassword(password);
+
+  if (emailError) errors.email = emailError;
+  if (!token) errors.token = 'The password reset token is missing.';
+  if (passwordError) errors.password = passwordError;
+
+  if (!passwordConfirmation) {
+    errors.password_confirmation = 'Please confirm your new password.';
+  } else if (passwordConfirmation !== password) {
+    errors.password_confirmation = 'The password confirmation does not match.';
   }
 
   return errors;

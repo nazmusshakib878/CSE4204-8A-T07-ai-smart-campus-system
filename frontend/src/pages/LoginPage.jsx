@@ -11,6 +11,7 @@ function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user, login } = useAuth();
+  const flash = location.state?.flash;
   const [form, setForm] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
@@ -90,6 +91,13 @@ function LoginPage() {
         subtitle="Use your campus credentials to continue to your personalized workspace."
       >
         <div className="auth-form-card">
+          {flash && (
+            <StatusAlert
+              variant={flash.variant || 'success'}
+              message={flash.message}
+            />
+          )}
+
           {error && (
             <StatusAlert
               variant="danger"
@@ -145,6 +153,9 @@ function LoginPage() {
           </form>
 
           <div className="auth-form-divider"><span>New to NUBTK Campus?</span></div>
+          <Link to="/forgot-password" className="btn btn-link text-decoration-none w-100 mb-2">
+            Forgot password?
+          </Link>
           <Link to="/register" className="btn btn-outline-primary rounded-3 w-100">
             Create an account
           </Link>

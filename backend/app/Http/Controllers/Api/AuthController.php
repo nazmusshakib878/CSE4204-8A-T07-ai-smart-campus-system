@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password as PasswordBroker;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -183,6 +184,97 @@ class AuthController extends Controller
             'token' => $token,
             'token_type' => 'Bearer',
         ]);
+    }
+
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $request->merge([
+            'email' => Str::lower(trim((string) $request->input('email'))),
+        ]);
+
+        $validatedData = $request->validate(
+            [
+                'email' => ['required', 'string', 'email:rfc', 'max:255'],
+            ],
+            [
+                'email.required' => 'Please enter your email address.',
+                'email.email' => 'Please enter a valid email address.',
+            ]
+        );
+
+        PasswordBroker::sendResetLink(['email' => $validatedData['email']]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'If an account with that email exists, password reset instructions have been sent.',
+        ]);
+    }
+
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $request->merge([
+            'email' => Str::lower(trim((string) $request->input('email'))),
+        ]);
+
+        $validatedData = $request->validate(
+            [
+                'token' => ['required', 'string'],
+                'email' => ['required', 'string', 'email:rfc', 'max:255'],
+                'password' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    Password::min(8)->letters()->mixedCase()->numbers()->symbols(),
+                ],
+                'password_confirmation' => ['required', 'string', 'max:255', 'same:password'],
+            ],
+            [
+                'token.required' => 'The password reset token is missing.',
+                'email.required' => 'Please enter your email address.',
+                'email.email' => 'Please enter a valid email address.',
+                'password.required' => 'Please create a new password.',
+                'password_confirmation.required' => 'Please confirm your new password.',
+                'password_confirmation.same' => 'The password confirmation does not match.',
+            ]
+        );
+
+        $status = PasswordBroker::reset(
+            [
+                'email' => $validatedData['email'],
+                'token' => $validatedData['token'],
+                'password' => $validatedData['password'],
+                'password_confirmation' => $validatedData['password_confirmation'],
+            ],
+            function (User $user, string $password): void {
+                $user->forceFill([
+                    'password' => $password,
+                    'remember_token' => Str::random(60),
+                ])->save();
+
+                $user->tokens()->delete();
+            }
+        );
+
+        if ($status === PasswordBroker::PASSWORD_RESET) {
+            return response()->json([
+                'status' => true,
+                'message' => 'Your password has been reset successfully.',
+            ]);
+        }
+
+        $message = match ($status) {
+            PasswordBroker::INVALID_TOKEN, PasswordBroker::INVALID_USER => 'This password reset link is invalid or has expired. Please request a new one.',
+            PasswordBroker::RESET_THROTTLED => 'Please wait before requesting another password reset.',
+            default => 'Unable to reset your password. Please request a new reset link and try again.',
+        };
+
+        return response()->json([
+            'status' => false,
+            'message' => $message,
+            'errors' => [
+                'token' => [$message],
+            ],
+        ], $status === PasswordBroker::RESET_THROTTLED ? 429 : 422);
     }
 
     public function createAdmin(Request $request): JsonResponse

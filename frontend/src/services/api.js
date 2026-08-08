@@ -72,6 +72,22 @@ export const loginUser = async (payload) => {
   }
 };
 
+export const forgotPassword = async (payload) => {
+  try {
+    return await api.post('/forgot-password', payload);
+  } catch (error) {
+    throw createApiError(error);
+  }
+};
+
+export const resetPassword = async (payload) => {
+  try {
+    return await api.post('/reset-password', payload);
+  } catch (error) {
+    throw createApiError(error);
+  }
+};
+
 export const logoutUser = async () => {
   try {
     return await api.post('/logout');

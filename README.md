@@ -93,27 +93,61 @@ Validated analyses are stored in `risk_alerts` with the provider source, model, 
 
 ## AI Request Architecture
 
-```text
-Authorized React user
-        |
-        v
-Laravel authentication, role checks, and validation
-        |
-        v
-Trusted database context and candidate constraints
-        |
-        +----> Google Gemini API
-        |
-        +----> OpenAI Responses API
-        |
-        v
-Backend parsing, validation, fallback, and persistence where applicable
-        |
-        v
-React loading, success, empty, and safe error states
+The following diagram is rendered directly by GitHub and represents the implemented backend-controlled AI flow.
+
+```mermaid
+flowchart TD
+    U([Student / Faculty / Admin]) --> FE[React Frontend]
+    FE --> API[Laravel REST API]
+    API --> AUTH{Sanctum authentication<br/>Role authorization<br/>Input validation}
+    AUTH -->|Authorized| DATA[(Trusted campus database context)]
+    AUTH -->|Rejected| SAFE[Safe HTTP error response]
+
+    DATA --> ASSIST[Student Assistant]
+    DATA --> COURSE[Course Recommendation Engine]
+    DATA --> RISK[Academic Risk Engine]
+
+    ASSIST --> GEMINI[Google Gemini API<br/>gemini-3.6-flash]
+    GEMINI -->|Valid response| CHECK[Laravel response validation]
+    GEMINI -.->|Quota, timeout, or invalid response| AF[Campus-data fallback]
+    AF --> CHECK
+
+    COURSE --> CAND[Eligible catalog candidates<br/>Department + semester + enrollment]
+    CAND --> GRANK[Gemini constrained ranking]
+    GRANK -->|Valid known course IDs| CHECK
+    GRANK -.->|Provider failure| RULE[Deterministic rule-based ranking]
+    RULE --> CHECK
+
+    RISK --> BASE[Database-backed baseline indicators]
+    BASE --> OPENAI[OpenAI Responses API<br/>gpt-4.1-mini]
+    OPENAI --> SCHEMA[Strict JSON Schema validation]
+    SCHEMA --> STORE[(Persisted risk alert)]
+    STORE --> CHECK
+    OPENAI -.->|Unavailable| SAFE
+
+    CHECK --> UI[React success / fallback display]
+    SAFE --> UI
+
+    classDef user fill:#fff3cd,stroke:#f59e0b,color:#172033,stroke-width:2px;
+    classDef frontend fill:#e8f1ff,stroke:#3b82f6,color:#172033,stroke-width:2px;
+    classDef backend fill:#eaf8ea,stroke:#22c55e,color:#172033,stroke-width:2px;
+    classDef security fill:#f2eaff,stroke:#8b5cf6,color:#172033,stroke-width:2px;
+    classDef provider fill:#fff4d6,stroke:#f59e0b,color:#172033,stroke-width:2px;
+    classDef validation fill:#ffe8ef,stroke:#ec4899,color:#172033,stroke-width:2px;
+    classDef data fill:#e9fbff,stroke:#06b6d4,color:#172033,stroke-width:2px;
+
+    class U user;
+    class FE,UI frontend;
+    class API,ASSIST,COURSE,RISK,CAND,BASE,RULE,AF backend;
+    class AUTH security;
+    class GEMINI,GRANK,OPENAI provider;
+    class CHECK,SCHEMA,SAFE validation;
+    class DATA,STORE data;
 ```
 
-API keys and system instructions remain on the Laravel server. No AI credential is required or referenced by the React application.
+- Solid arrows show the normal request path.
+- Dashed arrows show safe provider-failure paths.
+- API keys, system prompts, authorization, trusted context, and response validation remain in Laravel; the React application never receives an AI credential.
 
 ## AI-Related Source Files
 

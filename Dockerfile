@@ -56,6 +56,9 @@ RUN set -eux; \
         'NOTICE_SMS_URL=' \
         'NOTICE_SMS_TOKEN=' \
         'NOTICE_SMS_SENDER=NUBTK' \
+        'GEMINI_API_KEY=' \
+        'GEMINI_MODEL=gemini-3.6-flash' \
+        'GEMINI_TIMEOUT=30' \
         'OPENAI_API_KEY=' \
         'OPENAI_MODEL=gpt-4.1-mini' \
         'OPENAI_TIMEOUT=30' \

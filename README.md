@@ -4,19 +4,22 @@ Academic management and student-success platform for Northern University of Busi
 
 ## AI features
 
-- Student AI Assistant: student-only guidance based on trusted academic and campus context assembled by Laravel.
-- AI Academic Risk Analysis: structured academic-risk decision support for faculty/admin monitoring.
+- Student AI Assistant: Gemini-powered, student-only guidance based on trusted academic context assembled by Laravel.
+- AI Academic Risk Analysis: OpenAI-powered, structured decision support for authorized faculty and administrators.
 
-Both use React → Laravel → MySQL context → OpenAI Responses API → backend response validation → React display. Configure the backend environment only:
+Both integrations follow this secure flow: React -> Laravel authorization -> trusted database context -> AI provider -> backend response validation -> React.
 
-```dotenv
+~~~dotenv
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-3.6-flash
+GEMINI_TIMEOUT=30
+
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-4.1-mini
 OPENAI_TIMEOUT=30
-```
+~~~
 
-Add these values to `backend/.env` locally or Render backend Environment settings in production. Never commit or expose an API key in frontend code, documentation, screenshots, or `.env.example`. See [Week 8 AI integration](documentation/WEEK8_AI_INTEGRATION.md) for details.
-
+Add these values only to "backend/.env" locally or to protected production environment settings. Never commit or expose an API key in frontend code, documentation, screenshots, or environment examples. See the [AI integration guide](documentation/AI_INTEGRATION_GUIDE.md) for architecture, security, and verification details.
 ## Repository structure
 
 ```text

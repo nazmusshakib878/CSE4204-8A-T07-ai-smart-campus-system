@@ -2,7 +2,7 @@
 
 An academic management and student-success platform for Northern University of Business and Technology, Khulna (NUBTK). The application combines a React frontend, a Laravel REST API, MySQL, role-based access control, academic monitoring, campus services, and server-side AI integrations.
 
-> Week 08 AI Integration Assignment: this README documents only features verified in the repository source code. AI output is advisory and is not an official academic decision.
+> Week 08 AI Integration Assignment: this README documents the implemented AI-assisted workflows and the current project configuration. AI output is advisory and is not an official academic decision.
 
 ## Implemented Features
 
@@ -13,7 +13,7 @@ An academic management and student-success platform for Northern University of B
 - Academic transcript and attendance export
 - Campus tasks, learning resources, notices, and messages
 - Campus services including routines, exams, events, fees, support tickets, library loans, leave, and rescheduling
-- Student-only AI Assistant
+- Student-only conversational AI Assistant
 - Personalized course recommendations with a study-plan action
 
 ### Faculty
@@ -37,17 +37,21 @@ The project contains three AI-assisted workflows implemented through the Laravel
 
 | Workflow | Provider | Default model | Access | Failure behavior |
 | --- | --- | --- | --- | --- |
-| Student AI Assistant | Google Gemini | `gemini-3.6-flash` | Student only | Returns a built-in campus-data guidance fallback when Gemini is missing, unavailable, rate-limited, or invalid |
-| Course recommendation ranking | Google Gemini | `gemini-3.6-flash` | Student view; advisor recommendations remain supported | Falls back to deterministic department, semester, and enrollment-based ranking |
+| Student AI Assistant | Google Gemini | `gemini-3.5-flash-lite` | Student only | Uses server-side retry/quota handling for temporary provider errors and returns a safe user-facing error if the provider remains unavailable |
+| Course recommendation ranking | Google Gemini | `gemini-3.5-flash-lite` | Student view; advisor recommendations remain supported | Falls back to deterministic department, semester, and enrollment-based ranking |
 | Academic risk analysis | OpenAI Responses API | `gpt-4.1-mini` | Authorized faculty and administrators | Baseline risk indicators remain visible; the AI action returns a safe provider/configuration error |
 
-The models above are configuration defaults detected in `backend/config/services.php` and the AI services. Deployments may override them with protected environment variables.
+The models above are configuration defaults. Deployments may override them with protected environment variables.
 
 ### 1. Gemini Student Assistant
 
-`POST /api/ai/assistant` accepts a validated question from an authenticated student. Laravel loads trusted context from the database, including the student's department, program, enrolled courses, attendance percentage, and latest CGPA. The browser does not submit authoritative marks or another student's context.
+`POST /api/ai/assistant` accepts a validated question from an authenticated student. Laravel loads only trusted context available for the authenticated account, such as department, program, enrolled courses, attendance, and academic progress. The browser does not submit authoritative marks or another student's trusted context.
 
-The Gemini service uses a system instruction, bounded connection/request timeouts, a controlled generation configuration, and backend response extraction. If the provider cannot return a usable answer, `CampusAssistantFallback` provides limited built-in guidance for common study, attendance, progress, improvement, and programming questions.
+The assistant is designed as a natural conversational AI rather than a fixed-response chatbot. It supports English, Bangla, and mixed Bangla-English conversation, recent conversation context, follow-up questions, and general knowledge questions. Campus-specific answers use verified database context and must not invent unavailable academic records.
+
+For a normal successful message, the optimized path uses **one Gemini generation call**. Laravel prepares recent conversation history and relevant database context locally, then sends one complete request to Gemini. It does not use an extra Gemini call just for intent classification, context selection, question rewriting, or conversation summarization.
+
+Temporary provider failures are handled server-side. Existing retry logic respects provider retry information where available and handles temporary errors such as quota/rate-limit, timeout, or selected 5xx failures. If the provider still cannot return a usable answer, the frontend receives a safe error instead of an unrelated hardcoded AI response.
 
 Example request:
 
@@ -64,18 +68,16 @@ Example response shape:
   "status": true,
   "data": {
     "answer": "...",
-    "model": "gemini-3.6-flash"
+    "model": "gemini-3.5-flash-lite"
   }
 }
 ```
 
-Fallback responses use `campus-data-fallback` as the model identifier and include `fallback: true`.
-
 ### 2. Gemini-Assisted Course Recommendations
 
-When no advisor-created recommendation exists, the backend builds a candidate list from active courses in the student's resolved department and excludes already enrolled courses. A deterministic score prioritizes the student's current semester. Gemini may reorder only the supplied candidates and must return structured JSON containing known course IDs, scores, and reasons.
+When no advisor-created recommendation exists, the backend builds a candidate list from active courses in the student's resolved department and excludes already enrolled courses. A deterministic score prioritizes the student's current semester. Gemini may reorder only the supplied candidates and must return structured data containing known course IDs, scores, and reasons.
 
-The backend validates AI-selected IDs against the candidate list. If Gemini is not configured or returns an error/invalid payload, the deterministic ranking is returned instead of an empty page.
+The backend validates AI-selected IDs against the candidate list. If Gemini is unavailable or returns an invalid result, deterministic ranking remains available instead of returning an empty page.
 
 ### 3. OpenAI Academic Risk Analysis
 
@@ -93,39 +95,42 @@ Validated analyses are stored in `risk_alerts` with the provider source, model, 
 
 ## AI Request Architecture
 
-The following diagram is rendered directly by GitHub and represents the implemented backend-controlled AI flow.
+The following Mermaid diagram represents the current backend-controlled AI workflow.
 
 ```mermaid
 flowchart TD
     U([Student / Faculty / Admin]) --> FE[React Frontend]
-    FE --> API[Laravel REST API]
+    FE -->|One submit = one backend request| API[Laravel REST API]
     API --> AUTH{Sanctum authentication<br/>Role authorization<br/>Input validation}
-    AUTH -->|Authorized| DATA[(Trusted campus database context)]
-    AUTH -->|Rejected| SAFE[Safe HTTP error response]
+    AUTH -->|Authorized| DATA[(Trusted Campus Context)]
+    AUTH -->|Rejected| SAFE[Safe HTTP error]
 
     DATA --> ASSIST[Student Assistant]
     DATA --> COURSE[Course Recommendation Engine]
     DATA --> RISK[Academic Risk Engine]
 
-    ASSIST --> GEMINI[Google Gemini API<br/>gemini-3.6-flash]
-    GEMINI -->|Valid response| CHECK[Laravel response validation]
-    GEMINI -.->|Quota, timeout, or invalid response| AF[Campus-data fallback]
-    AF --> CHECK
+    ASSIST --> CTX[Local Context Builder<br/>Recent history + relevant DB context<br/>No Gemini call]
+    CTX --> GEMINI[Google Gemini API<br/>gemini-3.5-flash-lite<br/>ONE generation call]
+    GEMINI -->|Valid| ACHECK[Response Validation<br/>Content + format checks]
+    GEMINI -.->|429 / timeout / temporary 5xx| RETRY[Quota / Retry Handler]
+    RETRY -.->|Retry succeeds| ACHECK
+    RETRY -.->|Retry exhausted| SAFE
+    ACHECK --> CHECK[Laravel Response Validation]
 
-    COURSE --> CAND[Eligible catalog candidates<br/>Department + semester + enrollment]
-    CAND --> GRANK[Gemini constrained ranking]
+    COURSE --> CAND[Eligible Catalog Candidates<br/>Department + semester + not-enrolled filters]
+    CAND --> GRANK[Gemini constrained ranking<br/>Known course IDs only]
     GRANK -->|Valid known course IDs| CHECK
-    GRANK -.->|Provider failure| RULE[Deterministic rule-based ranking]
+    GRANK -.->|Provider failure| RULE[Deterministic ranking<br/>Provider failure fallback]
     RULE --> CHECK
 
-    RISK --> BASE[Database-backed baseline indicators]
+    RISK --> BASE[Database-backed Baseline<br/>Attendance + missed classes + CGPA + scores]
     BASE --> OPENAI[OpenAI Responses API<br/>gpt-4.1-mini]
-    OPENAI --> SCHEMA[Strict JSON Schema validation]
-    SCHEMA --> STORE[(Persisted risk alert)]
+    OPENAI --> SCHEMA[Strict JSON Schema<br/>validation]
+    SCHEMA --> STORE[(Persisted Risk Alert)]
     STORE --> CHECK
     OPENAI -.->|Unavailable| SAFE
 
-    CHECK --> UI[React success / fallback display]
+    CHECK --> UI[React Success / Fallback Display]
     SAFE --> UI
 
     classDef user fill:#fff3cd,stroke:#f59e0b,color:#172033,stroke-width:2px;
@@ -138,33 +143,33 @@ flowchart TD
 
     class U user;
     class FE,UI frontend;
-    class API,ASSIST,COURSE,RISK,CAND,BASE,RULE,AF backend;
+    class API,ASSIST,COURSE,RISK,CAND,BASE,RULE,CTX,RETRY backend;
     class AUTH security;
     class GEMINI,GRANK,OPENAI provider;
-    class CHECK,SCHEMA,SAFE validation;
+    class ACHECK,CHECK,SCHEMA,SAFE validation;
     class DATA,STORE data;
 ```
 
 - Solid arrows show the normal request path.
-- Dashed arrows show safe provider-failure paths.
-- API keys, system prompts, authorization, trusted context, and response validation remain in Laravel; the React application never receives an AI credential.
+- Dashed arrows show temporary-provider or failure paths.
+- A normal successful Student Assistant message uses one Gemini generation call.
+- API keys, system prompts, authorization, trusted context, retry handling, and response validation remain in Laravel; the React application never receives an AI credential.
 
 ## AI-Related Source Files
 
 | File | Responsibility |
 | --- | --- |
-| `backend/app/Http/Controllers/Api/AiAssistantController.php` | Student authorization, question validation, and trusted context assembly |
-| `backend/app/Services/GeminiCampusAssistant.php` | Gemini assistant request, prompt, timeout, and response parsing |
-| `backend/app/Services/CampusAssistantFallback.php` | Built-in provider-independent student guidance |
-| `backend/app/Services/CourseRecommendationService.php` | Candidate selection, deterministic ranking, AI merge, and fallback |
-| `backend/app/Services/GeminiCourseRecommender.php` | Gemini structured course ranking request |
+| `backend/app/Http/Controllers/Api/AiAssistantController.php` | Student authorization, question validation, trusted context assembly, and assistant request flow |
+| `backend/app/Services/GeminiCampusAssistant.php` | Gemini request construction, conversational prompt/history, timeout/retry handling, and response parsing |
+| `backend/app/Services/CourseRecommendationService.php` | Candidate selection, deterministic ranking, AI merge, and provider fallback |
+| `backend/app/Services/GeminiCourseRecommender.php` | Gemini structured course-ranking request |
 | `backend/app/Http/Controllers/Api/RecommendationController.php` | Advisor recommendations and student recommendation delivery |
 | `backend/app/Services/OpenAiRiskAnalyzer.php` | OpenAI Responses API request and strict risk-analysis schema |
 | `backend/app/Http/Controllers/Api/StudentMonitoringController.php` | Access scope, baseline indicators, AI invocation, and risk-alert persistence |
-| `frontend/src/pages/AiAssistantPage.jsx` | Student question, loading, answer, and error interface |
+| `frontend/src/pages/AiAssistantPage.jsx` | Student question, loading/thinking state, answer, and safe error interface |
 | `frontend/src/pages/CourseRecommendationsPage.jsx` | Recommendation cards and study-plan action |
 | `frontend/src/pages/StudentMonitoringPage.jsx` | Faculty/admin monitoring and AI analysis interface |
-| `backend/tests/Feature/AiAssistantTest.php` | Assistant authorization, validation, provider, and fallback tests |
+| `backend/tests/Feature/AiAssistantTest.php` | Assistant authorization, validation, provider, context, rate-limit, and error-path tests |
 | `backend/tests/Feature/CourseRecommendationEngineTest.php` | Recommendation ranking, AI constraints, and fallback tests |
 | `backend/tests/Feature/StudentMonitoringTest.php` | Monitoring authorization, OpenAI structure, and persistence tests |
 
@@ -174,7 +179,7 @@ Copy the example environment file and place real credentials only in `backend/.e
 
 ```dotenv
 GEMINI_API_KEY=
-GEMINI_MODEL=gemini-3.6-flash
+GEMINI_MODEL=gemini-3.5-flash-lite
 GEMINI_TIMEOUT=30
 
 OPENAI_API_KEY=
@@ -183,6 +188,15 @@ OPENAI_TIMEOUT=30
 ```
 
 The frontend needs no Gemini or OpenAI key.
+
+After changing backend environment values, clear Laravel's cached configuration before testing:
+
+```powershell
+cd backend
+php artisan optimize:clear
+php artisan config:clear
+php artisan cache:clear
+```
 
 ## Technology Stack
 
@@ -220,7 +234,7 @@ php artisan db:seed
 php artisan serve
 ```
 
-Configure the database values and optional AI credentials in `backend/.env` before starting the API. Keep `APP_DEBUG=false` and use dedicated database credentials in production.
+Configure the database values and AI credentials in `backend/.env` before starting the API. Keep `APP_DEBUG=false` and use dedicated database credentials in production.
 
 ### Frontend
 
@@ -230,9 +244,15 @@ npm install
 npm run dev
 ```
 
+If Windows PowerShell blocks `npm.ps1` because script execution is disabled, use:
+
+```powershell
+npm.cmd run dev
+```
+
 ## Verification
 
-Backend AI tests mock provider responses and therefore do not require paid API calls.
+The normal backend automated suite can mock provider responses so tests do not need to consume live provider quota.
 
 ```powershell
 cd backend
@@ -247,20 +267,30 @@ npm run build
 npm run test:e2e
 ```
 
+Latest local verification reported for the current Gemini configuration:
+
+- focused AI suite: **15 passed, 71 assertions**;
+- full backend suite: **78 passed, 381 assertions**;
+- live Gemini messages succeeded with `gemini-3.5-flash-lite`;
+- English, Bangla, campus-course lookup, and multi-turn follow-up behavior were tested;
+- normal successful-message flow was verified to use one Gemini generation call;
+- 429 retry-delay, daily-quota, exponential-backoff, and retry-limit tests passed.
+
 ## Week 08 Evidence Checklist
 
 Implementation evidence available in source code:
 
 - [x] AI provider integration through the backend
 - [x] Protected environment-variable configuration
-- [x] Student-facing AI interaction
+- [x] Student-facing conversational AI interaction
 - [x] Database-backed context supplied by the backend
 - [x] Role authorization and input validation
-- [x] Provider timeout/error handling
-- [x] Gemini assistant fallback and recommendation fallback
+- [x] One Gemini generation call per normal Student Assistant message
+- [x] Provider timeout, quota/rate-limit, retry, and safe error handling
+- [x] Deterministic course-recommendation fallback
 - [x] Structured OpenAI output validation
 - [x] Persisted AI risk-analysis result
-- [x] Mocked automated tests for success and failure paths
+- [x] Automated tests for success and failure paths
 - [x] AI architecture and source-code map
 
 Submission evidence still needed:
@@ -270,29 +300,30 @@ Submission evidence still needed:
 - [ ] Course recommendations showing whether the source is Gemini or rule-based
 - [ ] Faculty/admin student-monitoring page before analysis
 - [ ] Successful OpenAI risk-analysis result
-- [ ] Safe fallback/error state with credentials and provider details redacted
+- [ ] Safe quota/provider error state with credentials and provider details redacted
 - [ ] Browser network/API evidence showing successful endpoints without tokens
 - [ ] At least one mobile/responsive AI-page capture
 
-The current `screenshots/` directory contains legacy captures, but it does not contain a complete, consistently named Week 08 AI evidence set. Review every image for private student information, email addresses, phone numbers, tokens, and API keys before submission.
+Review every screenshot for private student information, email addresses, phone numbers, tokens, and API keys before submission.
 
 ## Known Limitations and Recommendations
 
 - AI quality and availability depend on external provider quota, billing, latency, and model availability.
-- The student assistant fallback is rule-based guidance, not a general-purpose language model.
+- Free-tier provider limits can temporarily return HTTP `429`; the application handles this safely, but quota itself cannot be bypassed by application code.
 - Course prerequisites are not represented as a dedicated prerequisite graph; recommendations use available catalog, department, semester, enrollment, and advisor data.
 - Risk analysis is decision support and requires human review; it must not be used as the sole basis for academic or disciplinary action.
-- Live-provider integration tests are not part of the normal automated suite; only mocked provider behavior is verified there.
+- Automated provider tests can use mocked responses; live-provider checks consume real quota and should be used sparingly.
 - Standardized, privacy-reviewed Week 08 screenshots are still required.
 - Production deployments should disable debug mode, use non-root database credentials, configure HTTPS, protect environment secrets, and monitor/rate-limit provider usage.
-- The built-in fallback source contains visible text-encoding artifacts in a small number of punctuation characters; this should be corrected in application code in a separate task.
 
 ## Security and Privacy
 
 - Do not commit `backend/.env` or any real provider credential.
-- Do not expose API keys in React variables, browser requests, logs, documentation, or screenshots.
+- Do not expose API keys in React variables, browser requests, URLs, logs, documentation, or screenshots.
+- Keep Gemini/OpenAI credentials server-side only.
+- Redact `key`, `api_key`, `authorization`, and `x-goog-api-key` values from logs and exception output.
 - Use test/demo accounts instead of real student records for assignment evidence.
-- Rotate a credential immediately if it has ever appeared in Git history or a shared screenshot.
+- Rotate a credential immediately if it has ever appeared in Git history, logs, or a shared screenshot.
 - Treat AI prompts, responses, risk alerts, grades, attendance, email addresses, and student IDs as sensitive academic data.
 
 ## Documentation
@@ -315,3 +346,4 @@ The current `screenshots/` directory contains legacy captures, but it does not c
 | Backend | Khan Waziur Rahman | 11220320861 |
 
 Course: CSE 4204 Mobile Computing Lab, Section 8A.
+

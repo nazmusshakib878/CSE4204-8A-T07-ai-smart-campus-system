@@ -56,8 +56,10 @@ function App() {
             <Route element={<RoleRoute allowedRoles={['student', 'faculty', 'admin']} />}>
               <Route path="/functions" element={<FunctionsPage />} />
             </Route>
-            <Route element={<RoleRoute allowedRoles={['student']} />}>
+            <Route element={<RoleRoute allowedRoles={['student', 'faculty']} />}>
               <Route path="/ai-assistant" element={<AiAssistantPage />} />
+            </Route>
+            <Route element={<RoleRoute allowedRoles={['student']} />}>
               <Route path="/course-recommendations" element={<CourseRecommendationsPage />} />
             </Route>
             <Route element={<RoleRoute allowedRoles={['faculty']} />}>

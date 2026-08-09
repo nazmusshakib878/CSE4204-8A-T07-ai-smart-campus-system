@@ -71,7 +71,6 @@ function Layout({ children, title, subtitle }) {
     { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
     { to: '/functions', label: 'Campus Tools', icon: 'functions' },
     { to: '/campus-services', label: 'Campus Services', icon: 'services' },
-    { to: '/ai-assistant', label: 'AI Assistant', icon: 'assistant' },
     { to: '/course-recommendations', label: 'Course Recommendations', icon: 'recommendations' },
     { to: '/messages', label: 'Messages', icon: 'messages', notificationCount: unreadNotices },
   ];
@@ -252,6 +251,12 @@ function Layout({ children, title, subtitle }) {
       {subtitle && <p className="text-secondary mb-0">{subtitle}</p>}
     </div>
   );
+  const assistantFloatingButton = isAuthenticated && ['student', 'faculty'].includes(user?.role) && (
+    <Link className="ai-assistant-floating-button" to="/ai-assistant" aria-label="Open AI Assistant">
+      <NavigationIcon name="assistant" />
+      <span>AI Assistant</span>
+    </Link>
+  );
 
   if (useInternalLayout) {
     return (
@@ -364,6 +369,7 @@ function Layout({ children, title, subtitle }) {
             {children}
           </main>
         </div>
+        {assistantFloatingButton}
       </div>
     );
   }
@@ -436,6 +442,7 @@ function Layout({ children, title, subtitle }) {
           <small className="text-secondary">Â© 2026 Northern University of Business and Technology, Khulna</small>
         </div>
       </footer>
+      {assistantFloatingButton}
     </div>
   );
 }

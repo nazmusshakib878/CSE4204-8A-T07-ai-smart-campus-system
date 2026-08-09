@@ -42,6 +42,8 @@ Route::middleware(['auth:sanctum', 'approved', 'throttle:api'])->group(function 
     Route::get('/faculty/student-monitoring', [StudentMonitoringController::class, 'index']);
     Route::post('/faculty/students/{student}/analyze-risk', [StudentMonitoringController::class, 'analyze']);
     Route::get('/student/dashboard', [StudentDashboardController::class, 'show']);
+    Route::get('/ai/assistant/conversation', [AiAssistantController::class, 'conversation']);
+    Route::post('/ai/assistant/conversation', [AiAssistantController::class, 'startConversation']);
     Route::post('/ai/assistant', [AiAssistantController::class, 'ask']);
     Route::get('/student/transcript', [AcademicExportController::class, 'transcript']);
     Route::get('/student/attendance-export', [AcademicExportController::class, 'attendance']);

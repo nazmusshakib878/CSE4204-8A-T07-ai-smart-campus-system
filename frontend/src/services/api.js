@@ -273,9 +273,29 @@ export const analyzeStudentRisk = async (studentDatabaseId) => {
   }
 };
 
-export const askAiAssistant = async (question) => {
+export const getAiConversation = async () => {
   try {
-    return await api.post('/ai/assistant', { question: String(question).trim() });
+    return await api.get('/ai/assistant/conversation');
+  } catch (error) {
+    throw createApiError(error);
+  }
+};
+
+export const startAiConversation = async () => {
+  try {
+    return await api.post('/ai/assistant/conversation');
+  } catch (error) {
+    throw createApiError(error);
+  }
+};
+
+export const askAiAssistant = async (question, conversationId = null) => {
+  try {
+    return await api.post(
+      '/ai/assistant',
+      { question: String(question).trim(), conversation_id: conversationId },
+      { timeout: 210000 },
+    );
   } catch (error) {
     throw createApiError(error);
   }

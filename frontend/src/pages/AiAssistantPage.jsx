@@ -135,14 +135,14 @@ function AiAssistantPage() {
         <div className="row g-4">
           <div className="col-lg-8">
             <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
-              {error && <StatusAlert variant="danger" message={error} onDismiss={() => setError('')} />}
+              {error && <StatusAlert variant="danger" message={error} actionLabel={question.trim() ? 'Retry' : undefined} onAction={() => submit()} onDismiss={() => setError('')} />}
               <div className="assistant-response assistant-thread rounded-4 p-4 mb-3" aria-live="polite">
                 {initializing ? (
                   <p className="mb-0 text-secondary">Loading your recent conversation...</p>
                 ) : messages.length === 0 ? (
                   <div className="assistant-empty">
                     <span className="assistant-message-label">AI Assistant</span>
-                    <p className="mb-0">Say hello or ask anything. I’ll use your campus records only when your question needs them.</p>
+                    <p className="mb-0">Say hello or ask anything. I'll use your campus records only when your question needs them.</p>
                   </div>
                 ) : (
                   messages.map((message) => (
@@ -182,7 +182,7 @@ function AiAssistantPage() {
                   {loading ? 'Sending...' : 'Send'}
                 </button>
               </form>
-              <small className="text-secondary mt-2">Enter to send · Shift+Enter for a new line</small>
+              <small className="text-secondary mt-2">Enter to send &middot; Shift+Enter for a new line</small>
             </div>
           </div>
 

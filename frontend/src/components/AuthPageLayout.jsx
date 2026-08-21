@@ -1,4 +1,4 @@
-import campusImage from '../assets/ChatGPT Image Jul 4, 2026, 11_22_37 PM.png';
+import campusImage from '../assets/campus-hero.webp';
 
 function AuthPageLayout({ eyebrow, title, subtitle, children }) {
   return (

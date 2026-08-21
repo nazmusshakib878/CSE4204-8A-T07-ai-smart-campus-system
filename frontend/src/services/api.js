@@ -30,12 +30,19 @@ api.interceptors.response.use(
 );
 
 const normalizeError = (error) => {
-  if (error.code === 'ECONNABORTED') {
+  if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
     return 'The server took too long to respond. Please try again.';
+  }
+
+  if (error.code === 'ERR_NETWORK' || !error.response) {
+    return 'Unable to reach the campus server. Check your connection and try again.';
   }
 
   if (error.response) {
     const data = error.response.data;
+    if (error.response.status === 429) {
+      return data?.message || 'Too many requests were sent. Please wait a moment and try again.';
+    }
     if (data?.message && typeof data.message === 'string') {
       return data.message;
     }

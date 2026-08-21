@@ -11,7 +11,7 @@ vi.mock('../auth/auth-context', () => ({
 }));
 
 vi.mock('../components/Layout', () => ({ default: ({ children }) => <div>{children}</div> }));
-vi.mock('../components/Feedback', () => ({ StatusAlert: ({ message }) => <div>{message}</div> }));
+vi.mock('../components/Feedback', () => ({ StatusAlert: ({ message, actionLabel, onAction }) => <div>{message}{actionLabel && <button type="button" onClick={onAction}>{actionLabel}</button>}</div> }));
 vi.mock('../services/api', () => ({
   askAiAssistant: vi.fn(),
   getAiConversation: vi.fn(),
@@ -94,5 +94,22 @@ describe('AiAssistantPage request locking', () => {
     await act(async () => {
       resolveRequest({ data: { data: { answer: 'Hi!', conversation_id: 1 } } });
     });
+  });
+  it('retries an unavailable AI request after restoring the message', async () => {
+    askAiAssistant
+      .mockRejectedValueOnce(new Error('AI service is temporarily unavailable.'))
+      .mockResolvedValueOnce({ data: { data: { answer: 'Recovered response', conversation_id: 7 } } });
+    const user = userEvent.setup();
+    render(<AiAssistantPage />);
+
+    const input = await screen.findByPlaceholderText('Message the assistant...');
+    await user.type(input, 'Try again');
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+
+    expect(await screen.findByText('AI service is temporarily unavailable.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+
+    await waitFor(() => expect(askAiAssistant).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText('Recovered response')).toBeInTheDocument();
   });
 });

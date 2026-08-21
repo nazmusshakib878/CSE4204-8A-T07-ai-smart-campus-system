@@ -13,7 +13,7 @@ An academic management and student-success platform for Northern University of B
 - Academic transcript and attendance export
 - Campus tasks, learning resources, notices, and messages
 - Campus services including routines, exams, events, fees, support tickets, library loans, leave, and rescheduling
-- Student-only conversational AI Assistant
+- Student and faculty conversational AI Assistant, each restricted to their own authorized context
 - Personalized course recommendations with a study-plan action
 
 ### Faculty
@@ -37,7 +37,7 @@ The project contains three AI-assisted workflows implemented through the Laravel
 
 | Workflow | Provider | Default model | Access | Failure behavior |
 | --- | --- | --- | --- | --- |
-| Student AI Assistant | Google Gemini | `gemini-3.5-flash-lite` | Student only | Uses server-side retry/quota handling for temporary provider errors and returns a safe user-facing error if the provider remains unavailable |
+| Campus AI Assistant | Google Gemini | `gemini-3.5-flash-lite` | Student and faculty | Uses server-side retry/quota handling for temporary provider errors and returns a safe user-facing error if the provider remains unavailable |
 | Course recommendation ranking | Google Gemini | `gemini-3.5-flash-lite` | Student view; advisor recommendations remain supported | Falls back to deterministic department, semester, and enrollment-based ranking |
 | Academic risk analysis | OpenAI Responses API | `gpt-4.1-mini` | Authorized faculty and administrators | Baseline risk indicators remain visible; the AI action returns a safe provider/configuration error |
 
@@ -250,6 +250,51 @@ If Windows PowerShell blocks `npm.ps1` because script execution is disabled, use
 npm.cmd run dev
 ```
 
+## Week 09 Integration Readiness
+
+The project is prepared for an integrated demo without adding unnecessary new features. The expected live flow is:
+
+```text
+Register → Admin Approval → Login → Dashboard → Select Feature → Submit Data
+→ Laravel validation and authorization → Database Save or server-side AI processing → Display Result
+```
+
+### Demo accounts and seed data
+
+The idempotent `CampusDemoSeeder` creates approved demo accounts, CSE courses, enrolments, attendance, grades, routines, notices, and student tasks. The same password is used only for local/demo use:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Administrator | `admin@nubtkhulna.ac.bd` | `Demo@12345` |
+| Faculty | `faculty.cse@nubtkhulna.ac.bd` | `Demo@12345` |
+| Student | `student1@nubtkhulna.ac.bd` | `Demo@12345` |
+
+Seed a fresh local database with:
+
+```powershell
+cd backend
+php artisan migrate:fresh --seed
+```
+
+To demonstrate approval, register a new student or faculty account from the frontend, sign in as the demo administrator, open **Manage Users**, approve the pending account, then sign in with that newly approved account.
+
+### Roles and permissions
+
+- Students use their dashboard, profile, notices, campus services, course recommendations, and the AI Assistant with only their own verified academic context.
+- Faculty use their dashboard, assigned-course workspace, student monitoring, notices, campus services, and the AI Assistant with context limited to assigned courses and students.
+- Administrators approve accounts and manage users, departments, courses, notices, routines, campus operations, and institution-wide monitoring. Administrators do not have access to the conversational Assistant route.
+
+### Current verification and demo checklist
+
+- [x] Frontend lint and production build pass.
+- [x] Frontend unit tests pass (10 tests in the current suite).
+- [x] Browser E2E navigation test passes.
+- [x] Authentication feature tests pass (13 tests, 71 assertions).
+- [x] Campus database-operation and AI feature tests pass (23 tests, 119 assertions).
+- [x] Network, timeout, validation, authorization, AI provider, and rate-limit errors have user-facing handling.
+- [ ] Run `php artisan test` in CI or a local environment without a command timeout before final submission.
+- [ ] Capture current desktop and mobile screenshots using demo accounts only; redact student data and never expose tokens or API keys.
+- [ ] Verify configured Gemini/OpenAI credentials in the deployment environment before presenting live AI output.
 ## Verification
 
 The normal backend automated suite can mock provider responses so tests do not need to consume live provider quota.

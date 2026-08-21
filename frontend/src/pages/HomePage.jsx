@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
-import campusImg from '../assets/ChatGPT Image Jul 4, 2026, 11_22_37 PM.png';
+import campusImg from '../assets/campus-hero.webp';
 import { useAuth } from '../auth/auth-context';
 import { getDashboardPath } from '../utils/routes';
 

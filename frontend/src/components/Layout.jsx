@@ -439,7 +439,7 @@ function Layout({ children, title, subtitle }) {
 
       <footer className="bg-white border-top py-4 mt-4">
         <div className="footer-content container d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
-          <small className="text-secondary">Â© 2026 Northern University of Business and Technology, Khulna</small>
+          <small className="text-secondary">© 2026 Northern University of Business and Technology, Khulna</small>
         </div>
       </footer>
       {assistantFloatingButton}

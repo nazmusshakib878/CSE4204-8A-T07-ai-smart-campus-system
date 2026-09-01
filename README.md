@@ -371,8 +371,48 @@ Review every screenshot for private student information, email addresses, phone 
 - Rotate a credential immediately if it has ever appeared in Git history, logs, or a shared screenshot.
 - Treat AI prompts, responses, risk alerts, grades, attendance, email addresses, and student IDs as sensitive academic data.
 
+## Testing & Quality Assurance Deliverables
+
+The repository includes a comprehensive Quality Assurance, Testing, Security Audit, and Bug Tracking suite with formal PDF and Markdown deliverables:
+
+- **Testing and Quality Assurance Report:** [`CSE4204-8A-T07_TestingReport.pdf`](CSE4204-8A-T07_TestingReport.pdf) | [`CSE4204-8A-T07_TestingReport.md`](CSE4204-8A-T07_TestingReport.md)
+- **Test Cases Specification (52 Test Cases):** [`CSE4204-8A-T07_TestCases.pdf`](CSE4204-8A-T07_TestCases.pdf) | [`CSE4204-8A-T07_TestCases.md`](CSE4204-8A-T07_TestCases.md)
+- **Bug Tracking & Verification Report (5 Bugs Fixed):** [`CSE4204-8A-T07_BugReport.pdf`](CSE4204-8A-T07_BugReport.pdf) | [`CSE4204-8A-T07_BugReport.md`](CSE4204-8A-T07_BugReport.md)
+- **Visual Evidence Directory:** [`/testing-evidence/`](testing-evidence/) (contains 21 visual evidence screenshots and `test_execution_results.json`)
+
+### Automated Test Execution Commands
+
+```bash
+# Backend PHPUnit Feature & Unit Tests (82 passed / 421 assertions)
+cd backend
+php artisan test
+
+# Frontend Unit & Component Tests (10 passed)
+cd frontend
+npm test
+
+# Frontend Oxlint Static Analysis (0 errors, 0 warnings)
+cd frontend
+npm run lint
+
+# Frontend Production Build (Vite)
+cd frontend
+npm run build
+
+# End-to-End Playwright Suite
+cd frontend
+npx playwright test
+
+# Full Comprehensive QA Suite & Evidence Generator (52 Test Cases)
+cd frontend
+node run_complete_qa.mjs
+```
+
 ## Documentation
 
+- [Testing Report (PDF)](CSE4204-8A-T07_TestingReport.pdf)
+- [Test Cases (PDF)](CSE4204-8A-T07_TestCases.pdf)
+- [Bug Report (PDF)](CSE4204-8A-T07_BugReport.pdf)
 - [AI integration guide](documentation/AI_INTEGRATION_GUIDE.md)
 - [API reference](documentation/API.md)
 - [Deployment guide](documentation/DEPLOYMENT.md)

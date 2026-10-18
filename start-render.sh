@@ -31,7 +31,7 @@ if [ -n "${MYSQL_ATTR_SSL_CA:-}" ] && [ ! -r "${MYSQL_ATTR_SSL_CA}" ]; then
   exit 1
 fi
 
-if [ "${DB_TLS_CHECK_ON_START:-false}" = "true" ]; then
+if [ "${APP_ENV:-production}" = "production" ] && { [ "${DB_CONNECTION:-}" = "mysql" ] || [ "${DB_CONNECTION:-}" = "mariadb" ]; }; then
   php artisan database:startup-health --no-interaction || exit 1
 fi
 

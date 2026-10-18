@@ -18,6 +18,8 @@ services:
         value: "false"
       - key: DB_CONNECTION
         value: mysql
+      - key: DB_TLS_CHECK_ON_START
+        value: "true"
       - key: DB_HOST
         sync: false
       - key: DB_PORT

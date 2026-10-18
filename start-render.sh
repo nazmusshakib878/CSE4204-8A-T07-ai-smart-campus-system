@@ -21,6 +21,11 @@ if [ "${APP_ENV:-production}" = "production" ] && ! php -r 'exit(extension_loade
   exit 1
 fi
 
+if [ -n "${MYSQL_ATTR_SSL_CA:-}" ] && [ ! -r "${MYSQL_ATTR_SSL_CA}" ]; then
+  echo "MYSQL_ATTR_SSL_CA must be the readable path of a mounted CA certificate file." >&2
+  exit 1
+fi
+
 # Production migrations are intentionally run as an approved one-off operation,
 # never as an implicit side effect of a web-service restart or deploy.
 php artisan storage:link --ansi || true

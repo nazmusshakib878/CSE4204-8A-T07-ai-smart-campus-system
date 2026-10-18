@@ -15,7 +15,9 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 class CampusDemoSeeder extends Seeder {
  public function run():void {
-  $password=Hash::make('Demo@12345');
+  $plainPassword=(string)env('DEMO_ACCOUNT_PASSWORD','');
+  if(strlen($plainPassword)<12)throw new \RuntimeException('DEMO_ACCOUNT_PASSWORD must be a private environment secret of at least 12 characters.');
+  $password=Hash::make($plainPassword);
   $admin=User::updateOrCreate(['email'=>'admin@nubtkhulna.ac.bd'],['name'=>'NUBTK Admin','phone'=>'01700000001','password'=>$password,'role'=>'admin','department'=>'Computer Science & Engineering','admin_id'=>'ADM-901','student_id'=>null,'faculty_id'=>null,'approval_status'=>'approved']);
   $facultyUser=User::updateOrCreate(['email'=>'faculty.cse@nubtkhulna.ac.bd'],['name'=>'Dr. Nasrin Begum','phone'=>'01700000002','password'=>$password,'role'=>'faculty','department'=>'Computer Science & Engineering','faculty_id'=>'FAC-CSE-9001','student_id'=>null,'admin_id'=>null,'approval_status'=>'approved']);
   $faculty=Faculty::updateOrCreate(['user_id'=>$facultyUser->id],['department'=>$facultyUser->department,'designation'=>'Associate Professor']);
@@ -38,6 +40,6 @@ class CampusDemoSeeder extends Seeder {
   Notice::updateOrCreate(['title'=>'Mid-Semester Examination Schedule'],['user_id'=>$admin->id,'description'=>'The mid-semester examination schedule is now available. Check your department notice board for details.','publish_date'=>now(),'expires_at'=>now()->addDays(30),'category'=>'Exam','audience'=>'Students','target_role'=>'Students','email_delivery_status'=>'not_configured','sms_delivery_status'=>'not_configured']);
   Notice::updateOrCreate(['title'=>'CSE Project Presentation'],['user_id'=>$facultyUser->id,'description'=>'AI Smart Campus project presentation will be held next week.','publish_date'=>now(),'category'=>'Academic','audience'=>'Department','target_department'=>'Computer Science & Engineering','target_role'=>'Students','email_delivery_status'=>'not_configured','sms_delivery_status'=>'not_configured']);
   foreach($students as $i=>$student)CampusTask::updateOrCreate(['title'=>'Prepare for AI Smart Campus presentation','assigned_to_user_id'=>$student->user_id],['description'=>'Review the project workflow and demonstration data.','assigned_to'=>$student->user?->name,'due_date'=>now()->addDays(7)->toDateString(),'status'=>$i===0?'in_progress':'pending','priority'=>'high']);
-  $this->command?->info('Campus demo data seeded. Login password for all demo accounts: Demo@12345');
+  $this->command?->info('Campus demo data seeded. Credentials remain in the private environment configuration.');
  }
 }

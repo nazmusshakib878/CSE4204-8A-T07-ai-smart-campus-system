@@ -46,12 +46,12 @@ class StudentCampusContext
     {
         $student->loadMissing([
             'enrollments.course' => fn ($query) => $query
-                ->with(['schedules:id,course_id,semester,year,day_of_week,starts_at,ends_at,room,class_type'])
+                ->with(['schedules:id,course_id,semester,year,section,shift,day_of_week,starts_at,ends_at,room,instructor_initials,class_type'])
                 ->select(['id', 'course_code', 'title', 'department', 'credit_hours']),
         ]);
 
         return $student->enrollments->map(function ($enrollment) {
-            $days = [1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday', 7 => 'Sunday'];
+            $days = [0 => 'Sunday', 1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday'];
             $schedules = $enrollment->course?->schedules->map(fn ($schedule) => array_filter([
                 'semester' => $schedule->semester,
                 'year' => $schedule->year,
@@ -59,6 +59,8 @@ class StudentCampusContext
                 'starts_at' => $schedule->starts_at,
                 'ends_at' => $schedule->ends_at,
                 'room' => $schedule->room,
+                'shift' => $schedule->shift,
+                'instructor_initials' => $schedule->instructor_initials,
                 'class_type' => $schedule->class_type,
             ], fn ($value) => $value !== null && $value !== [] && $value !== ''))->values()->all() ?? [];
 
@@ -153,10 +155,11 @@ class StudentCampusContext
     private function schedule(Student $student): array
     {
         $courseIds = $student->enrollments()->pluck('course_id');
-        $days = [1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday', 7 => 'Sunday'];
+        $days = [0 => 'Sunday', 1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday'];
         $schedules = CourseSchedule::query()
             ->with('course:id,course_code,title')
             ->whereIn('course_id', $courseIds)
+            ->when($student->section, fn ($query, $section) => $query->where('section', $section))
             ->orderBy('day_of_week')
             ->orderBy('starts_at')
             ->get();
@@ -176,6 +179,8 @@ class StudentCampusContext
                 'starts_at' => $schedule->starts_at,
                 'ends_at' => $schedule->ends_at,
                 'room' => $schedule->room,
+                'shift' => $schedule->shift,
+                'instructor_initials' => $schedule->instructor_initials,
                 'class_type' => $schedule->class_type,
                 'semester' => $schedule->semester,
                 'year' => $schedule->year,

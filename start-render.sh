@@ -21,6 +21,11 @@ if [ "${APP_ENV:-production}" = "production" ] && ! php -r 'exit(extension_loade
   exit 1
 fi
 
+if [ "${APP_ENV:-production}" = "production" ] && { [ "${DB_CONNECTION:-}" = "mysql" ] || [ "${DB_CONNECTION:-}" = "mariadb" ]; } && [ -z "${MYSQL_ATTR_SSL_CA:-}" ]; then
+  echo "Production MySQL/MariaDB requires MYSQL_ATTR_SSL_CA to reference a mounted CA certificate file." >&2
+  exit 1
+fi
+
 if [ -n "${MYSQL_ATTR_SSL_CA:-}" ] && [ ! -r "${MYSQL_ATTR_SSL_CA}" ]; then
   echo "MYSQL_ATTR_SSL_CA must be the readable path of a mounted CA certificate file." >&2
   exit 1

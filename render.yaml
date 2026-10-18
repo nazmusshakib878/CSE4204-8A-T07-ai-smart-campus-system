@@ -2,7 +2,37 @@ services:
   - type: web
     name: ai-smart-campus-system
     runtime: docker
-    plan: free
+    # A paid web plan is required for an always-on public demo. Database is external managed MariaDB.
+    plan: starter
     branch: main
-    autoDeployTrigger: commit
+    # Deploy only after the production database and secrets have been reviewed.
+    autoDeployTrigger: off
     healthCheckPath: /
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_KEY
+        # Preserve the current production key; provide it as a dashboard secret.
+        sync: false
+      - key: APP_DEBUG
+        value: "false"
+      - key: DB_CONNECTION
+        value: mariadb
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_DATABASE
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: MYSQL_ATTR_SSL_CA
+        sync: false
+      - key: DEMO_ACCOUNT_PASSWORD
+        sync: false
+      - key: ONLINE_DEMO_SEED_ENABLED
+        value: "false"
+      - key: ONLINE_DEMO_SEED_CONFIRMATION
+        sync: false

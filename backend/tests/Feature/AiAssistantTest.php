@@ -7,6 +7,7 @@ use App\Models\AiConversation;
 use App\Models\AttendanceRecord;
 use App\Models\Course;
 use App\Models\CourseEnrollment;
+use App\Models\CourseSchedule;
 use App\Models\Faculty;
 use App\Models\Student;
 use App\Models\User;
@@ -131,6 +132,36 @@ class AiAssistantTest extends TestCase
         $this->assertSame('Explain it simply.', data_get($contents, '4.parts.0.text'));
     }
 
+    public function test_mixed_language_follow_up_selects_schedule_context_without_backend_error(): void
+    {
+        $user = $this->student();
+        $course = Course::create(['course_code' => 'CSE4204', 'title' => 'Artificial Intelligence', 'department' => 'CSE']);
+        CourseEnrollment::create(['student_id' => $user->studentProfile->id, 'course_id' => $course->id, 'semester' => 'Fall', 'year' => 2026]);
+        Http::fake(['generativelanguage.googleapis.com/*' => Http::sequence()
+            ->push($this->geminiText('Your enrolled course is CSE4204.'))
+            ->push($this->geminiText('Your class is on Tuesday.'))]);
+
+        $first = $this->actingAs($user, 'sanctum')
+            ->postJson('/api/ai/assistant', ['question' => 'What courses am I taking?'])
+            ->assertOk();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/ai/assistant', [
+                'question' => 'Oi course er class kobe?',
+                'conversation_id' => $first->json('data.conversation_id'),
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.answer', 'Your class is on Tuesday.');
+
+        Http::assertSentCount(2);
+        Http::assertSent(function ($request) {
+            $system = data_get($request->data(), 'systemInstruction.parts.0.text', '');
+
+            return str_contains($system, 'VERIFIED CAMPUS CONTEXT')
+                && str_contains($system, '"schedule"');
+        });
+    }
+
     public function test_429_respects_server_retry_delay_and_returns_normal_answer_when_retry_succeeds(): void
     {
         Http::fake(['generativelanguage.googleapis.com/*' => Http::sequence()
@@ -170,20 +201,16 @@ class AiAssistantTest extends TestCase
     }
 
 
-    public function test_temporary_failures_stop_after_three_retries(): void
+    public function test_temporary_failures_stop_after_one_retry(): void
     {
         Http::fake(['generativelanguage.googleapis.com/*' => Http::sequence()
-            ->push(['error' => ['status' => 'UNAVAILABLE']], 503)
-            ->push(['error' => ['status' => 'UNAVAILABLE']], 503)
             ->push(['error' => ['status' => 'UNAVAILABLE']], 503)
             ->push(['error' => ['status' => 'UNAVAILABLE']], 503)]);
         $this->actingAs($this->student(), 'sanctum')->postJson('/api/ai/assistant', ['question' => 'Hello'])
             ->assertStatus(503)->assertJsonPath('message', 'AI service is temporarily unavailable. Please try again.');
-        Http::assertSentCount(4);
-        Sleep::assertSleptTimes(3);
+        Http::assertSentCount(2);
+        Sleep::assertSleptTimes(1);
         Sleep::assertSlept(fn ($duration) => $duration->totalMilliseconds >= 1000 && $duration->totalMilliseconds <= 1250);
-        Sleep::assertSlept(fn ($duration) => $duration->totalMilliseconds >= 2000 && $duration->totalMilliseconds <= 2250);
-        Sleep::assertSlept(fn ($duration) => $duration->totalMilliseconds >= 4000 && $duration->totalMilliseconds <= 4250);
     }
 
     public function test_permanent_400_is_not_retried(): void
@@ -237,9 +264,9 @@ class AiAssistantTest extends TestCase
 
     public function test_bangla_and_mixed_language_responses_pass_through_unchanged(): void
     {
-        Http::fake(['generativelanguage.googleapis.com/*' => Http::response($this->geminiText('অবশ্যই—কোন topic-এ help দরকার?'))]);
-        $this->actingAs($this->student(), 'sanctum')->postJson('/api/ai/assistant', ['question' => 'আমার একটু help দরকার'])
-            ->assertOk()->assertJsonPath('data.answer', 'অবশ্যই—কোন topic-এ help দরকার?');
+        Http::fake(['generativelanguage.googleapis.com/*' => Http::response($this->geminiText('Ã Â¦â€¦Ã Â¦Â¬Ã Â¦Â¶Ã Â§ÂÃ Â¦Â¯Ã Â¦â€¡Ã¢â‚¬â€Ã Â¦â€¢Ã Â§â€¹Ã Â¦Â¨ topic-Ã Â¦Â help Ã Â¦Â¦Ã Â¦Â°Ã Â¦â€¢Ã Â¦Â¾Ã Â¦Â°?'))]);
+        $this->actingAs($this->student(), 'sanctum')->postJson('/api/ai/assistant', ['question' => 'Ã Â¦â€ Ã Â¦Â®Ã Â¦Â¾Ã Â¦Â° Ã Â¦ÂÃ Â¦â€¢Ã Â¦Å¸Ã Â§Â help Ã Â¦Â¦Ã Â¦Â°Ã Â¦â€¢Ã Â¦Â¾Ã Â¦Â°'])
+            ->assertOk()->assertJsonPath('data.answer', 'Ã Â¦â€¦Ã Â¦Â¬Ã Â¦Â¶Ã Â§ÂÃ Â¦Â¯Ã Â¦â€¡Ã¢â‚¬â€Ã Â¦â€¢Ã Â§â€¹Ã Â¦Â¨ topic-Ã Â¦Â help Ã Â¦Â¦Ã Â¦Â°Ã Â¦â€¢Ã Â¦Â¾Ã Â¦Â°?');
         Http::assertSentCount(1);
     }
 
@@ -314,6 +341,81 @@ class AiAssistantTest extends TestCase
                 'question' => 'Continue',
                 'conversation_id' => $studentConversation->id,
             ])->assertNotFound();
+    }
+
+    public function test_faculty_course_context_includes_all_authorized_course_details_and_schedule(): void
+    {
+        $facultyUser = User::factory()->create(['role' => 'faculty', 'department' => 'CSE']);
+        $faculty = Faculty::create(['user_id' => $facultyUser->id, 'department' => 'CSE', 'designation' => 'Lecturer']);
+        $first = Course::create([
+            'faculty_id' => $faculty->id,
+            'course_code' => 'CSE4204',
+            'title' => 'Artificial Intelligence',
+            'department' => 'CSE',
+            'credit_hours' => 3,
+        ]);
+        $second = Course::create([
+            'faculty_id' => $faculty->id,
+            'course_code' => 'CSE4205',
+            'title' => 'Computer Networks',
+            'department' => 'CSE',
+            'credit_hours' => 3,
+        ]);
+        CourseSchedule::create([
+            'course_id' => $first->id,
+            'semester' => 'Fall',
+            'year' => 2026,
+            'day_of_week' => 2,
+            'starts_at' => '10:00:00',
+            'ends_at' => '11:30:00',
+            'room' => 'Room 401',
+            'class_type' => 'lecture',
+        ]);
+        CourseSchedule::create([
+            'course_id' => $second->id,
+            'semester' => 'Fall',
+            'year' => 2026,
+            'day_of_week' => 4,
+            'starts_at' => '12:00:00',
+            'ends_at' => '13:30:00',
+            'room' => null,
+            'class_type' => 'lecture',
+        ]);
+
+        Http::fake(['generativelanguage.googleapis.com/*' => Http::response($this->geminiText('You teach two courses.'))]);
+
+        $this->actingAs($facultyUser->load('facultyProfile'), 'sanctum')
+            ->postJson('/api/ai/assistant', ['question' => 'Which courses am I teaching?'])
+            ->assertOk();
+
+        Http::assertSent(function ($request) {
+            $system = data_get($request->data(), 'systemInstruction.parts.0.text', '');
+
+            return str_contains($system, 'CSE4204')
+                && str_contains($system, 'Artificial Intelligence')
+                && str_contains($system, 'CSE4205')
+                && str_contains($system, 'Computer Networks')
+                && str_contains($system, 'Room 401')
+                && str_contains($system, 'Tuesday')
+                && str_contains($system, '"enrolled_students":0')
+                && ! str_contains($system, '"room":null');
+        });
+    }
+
+    public function test_faculty_without_assigned_courses_receives_explicit_empty_context(): void
+    {
+        $facultyUser = User::factory()->create(['role' => 'faculty', 'department' => 'CSE']);
+        Faculty::create(['user_id' => $facultyUser->id, 'department' => 'CSE', 'designation' => 'Lecturer']);
+        Http::fake(['generativelanguage.googleapis.com/*' => Http::response($this->geminiText('No assigned courses are recorded.'))]);
+
+        $this->actingAs($facultyUser->load('facultyProfile'), 'sanctum')
+            ->postJson('/api/ai/assistant', ['question' => 'Show my courses.'])
+            ->assertOk();
+
+        Http::assertSent(fn ($request) => str_contains(
+            data_get($request->data(), 'systemInstruction.parts.0.text', ''),
+            '"courses":[]',
+        ));
     }
 
     public function test_starting_a_new_conversation_creates_an_empty_session_without_old_gemini_context(): void

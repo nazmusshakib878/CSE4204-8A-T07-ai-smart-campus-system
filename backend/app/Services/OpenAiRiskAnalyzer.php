@@ -21,9 +21,9 @@ class OpenAiRiskAnalyzer
         try {
         $response = Http::withToken($apiKey)
             ->acceptJson()
-            ->timeout((int) config('services.openai.timeout', 30))
+            ->timeout((int) config('services.openai.timeout', 20))
             ->connectTimeout(10)
-            ->retry(2, 500)
+            ->retry(1, 500)
             ->post('https://api.openai.com/v1/responses', [
                 'model' => $model,
                 'instructions' => implode("\n", [
@@ -87,8 +87,35 @@ class OpenAiRiskAnalyzer
             throw new RuntimeException('OpenAI returned an invalid risk analysis.');
         }
 
+        $analysis = $this->validatedAnalysis($analysis);
         $analysis['model'] = $model;
 
         return $analysis;
+    }
+
+    private function validatedAnalysis(array $analysis): array
+    {
+        $score = $analysis['risk_score'] ?? null;
+        $level = $analysis['risk_level'] ?? null;
+        $prediction = $analysis['prediction'] ?? null;
+        $reasons = $analysis['reasons'] ?? null;
+        $advice = $analysis['advice'] ?? null;
+
+        if (! is_int($score) || $score < 0 || $score > 100
+            || ! in_array($level, ['low', 'medium', 'high'], true)
+            || ! is_string($prediction) || trim($prediction) === ''
+            || ! is_array($reasons) || count($reasons) < 1 || count($reasons) > 4
+            || collect($reasons)->contains(fn ($reason) => ! is_string($reason) || trim($reason) === '')
+            || ! is_string($advice) || trim($advice) === '') {
+            throw new RuntimeException('OpenAI returned an invalid risk analysis.');
+        }
+
+        return [
+            'risk_score' => $score,
+            'risk_level' => $level,
+            'prediction' => trim($prediction),
+            'reasons' => array_values(array_map('trim', $reasons)),
+            'advice' => trim($advice),
+        ];
     }
 }

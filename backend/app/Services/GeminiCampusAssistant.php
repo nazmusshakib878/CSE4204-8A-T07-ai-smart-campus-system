@@ -15,7 +15,7 @@ use Throwable;
 class GeminiCampusAssistant
 {
     private const MAX_HISTORY_MESSAGES = 16;
-    private const MAX_RETRIES = 3;
+    private const MAX_RETRIES = 1;
 
     private int $generationCalls = 0;
 
@@ -191,7 +191,7 @@ PROMPT;
             'gemini_generation_calls' => $this->generationCalls,
         ]);
         return Http::acceptJson()->asJson()
-            ->timeout((int) config('services.gemini.timeout', 30))
+            ->timeout((int) config('services.gemini.timeout', 20))
             ->connectTimeout(5)
             ->withHeaders(['x-goog-api-key' => trim((string) config('services.gemini.api_key'))])
             ->post(sprintf('https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent', rawurlencode($model)), $payload);

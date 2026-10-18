@@ -118,6 +118,20 @@ class StudentMonitoringTest extends TestCase
             ->assertJsonPath('status', false);
     }
 
+    public function test_invalid_openai_analysis_returns_a_safe_error_without_persisting_an_alert(): void
+    {
+        [$facultyUser, $student] = $this->createAssignedStudent();
+        config(['services.openai.api_key' => 'test-key']);
+        Http::fake(['api.openai.com/v1/responses' => Http::response(['output_text' => '{"risk_score":72}'])]);
+
+        $this->actingAs($facultyUser, 'sanctum')
+            ->postJson("/api/faculty/students/{$student->id}/analyze-risk")
+            ->assertStatus(502)
+            ->assertJsonPath('status', false)
+            ->assertJsonPath('message', 'AI analysis is temporarily unavailable. Please try again.');
+
+        $this->assertDatabaseCount('risk_alerts', 0);
+    }
     private function createAssignedStudent(): array
     {
         $facultyUser = User::factory()->create([

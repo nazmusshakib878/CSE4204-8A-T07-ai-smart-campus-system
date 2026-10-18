@@ -44,14 +44,34 @@ class StudentCampusContext
 
     private function courses(Student $student): array
     {
-        $student->loadMissing('enrollments.course:id,course_code,title');
+        $student->loadMissing([
+            'enrollments.course' => fn ($query) => $query
+                ->with(['schedules:id,course_id,semester,year,day_of_week,starts_at,ends_at,room,class_type'])
+                ->select(['id', 'course_code', 'title', 'department', 'credit_hours']),
+        ]);
 
-        return $student->enrollments->map(fn ($enrollment) => [
-            'code' => $enrollment->course?->course_code,
-            'title' => $enrollment->course?->title,
-            'semester' => $enrollment->semester,
-            'year' => $enrollment->year,
-        ])->take(12)->values()->all();
+        return $student->enrollments->map(function ($enrollment) {
+            $days = [1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday', 7 => 'Sunday'];
+            $schedules = $enrollment->course?->schedules->map(fn ($schedule) => array_filter([
+                'semester' => $schedule->semester,
+                'year' => $schedule->year,
+                'day' => $days[$schedule->day_of_week] ?? (string) $schedule->day_of_week,
+                'starts_at' => $schedule->starts_at,
+                'ends_at' => $schedule->ends_at,
+                'room' => $schedule->room,
+                'class_type' => $schedule->class_type,
+            ], fn ($value) => $value !== null && $value !== [] && $value !== ''))->values()->all() ?? [];
+
+            return array_filter([
+                'code' => $enrollment->course?->course_code,
+                'title' => $enrollment->course?->title,
+                'department' => $enrollment->course?->department,
+                'credit_hours' => $enrollment->course?->credit_hours,
+                'semester' => $enrollment->semester,
+                'year' => $enrollment->year,
+                'schedules' => $schedules,
+            ], fn ($value) => $value !== null && $value !== []);
+        })->take(12)->values()->all();
     }
 
     private function attendance(Student $student): array

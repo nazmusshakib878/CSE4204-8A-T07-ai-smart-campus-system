@@ -9,7 +9,7 @@ class CampusContextSelector
         'courses' => '/(?:\b(?:my\s+)?(?:courses?|subjects?)\b|\benrolled\b|\bwhat\s+(?:courses?|classes?)\s+am\s+i\s+taking\b|কোর্স|বিষয়)/iu',
         'attendance' => '/(?:\battendance\b|\bpresent\b|\babsent\b|উপস্থিতি|হাজিরা)/iu',
         'results' => '/(?:\bresults?\b|\bgrades?\b|\bcgpa\b|\bgpa\b|\bmarks?\b|\bscores?\b|রেজাল্ট|ফলাফল|মার্ক)/iu',
-        'schedule' => '/(?:\bschedule\b|\broutine\b|\bnext\s+class\b|\bclass\s+time\b|ক্লাস\s+কখন|রুটিন)/iu',
+        'schedule' => '/(?:\bschedule\b|\broutine\b|\bnext\s+class\b|\bclass\s+(?:time|when|kobe)\b|ক্লাস\s+কখন|রুটিন)/iu',
         'appointments' => '/(?:\bappointments?\b|\bmeetings?\b|অ্যাপয়েন্টমেন্ট|সাক্ষাৎ)/iu',
         'policies' => '/(?:\bpolic(?:y|ies)\b|\brequirements?\b|\bminimum\s+attendance\b|\beligib(?:le|ility)\b|নিয়ম|নীতি|সর্বনিম্ন)/iu',
     ];
@@ -21,7 +21,7 @@ class CampusContextSelector
         $text = trim($question);
 
         if (preg_match(self::FOLLOW_UP_PATTERN, $text) === 1) {
-            $recent = collect($history)->take(-4)->pluck('content')->filter('is_string')->implode("\n");
+            $recent = collect($history)->take(-4)->pluck('content')->filter(fn ($content) => is_string($content))->implode("\n");
             $text = $recent."\n".$text;
         }
 

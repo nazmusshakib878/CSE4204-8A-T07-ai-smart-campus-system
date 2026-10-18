@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+const AI_TIMEOUT_MS = Number(import.meta.env.VITE_AI_TIMEOUT_MS) || 45000;
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   timeout: Number(import.meta.env.VITE_API_TIMEOUT_MS) || 15000,
@@ -301,7 +303,7 @@ export const askAiAssistant = async (question, conversationId = null) => {
     return await api.post(
       '/ai/assistant',
       { question: String(question).trim(), conversation_id: conversationId },
-      { timeout: 210000 },
+      { timeout: AI_TIMEOUT_MS },
     );
   } catch (error) {
     throw createApiError(error);

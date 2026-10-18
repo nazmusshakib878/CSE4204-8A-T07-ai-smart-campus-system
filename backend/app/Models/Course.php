@@ -31,6 +31,11 @@ class Course extends Model
         return $this->hasMany(CourseEnrollment::class);
     }
 
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(CourseSchedule::class);
+    }
+
     public function students(): BelongsToMany
     {
         return $this->belongsToMany(Student::class, 'course_enrollments')

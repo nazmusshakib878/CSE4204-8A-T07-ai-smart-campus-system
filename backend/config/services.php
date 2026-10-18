@@ -17,13 +17,13 @@ return [
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),
         'model' => env('GEMINI_MODEL', 'gemini-3.5-flash-lite'),
-        'timeout' => env('GEMINI_TIMEOUT', 30),
+        'timeout' => env('GEMINI_TIMEOUT', 20),
     ],
 
     'openai' => [
         'api_key' => env('OPENAI_API_KEY'),
         'model' => env('OPENAI_MODEL', 'gpt-4.1-mini'),
-        'timeout' => env('OPENAI_TIMEOUT', 30),
+        'timeout' => env('OPENAI_TIMEOUT', 20),
     ],
 
     'postmark' => [

@@ -119,7 +119,10 @@ function Layout({ children, title, subtitle }) {
     }
 
     let active = true;
+    let inFlight = false;
     const refreshUnread = () => {
+      if (inFlight) return;
+      inFlight = true;
       getNotices()
         .then((response) => {
           if (!active) return;
@@ -127,7 +130,8 @@ function Layout({ children, title, subtitle }) {
         })
         .catch(() => {
           if (active) setUnreadNotices(0);
-        });
+        })
+        .finally(() => { inFlight = false; });
     };
 
     const handleNoticeRead = () => {
@@ -160,14 +164,18 @@ function Layout({ children, title, subtitle }) {
     }
 
     let active = true;
+    let inFlight = false;
     const refreshPendingApprovals = () => {
+      if (inFlight) return;
+      inFlight = true;
       getPendingUsers()
         .then((response) => {
           if (active) setPendingApprovals((response.data.data || []).length);
         })
         .catch(() => {
           if (active) setPendingApprovals(0);
-        });
+        })
+        .finally(() => { inFlight = false; });
     };
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') refreshPendingApprovals();

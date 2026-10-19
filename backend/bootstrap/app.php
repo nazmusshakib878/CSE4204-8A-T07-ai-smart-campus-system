@@ -23,6 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Render terminates TLS at its proxy. Trust its forwarded client address so
+        // rate limits do not collapse every visitor into one shared proxy bucket.
+        $middleware->trustProxies(at: '*');
         $middleware->api(append: [ApiRequestLogger::class]);
         $middleware->alias(['approved' => EnsureAccountApproved::class]);
     })

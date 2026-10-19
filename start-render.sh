@@ -39,4 +39,7 @@ fi
 # never as an implicit side effect of a web-service restart or deploy.
 php artisan storage:link --ansi || true
 
-exec php -S "0.0.0.0:${PORT:-10000}" -t /app/backend/public /app/router.php
+# Apache provides concurrent request handling. The PHP built-in server is
+# single-process and lets a slow upstream (AI or database) stall every page.
+sed -i "s/Listen 80/Listen ${PORT:-10000}/" /etc/apache2/ports.conf
+exec apache2-foreground

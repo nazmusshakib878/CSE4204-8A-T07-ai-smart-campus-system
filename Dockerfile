@@ -7,7 +7,7 @@ RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
-FROM php:8.2-cli-bookworm AS runtime
+FROM php:8.2-apache-bookworm AS runtime
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git unzip libicu-dev libmariadb-dev libonig-dev libsqlite3-dev libzip-dev libxml2-dev \
@@ -33,6 +33,9 @@ COPY router.php /app/router.php
 COPY start-render.sh /app/start-render.sh
 
 RUN chmod +x /app/start-render.sh
+
+COPY docker/apache-vhost.conf /etc/apache2/sites-available/000-default.conf
+RUN a2enmod rewrite
 
 EXPOSE 10000
 

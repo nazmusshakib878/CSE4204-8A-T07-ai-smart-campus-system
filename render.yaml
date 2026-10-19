@@ -2,12 +2,12 @@ services:
   - type: web
     name: ai-smart-campus-system
     runtime: docker
-    # A paid web plan is required for an always-on public demo. Database is external managed MariaDB.
+    # A paid web plan is required for an always-on public demo. Database is external managed MySQL.
     plan: starter
     branch: main
     # Deploy only after the production database and secrets have been reviewed.
     autoDeployTrigger: off
-    healthCheckPath: /
+    healthCheckPath: /up
     envVars:
       - key: APP_ENV
         value: production

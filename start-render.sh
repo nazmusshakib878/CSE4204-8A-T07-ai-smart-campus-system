@@ -19,6 +19,13 @@ if [ "${APP_ENV:-production}" = "production" ] && [ "${DB_CONNECTION:-}" = "sqli
   exit 1
 fi
 
+# Laravel gives DB_URL precedence over DB_HOST/DB_PORT. A stale Render DB_URL
+# would silently send every API query to an old database even when the visible
+# Aiven variables are correct. Production uses the explicit Aiven variables.
+if [ "${APP_ENV:-production}" = "production" ] && { [ "${DB_CONNECTION:-}" = "mysql" ] || [ "${DB_CONNECTION:-}" = "mariadb" ]; }; then
+  unset DB_URL DB_SOCKET
+fi
+
 if [ "${APP_ENV:-production}" = "production" ] && ! php -r 'exit(extension_loaded("pdo_mysql") ? 0 : 1);'; then
   echo "pdo_mysql is not enabled in this image. Deploy an image built from the current Dockerfile before running migrations." >&2
   exit 1
@@ -35,7 +42,9 @@ if [ -n "${MYSQL_ATTR_SSL_CA:-}" ] && [ ! -r "${MYSQL_ATTR_SSL_CA}" ]; then
 fi
 
 if [ "${APP_ENV:-production}" = "production" ] && { [ "${DB_CONNECTION:-}" = "mysql" ] || [ "${DB_CONNECTION:-}" = "mariadb" ]; }; then
-  php artisan database:startup-health --no-interaction || exit 1
+  # Refuse to serve a partially migrated database: otherwise all DB-backed API
+  # calls fail at runtime while static routes and /up still appear healthy.
+  php artisan database:startup-health --critical-schema --no-interaction || exit 1
 fi
 
 # Production migrations are intentionally run as an approved one-off operation,

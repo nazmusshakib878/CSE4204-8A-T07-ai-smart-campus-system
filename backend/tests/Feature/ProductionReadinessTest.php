@@ -2,6 +2,8 @@
 namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Mockery;
 use Tests\TestCase;
 class ProductionReadinessTest extends TestCase {
  use RefreshDatabase;
@@ -16,6 +18,18 @@ class ProductionReadinessTest extends TestCase {
   DB::shouldReceive('selectOne')->once()->with('SELECT 1 AS connected')->andReturn((object)['connected'=>1]);
   DB::shouldReceive('selectOne')->once()->with("SHOW STATUS LIKE 'Ssl_cipher'")->andReturn((object)['Value'=>'TLS_AES_256_GCM_SHA384']);
   $this->artisan('database:startup-health')->expectsOutput('DATABASE_TLS_CHECK=OK')->assertExitCode(0);
+ }
+ public function test_startup_database_health_rejects_missing_critical_schema():void {
+  DB::shouldReceive('selectOne')->once()->with('SELECT 1 AS connected')->andReturn((object)['connected'=>1]);
+  DB::shouldReceive('selectOne')->once()->with("SHOW STATUS LIKE 'Ssl_cipher'")->andReturn((object)['Value'=>'TLS_AES_256_GCM_SHA384']);
+  $schema=Mockery::mock();$schema->shouldReceive('hasTable')->once()->with('users')->andReturn(false);Schema::swap($schema);
+  $this->artisan('database:startup-health --critical-schema')->expectsOutput('DATABASE_CRITICAL_SCHEMA=FAIL')->assertExitCode(1);
+ }
+ public function test_startup_database_health_accepts_complete_critical_schema():void {
+  DB::shouldReceive('selectOne')->once()->with('SELECT 1 AS connected')->andReturn((object)['connected'=>1]);
+  DB::shouldReceive('selectOne')->once()->with("SHOW STATUS LIKE 'Ssl_cipher'")->andReturn((object)['Value'=>'TLS_AES_256_GCM_SHA384']);
+  $schema=Mockery::mock();$schema->shouldReceive('hasTable')->times(6)->andReturn(true);$schema->shouldReceive('hasColumns')->times(6)->andReturn(true);Schema::swap($schema);
+  $this->artisan('database:startup-health --critical-schema')->expectsOutput('DATABASE_TLS_CHECK=OK')->expectsOutput('DATABASE_CRITICAL_SCHEMA=OK')->assertExitCode(0);
  }
  public function test_startup_database_health_hides_connection_errors():void {
   DB::shouldReceive('selectOne')->once()->with('SELECT 1 AS connected')->andThrow(new \RuntimeException('secret connection failure'));

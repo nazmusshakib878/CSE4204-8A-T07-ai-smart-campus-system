@@ -2,7 +2,7 @@ name: Docker production smoke test
 
 on:
   push:
-    branches: ["verify/render-apache-port"]
+    branches: ["verify/render-apache-port", "verify/render-api-fix"]
   workflow_dispatch:
 
 permissions:

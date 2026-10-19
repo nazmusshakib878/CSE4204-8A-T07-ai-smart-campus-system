@@ -43,8 +43,9 @@ jobs:
           curl --fail --silent --show-error http://127.0.0.1:10000/ > /tmp/home
           grep -q 'id="root"' /tmp/home
           for path in /login /register /admin /admin/users; do
-            curl --fail --silent --show-error "http://127.0.0.1:10000${path}" > "/tmp$(echo "$path" | tr '/' '_')"
-            grep -q 'id="root"' "/tmp$(echo "$path" | tr '/' '_')"
+            route_file="/tmp/route-$(echo "$path" | tr '/' '_')"
+            curl --fail --silent --show-error "http://127.0.0.1:10000${path}" > "$route_file"
+            grep -q 'id="root"' "$route_file"
           done
           asset=$(grep -oE '/assets/[^" ]+\.(js|css)' /tmp/home | head -n 1)
           test -n "$asset"

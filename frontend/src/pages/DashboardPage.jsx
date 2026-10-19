@@ -7,7 +7,17 @@ import { ConfirmDialog,EmptyState,LoadingState,StatusAlert } from '../components
 import { formatCurrentSemester } from '../utils/academic';
 function DashboardPage(){
  const {user}=useAuth();const [tasks,setTasks]=useState([]);const [resources,setResources]=useState([]);const [recommendations,setRecommendations]=useState([]);const [academic,setAcademic]=useState(null);const [loading,setLoading]=useState(true);const [error,setError]=useState('');const [feedback,setFeedback]=useState(null);const [taskToDelete,setTaskToDelete]=useState(null);const [deleting,setDeleting]=useState(false);
- const fetchData=useCallback(async()=>{setLoading(true);setError('');try{const [t,r,n,a]=await Promise.all([getTasks(),getLearningResources(),getRecommendations(),getStudentDashboard()]);setTasks(t.data.data||[]);setResources(r.data.data||[]);setRecommendations(n.data.data||[]);setAcademic(a.data.data);}catch(e){setError(e.message||'Dashboard data could not be loaded.');}finally{setLoading(false);}},[]);
+ const fetchData=useCallback(async()=>{setLoading(true);setError('');try{
+  // Load the core academic view first. The auxiliary cards must not blank the
+  // entire dashboard if one independently rate-limited request is retried.
+  const academicResponse=await getStudentDashboard();setAcademic(academicResponse.data.data);
+  const [tasksResult,resourcesResult,recommendationsResult]=await Promise.allSettled([getTasks(),getLearningResources(),getRecommendations()]);
+  if(tasksResult.status==='fulfilled')setTasks(tasksResult.value.data.data||[]);
+  if(resourcesResult.status==='fulfilled')setResources(resourcesResult.value.data.data||[]);
+  if(recommendationsResult.status==='fulfilled')setRecommendations(recommendationsResult.value.data.data||[]);
+  const rejected=[tasksResult,resourcesResult,recommendationsResult].find(result=>result.status==='rejected');
+  if(rejected)setFeedback({variant:'warning',message:'Some optional dashboard items are temporarily unavailable. Please try again shortly.'});
+ }catch(e){setError(e.message||'Dashboard data could not be loaded.');}finally{setLoading(false);}},[]);
  useEffect(()=>{fetchData();},[fetchData]);
  const remove=async()=>{if(!taskToDelete)return;setDeleting(true);try{await deleteTask(taskToDelete.id);setTasks(v=>v.filter(t=>t.id!==taskToDelete.id));setFeedback({variant:'success',message:'Task deleted.'});}catch(e){setFeedback({variant:'danger',message:e.message});}finally{setTaskToDelete(null);setDeleting(false);}};
  if(loading)return <Layout title="Dashboard" subtitle="Preparing your academic overview..."><LoadingState message="Loading student dashboard..."/></Layout>;

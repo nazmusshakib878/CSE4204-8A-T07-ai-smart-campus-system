@@ -14,7 +14,10 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        RateLimiter::for('api', fn (Request $request) => Limit::perMinute((int) env('API_RATE_LIMIT', 60))->by($request->user()?->id ?: $request->ip()));
+        // A dashboard loads several independent, authenticated data panels.
+        // Keep a safe floor so an accidental low production environment value
+        // cannot lock a legitimate student out during one page load.
+        RateLimiter::for('api', fn (Request $request) => Limit::perMinute(max(60, (int) env('API_RATE_LIMIT', 60)))->by($request->user()?->id ?: $request->ip()));
         RateLimiter::for('auth', fn (Request $request) => Limit::perMinute((int) env('AUTH_RATE_LIMIT', 5))->by(strtolower((string) $request->input('email')).'|'.$request->ip()));
 
         ResetPassword::createUrlUsing(function ($notifiable, string $token): string {

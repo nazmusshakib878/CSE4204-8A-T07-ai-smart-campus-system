@@ -55,8 +55,8 @@ jobs:
           echo
           test "$api_status" = 404
           grep -q 'API endpoint not found' /tmp/api
-          docker exec campus-smoke apache2ctl -S
-          docker exec campus-smoke apache2ctl -S | grep -Eq '(:|\*)10000'
+          docker exec campus-smoke apache2ctl -S 2>&1
+          docker exec campus-smoke apache2ctl -S 2>&1 | grep -Eq '(:|\*)10000'
           test "$(docker inspect --format '{{.State.Running}}' campus-smoke)" = true
           ! docker logs campus-smoke 2>&1 | grep -E 'AH01276|Cannot serve directory|DirectoryIndex'
 

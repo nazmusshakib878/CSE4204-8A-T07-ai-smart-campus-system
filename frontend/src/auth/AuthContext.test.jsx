@@ -12,12 +12,13 @@ vi.mock('../services/api', () => ({
 }));
 
 function SessionState() {
-  const { initializing, isAuthenticated, user } = useAuth();
+  const { initializing, isAuthenticated, user, sessionError } = useAuth();
   return (
     <div>
       <span>{initializing ? 'initializing' : 'ready'}</span>
       <span>{isAuthenticated ? 'authenticated' : 'anonymous'}</span>
       <span>{user?.name || 'no-user'}</span>
+      <span>{sessionError || 'no-session-error'}</span>
     </div>
   );
 }
@@ -39,6 +40,7 @@ describe('AuthProvider session restoration', () => {
     expect(screen.getByText('authenticated')).toBeInTheDocument();
     expect(screen.getByText('Stored User')).toBeInTheDocument();
     expect(localStorage.getItem('auth_token')).toBe('stored-token');
+    expect(screen.getByText('Network error')).toBeInTheDocument();
   });
 
   it('clears the stored session when the API rejects authorization', async () => {

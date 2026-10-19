@@ -30,11 +30,13 @@ export function AuthProvider({ children }) {
     localStorage.getItem(TOKEN_KEY) ? readStoredUser() : null
   ));
   const [initializing, setInitializing] = useState(true);
+  const [sessionError, setSessionError] = useState('');
 
   const clearSession = useCallback(() => {
     removeStoredSession();
     setToken(null);
     setUser(null);
+    setSessionError('');
     setInitializing(false);
   }, []);
 
@@ -45,11 +47,13 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (!token) {
+      setSessionError('');
       setInitializing(false);
       return;
     }
 
     let active = true;
+    setSessionError('');
 
     getProfile()
       .then((response) => {
@@ -66,6 +70,8 @@ export function AuthProvider({ children }) {
         // failures should not destroy an otherwise valid local session.
         if (error.status === 401 || error.status === 403) {
           clearSession();
+        } else {
+          setSessionError(error.message || 'We could not verify your session. Please try again shortly.');
         }
       })
       .finally(() => {
@@ -119,13 +125,14 @@ export function AuthProvider({ children }) {
 
   const value = useMemo(() => ({
     user,
+    sessionError,
     initializing,
     isAuthenticated: Boolean(token && user),
     login,
     register,
     logout,
     updateUser,
-  }), [initializing, login, logout, register, token, updateUser, user]);
+  }), [initializing, login, logout, register, sessionError, token, updateUser, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -1,10 +1,11 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from './auth-context';
 import { LoadingState } from '../components/Feedback';
+import { StatusAlert } from '../components/Feedback';
 
 function ProtectedRoute() {
   const location = useLocation();
-  const { initializing, isAuthenticated } = useAuth();
+  const { initializing, isAuthenticated, sessionError } = useAuth();
 
   if (initializing) {
     return <LoadingState message="Checking your session..." fullPage />;
@@ -26,7 +27,12 @@ function ProtectedRoute() {
     );
   }
 
-  return <Outlet />;
+  return (
+    <>
+      {sessionError && <StatusAlert variant="warning" message={`${sessionError} You can continue using saved session information.`} />}
+      <Outlet />
+    </>
+  );
 }
 
 export default ProtectedRoute;

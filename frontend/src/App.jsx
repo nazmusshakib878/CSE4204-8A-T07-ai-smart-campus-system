@@ -6,6 +6,7 @@ import ProtectedRoute from './auth/ProtectedRoute';
 import RoleRoute from './auth/RoleRoute';
 import { useAuth } from './auth/auth-context';
 import { LoadingState } from './components/Feedback';
+import AppErrorBoundary from './components/AppErrorBoundary';
 
 const HomePage = lazy(() => import('./pages/HomePage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -39,8 +40,9 @@ function DashboardEntry() {
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <Suspense fallback={<LoadingState message="Loading page..." fullPage />}>
+      <AppErrorBoundary>
+        <AuthProvider>
+          <Suspense fallback={<LoadingState message="Loading page..." fullPage />}>
           <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -82,8 +84,9 @@ function App() {
 
           <Route path="*" element={<NotFoundPage />} />
           </Routes>
-        </Suspense>
-      </AuthProvider>
+          </Suspense>
+        </AuthProvider>
+      </AppErrorBoundary>
     </Router>
   );
 }

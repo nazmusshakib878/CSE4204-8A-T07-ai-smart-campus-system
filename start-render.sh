@@ -42,6 +42,17 @@ if [ -n "${MYSQL_ATTR_SSL_CA:-}" ] && [ ! -r "${MYSQL_ATTR_SSL_CA}" ]; then
 fi
 
 if [ "${APP_ENV:-production}" = "production" ] && { [ "${DB_CONNECTION:-}" = "mysql" ] || [ "${DB_CONNECTION:-}" = "mariadb" ]; }; then
+  # Render secret files may be readable by the root startup process but not by
+  # Apache's www-data worker. Stage the CA with least-privilege ownership so
+  # PDO can perform verified TLS handshakes for web requests too.
+  db_ca_runtime_path="/app/backend/storage/framework/cache/db-ca.pem"
+  install -o www-data -g www-data -m 0440 "${MYSQL_ATTR_SSL_CA}" "${db_ca_runtime_path}"
+  if ! su -s /bin/sh www-data -c "test -r '${db_ca_runtime_path}'"; then
+    echo "The staged database CA certificate is not readable by the Apache worker." >&2
+    exit 1
+  fi
+  export MYSQL_ATTR_SSL_CA="${db_ca_runtime_path}"
+
   # Refuse to serve a partially migrated database: otherwise all DB-backed API
   # calls fail at runtime while static routes and /up still appear healthy.
   php artisan database:startup-health --critical-schema --no-interaction || exit 1

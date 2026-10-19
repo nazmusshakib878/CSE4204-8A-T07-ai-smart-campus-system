@@ -190,6 +190,20 @@ class AiAssistantTest extends TestCase
         Sleep::assertNeverSlept();
     }
 
+    public function test_provider_retry_delay_is_forwarded_to_the_client_after_retries_are_exhausted(): void
+    {
+        Http::fake(['generativelanguage.googleapis.com/*' => Http::sequence()
+            ->push($this->quotaResponse('GenerateRequestsPerMinutePerProjectPerModel-FreeTier', '1.2s'), 429)
+            ->push($this->quotaResponse('GenerateRequestsPerMinutePerProjectPerModel-FreeTier', '1.2s'), 429)]);
+
+        $this->actingAs($this->student(), 'sanctum')->postJson('/api/ai/assistant', ['question' => 'Hello'])
+            ->assertStatus(429)
+            ->assertHeader('Retry-After', '2')
+            ->assertJsonPath('status', false);
+
+        Http::assertSentCount(2);
+    }
+
     public function test_temporary_500_uses_exponential_backoff_and_can_recover(): void
     {
         Http::fake(['generativelanguage.googleapis.com/*' => Http::sequence()

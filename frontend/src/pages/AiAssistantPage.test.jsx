@@ -112,4 +112,18 @@ describe('AiAssistantPage request locking', () => {
     await waitFor(() => expect(askAiAssistant).toHaveBeenCalledTimes(2));
     expect(await screen.findByText('Recovered response')).toBeInTheDocument();
   });
+
+  it('honors a provider retry delay instead of immediately sending another request', async () => {
+    askAiAssistant.mockRejectedValue(Object.assign(new Error('AI is receiving too many requests right now.'), { retryAfterSeconds: 5 }));
+    const user = userEvent.setup();
+    render(<AiAssistantPage />);
+
+    const input = await screen.findByPlaceholderText('Message the assistant...');
+    await user.type(input, 'Please answer');
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+
+    expect(await screen.findByText('AI is receiving too many requests right now.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wait 5s' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+  });
 });

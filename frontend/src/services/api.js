@@ -60,6 +60,10 @@ const normalizeError = (error) => {
 const createApiError = (error) => {
   const normalizedError = new Error(normalizeError(error));
   normalizedError.status = error.response?.status;
+  const retryAfter = Number(error.response?.headers?.['retry-after']);
+  normalizedError.retryAfterSeconds = Number.isFinite(retryAfter) && retryAfter > 0
+    ? Math.ceil(retryAfter)
+    : null;
   normalizedError.fields = Object.fromEntries(
     Object.entries(error.response?.data?.errors || {}).map(([field, messages]) => [
       field,

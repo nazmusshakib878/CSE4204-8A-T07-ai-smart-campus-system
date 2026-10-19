@@ -32,6 +32,7 @@ function AiAssistantPage() {
   const [loading, setLoading] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [initializing, setInitializing] = useState(true);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const endRef = useRef(null);
   const submittingRef = useRef(false);
 
@@ -61,6 +62,13 @@ function AiAssistantPage() {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages, loading]);
 
+  useEffect(() => {
+    if (cooldownSeconds <= 0) return undefined;
+
+    const timer = window.setTimeout(() => setCooldownSeconds((current) => Math.max(0, current - 1)), 1000);
+    return () => window.clearTimeout(timer);
+  }, [cooldownSeconds]);
+
   const startNewConversation = async () => {
     if (initializing || loading || resetting) return;
 
@@ -89,6 +97,10 @@ function AiAssistantPage() {
       setError('Please enter a message.');
       return;
     }
+    if (cooldownSeconds > 0) {
+      setError(`AI is busy. Please wait ${cooldownSeconds} second${cooldownSeconds === 1 ? '' : 's'} before trying again.`);
+      return;
+    }
     if (submittingRef.current) return;
     submittingRef.current = true;
 
@@ -110,6 +122,7 @@ function AiAssistantPage() {
     } catch (requestError) {
       setMessages((current) => current.filter((message) => message.id !== pendingMessage.id));
       setQuestion(trimmedQuestion);
+      if (requestError.retryAfterSeconds) setCooldownSeconds(requestError.retryAfterSeconds);
       setError(requestError.message || 'AI service is temporarily unavailable. Please try again.');
     } finally {
       submittingRef.current = false;
@@ -135,7 +148,7 @@ function AiAssistantPage() {
         <div className="row g-4">
           <div className="col-lg-8">
             <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
-              {error && <StatusAlert variant="danger" message={error} actionLabel={question.trim() ? 'Retry' : undefined} onAction={() => submit()} onDismiss={() => setError('')} />}
+              {error && <StatusAlert variant="danger" message={error} actionLabel={question.trim() && cooldownSeconds === 0 ? 'Retry' : undefined} onAction={() => submit()} onDismiss={() => setError('')} />}
               <div className="assistant-response assistant-thread rounded-4 p-4 mb-3" aria-live="polite">
                 {initializing ? (
                   <p className="mb-0 text-secondary">Loading your recent conversation...</p>
@@ -176,10 +189,10 @@ function AiAssistantPage() {
                       submit();
                     }
                   }}
-                  disabled={initializing || loading || resetting}
+                  disabled={initializing || loading || resetting || cooldownSeconds > 0}
                 />
-                <button type="submit" className="btn btn-primary px-4" disabled={initializing || loading || resetting || !question.trim()}>
-                  {loading ? 'Sending...' : 'Send'}
+                <button type="submit" className="btn btn-primary px-4" disabled={initializing || loading || resetting || cooldownSeconds > 0 || !question.trim()}>
+                  {loading ? 'Sending...' : cooldownSeconds > 0 ? `Wait ${cooldownSeconds}s` : 'Send'}
                 </button>
               </form>
               <small className="text-secondary mt-2">Enter to send &middot; Shift+Enter for a new line</small>

@@ -85,7 +85,14 @@ class AiAssistantController extends Controller
         try {
             $answer = $assistant->answer($question, $history, $request->user());
         } catch (GeminiRateLimitException $exception) {
-            return response()->json(['status' => false, 'message' => $exception->getMessage()], 429);
+            $response = response()->json(['status' => false, 'message' => $exception->getMessage()], 429);
+            $retryAfter = $exception->quota['retry_delay_seconds'] ?? null;
+
+            if (is_numeric($retryAfter) && (float) $retryAfter > 0) {
+                $response->headers->set('Retry-After', (string) max(1, (int) ceil((float) $retryAfter)));
+            }
+
+            return $response;
         } catch (GeminiServiceException $exception) {
             return response()->json(['status' => false, 'message' => self::UNAVAILABLE_MESSAGE], 503);
         }

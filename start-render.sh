@@ -41,5 +41,10 @@ php artisan storage:link --ansi || true
 
 # Apache provides concurrent request handling. The PHP built-in server is
 # single-process and lets a slow upstream (AI or database) stall every page.
-sed -i "s/Listen 80/Listen ${PORT:-10000}/" /etc/apache2/ports.conf
+render_port="${PORT:-10000}"
+sed -i "s/Listen 80/Listen ${render_port}/" /etc/apache2/ports.conf
+# The vhost must match the dynamic Render port too. Without this replacement,
+# Apache falls back to its default /var/www/html document root and returns 403.
+sed -i "s/<VirtualHost \*:80>/<VirtualHost *:${render_port}>/" /etc/apache2/sites-available/000-default.conf
+apache2ctl configtest
 exec apache2-foreground

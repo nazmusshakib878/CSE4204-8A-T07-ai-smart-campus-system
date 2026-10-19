@@ -1,0 +1,58 @@
+name: Docker production smoke test
+
+on:
+  push:
+    branches: ["verify/render-apache-port"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the exact Render image
+        run: docker build --tag ai-smart-campus:smoke .
+
+      - name: Start production image on the Render port
+        run: |
+          docker run --detach --name campus-smoke --publish 10000:10000 \
+            --env PORT=10000 \
+            --env APP_ENV=testing \
+            --env APP_KEY='base64:SmFzP5cUFhO6HlWGAcYjZhrTXVbsqGsxDKv3PRB9mfA=' \
+            --env DB_CONNECTION=sqlite \
+            --env DB_DATABASE=/tmp/smoke.sqlite \
+            --env LOG_CHANNEL=stderr \
+            ai-smart-campus:smoke
+
+      - name: Verify Apache, Laravel, React SPA, assets and API routing
+        run: |
+          set -euo pipefail
+          trap 'docker logs campus-smoke; docker rm -f campus-smoke || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error http://127.0.0.1:10000/up > /tmp/up; then break; fi
+            sleep 1
+          done
+          curl --fail --silent --show-error http://127.0.0.1:10000/ > /tmp/home
+          grep -q 'id="root"' /tmp/home
+          for path in /login /register /admin /admin/users; do
+            curl --fail --silent --show-error "http://127.0.0.1:10000${path}" > "/tmp$(echo "$path" | tr '/' '_')"
+            grep -q 'id="root"' "/tmp$(echo "$path" | tr '/' '_')"
+          done
+          asset=$(grep -oE '/assets/[^" ]+\.(js|css)' /tmp/home | head -n 1)
+          test -n "$asset"
+          curl --fail --silent --show-error "http://127.0.0.1:10000${asset}" > /dev/null
+          api_status=$(curl --silent --output /tmp/api --write-out '%{http_code}' http://127.0.0.1:10000/api/not-a-real-route)
+          test "$api_status" = 404
+          grep -q 'API endpoint not found' /tmp/api
+          docker exec campus-smoke apache2ctl -S | grep -q ':10000'
+          test "$(docker inspect --format '{{.State.Running}}' campus-smoke)" = true
+          ! docker logs campus-smoke 2>&1 | grep -E 'AH01276|Cannot serve directory|DirectoryIndex'
+
+      - name: Print logs on failure
+        if: failure()
+        run: docker logs campus-smoke || true

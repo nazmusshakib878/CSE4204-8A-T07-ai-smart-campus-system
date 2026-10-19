@@ -5,6 +5,9 @@ cd /app/backend
 
 mkdir -p database storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache
 chmod -R ug+rwX storage bootstrap/cache database
+# Apache serves PHP as www-data; mode bits alone are insufficient when the
+# copied application tree is root-owned and has a different group.
+chown -R www-data:www-data storage bootstrap/cache database
 
 if [ "${APP_ENV:-production}" = "production" ] && [ -z "${DB_CONNECTION:-}" ]; then
   echo "DB_CONNECTION must be supplied as a Render environment variable for production." >&2

@@ -25,7 +25,10 @@ jobs:
             --env APP_ENV=testing \
             --env APP_KEY='base64:SmFzP5cUFhO6HlWGAcYjZhrTXVbsqGsxDKv3PRB9mfA=' \
             --env DB_CONNECTION=sqlite \
-            --env DB_DATABASE=/tmp/smoke.sqlite \
+            --env DB_DATABASE=:memory: \
+            --env SESSION_DRIVER=array \
+            --env CACHE_STORE=array \
+            --env QUEUE_CONNECTION=sync \
             --env LOG_CHANNEL=stderr \
             ai-smart-campus:smoke
 

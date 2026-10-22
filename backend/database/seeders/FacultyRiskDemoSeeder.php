@@ -91,7 +91,7 @@ class FacultyRiskDemoSeeder extends Seeder
                 [
                     'name' => $data['name'],
                     'phone' => '0198'.str_pad($suffix, 7, '0', STR_PAD_LEFT),
-                    'password' => Hash::make('DemoStudent@2026'),
+                    'password' => Hash::make($this->demoPassword()),
                     'role' => 'student',
                     'department' => $faculty->department ?: $facultyUser->department,
                     'student_id' => $studentNumber,
@@ -199,5 +199,15 @@ class FacultyRiskDemoSeeder extends Seeder
             ->first();
 
         return $facultyUser ?? throw new RuntimeException('No approved Faculty account is available for risk demo data.');
+    }
+
+    private function demoPassword(): string
+    {
+        $password = (string) env('DEMO_ACCOUNT_PASSWORD', '');
+        if (strlen($password) < 12) {
+            throw new RuntimeException('DEMO_ACCOUNT_PASSWORD must be a private environment secret of at least 12 characters.');
+        }
+
+        return $password;
     }
 }

@@ -15,7 +15,7 @@ class LiveDemoAdminSeeder extends Seeder
             [
                 'name' => 'Live Demo Administrator',
                 'phone' => '01700000909',
-                'password' => Hash::make('admin@nubtk'),
+                'password' => Hash::make($this->demoPassword()),
                 'role' => 'admin',
                 'department' => null,
                 'student_id' => null,
@@ -24,5 +24,15 @@ class LiveDemoAdminSeeder extends Seeder
                 'approval_status' => 'approved',
             ]
         );
+    }
+
+    private function demoPassword(): string
+    {
+        $password = (string) env('DEMO_ACCOUNT_PASSWORD', '');
+        if (strlen($password) < 12) {
+            throw new \RuntimeException('DEMO_ACCOUNT_PASSWORD must be a private environment secret of at least 12 characters.');
+        }
+
+        return $password;
     }
 }

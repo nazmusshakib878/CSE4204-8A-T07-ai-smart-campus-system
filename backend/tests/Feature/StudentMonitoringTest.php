@@ -118,7 +118,7 @@ class StudentMonitoringTest extends TestCase
             ->assertJsonPath('status', false);
     }
 
-    public function test_invalid_openai_analysis_returns_a_safe_error_without_persisting_an_alert(): void
+    public function test_invalid_openai_analysis_falls_back_to_verified_baseline_indicators(): void
     {
         [$facultyUser, $student] = $this->createAssignedStudent();
         config(['services.openai.api_key' => 'test-key']);
@@ -126,11 +126,16 @@ class StudentMonitoringTest extends TestCase
 
         $this->actingAs($facultyUser, 'sanctum')
             ->postJson("/api/faculty/students/{$student->id}/analyze-risk")
-            ->assertStatus(502)
-            ->assertJsonPath('status', false)
-            ->assertJsonPath('message', 'AI analysis is temporarily unavailable. Please try again.');
+            ->assertOk()
+            ->assertJsonPath('status', true)
+            ->assertJsonPath('data.source', 'baseline')
+            ->assertJsonPath('data.model', 'deterministic-baseline-v1');
 
-        $this->assertDatabaseCount('risk_alerts', 0);
+        $this->assertDatabaseHas('risk_alerts', [
+            'student_id' => $student->id,
+            'source' => 'baseline',
+            'model' => 'deterministic-baseline-v1',
+        ]);
     }
     private function createAssignedStudent(): array
     {

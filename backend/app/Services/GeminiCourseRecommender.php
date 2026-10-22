@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use Throwable;
 
@@ -12,16 +13,18 @@ class GeminiCourseRecommender
     {
         $apiKey = (string) config('services.gemini.api_key');
         $model = (string) config('services.gemini.model', 'gemini-3.6-flash');
+        $timeoutSeconds = max(1, min(10, (int) config('services.gemini.recommendation_timeout', 8)));
 
         if ($apiKey === '') {
             throw new RuntimeException('Gemini is not configured.');
         }
 
         try {
+            $startedAt = microtime(true);
             $response = Http::acceptJson()
                 ->asJson()
-                ->timeout((int) config('services.gemini.timeout', 30))
-                ->connectTimeout(5)
+                ->timeout($timeoutSeconds)
+                ->connectTimeout(min(3, $timeoutSeconds))
                 ->withHeaders(['x-goog-api-key' => $apiKey])
                 ->post(sprintf('https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent', $model), [
                     'systemInstruction' => [
@@ -47,6 +50,11 @@ class GeminiCourseRecommender
                 ]);
 
             if ($response->failed()) {
+                Log::warning('Gemini course recommendation request failed', [
+                    'model' => $model,
+                    'http_status' => $response->status(),
+                    'duration_ms' => (int) round((microtime(true) - $startedAt) * 1000),
+                ]);
                 throw new RuntimeException('Gemini recommendation request failed.');
             }
 
@@ -62,6 +70,11 @@ class GeminiCourseRecommender
                 'recommendations' => $payload['recommendations'],
             ];
         } catch (Throwable $exception) {
+            Log::warning('Gemini course recommendation request unavailable', [
+                'model' => $model,
+                'timeout_seconds' => $timeoutSeconds,
+                'exception' => $exception::class,
+            ]);
             throw $exception instanceof RuntimeException
                 ? $exception
                 : new RuntimeException('Gemini course recommendations are temporarily unavailable.', 0, $exception);

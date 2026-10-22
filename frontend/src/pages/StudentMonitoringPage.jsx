@@ -62,9 +62,12 @@ function StudentMonitoringPage() {
     setFeedback(null);
 
     try {
-      await analyzeStudentRisk(student.database_id);
+      const response = await analyzeStudentRisk(student.database_id);
       await fetchMonitoring({ quiet: true });
-      setFeedback({ variant: 'success', message: `AI risk analysis completed for ${student.name}.` });
+      setFeedback({
+        variant: 'success',
+        message: response?.data?.message || `Risk analysis completed for ${student.name}.`,
+      });
     } catch (requestError) {
       setFeedback({ variant: 'danger', message: requestError.message || 'AI analysis could not be completed.' });
     } finally {

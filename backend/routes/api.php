@@ -50,6 +50,7 @@ Route::middleware(['auth:sanctum', 'approved', 'throttle:api'])->group(function 
     Route::get('/students/{student}/transcript', [AcademicExportController::class, 'transcript']);
     Route::get('/students/{student}/attendance-export', [AcademicExportController::class, 'attendance']);
     Route::get('/campus-services', [CampusOperationsController::class, 'index']);
+    Route::get('/campus-services/official-routine-pdf', [CampusOperationsController::class, 'downloadOfficialRoutine']);
     Route::post('/campus-services/exams', [CampusOperationsController::class, 'storeExam']);
     Route::put('/campus-services/exams/{exam}', [CampusOperationsController::class, 'updateExam']);
     Route::delete('/campus-services/exams/{exam}', [CampusOperationsController::class, 'destroyExam']);

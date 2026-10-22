@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Course;
 use App\Models\CourseEnrollment;
+use App\Models\CourseSchedule;
 use App\Models\Faculty;
 use App\Models\Student;
 use App\Models\User;
@@ -48,6 +49,33 @@ class CampusOperationsTest extends TestCase
         $this->postJson('/api/campus-services/tickets', ['category' => 'Accounts', 'subject' => 'Fee query', 'description' => 'Please verify my payment.', 'priority' => 'medium'])->assertCreated();
         $this->getJson('/api/campus-services')->assertOk()->assertJsonFragment(['title' => 'Registration Week'])->assertJsonPath('data.fees.0.status', 'partial')->assertJsonCount(1, 'data.tickets');
         $this->postJson('/api/campus-services/events', [])->assertForbidden();
+    }
+
+    public function test_student_without_enrollment_can_view_only_the_published_official_routine(): void
+    {
+        $studentUser = User::factory()->create(['role' => 'student']);
+        Student::create(['user_id' => $studentUser->id, 'student_number' => 'S-ROUTINE']);
+        $officialCourse = Course::create(['course_code' => 'CSE-401', 'title' => 'Official Routine Course']);
+        $otherCourse = Course::create(['course_code' => 'CSE-999', 'title' => 'Private Course']);
+        CourseSchedule::create(['course_id' => $officialCourse->id, 'semester' => 'Spring', 'year' => 2026, 'section' => '4A', 'day_of_week' => 1, 'starts_at' => '09:00', 'ends_at' => '10:30', 'room' => '401', 'class_type' => 'lecture', 'source_reference' => 'Spring_2026_A_Sections_Official_Routine.csv page 1']);
+        CourseSchedule::create(['course_id' => $otherCourse->id, 'semester' => 'Fall', 'year' => 2026, 'section' => '9A', 'day_of_week' => 1, 'starts_at' => '11:00', 'ends_at' => '12:30', 'room' => '402', 'class_type' => 'lecture']);
+
+        Sanctum::actingAs($studentUser);
+
+        $this->getJson('/api/campus-services')->assertOk()
+            ->assertJsonPath('data.schedules.0.course_code', 'CSE-401')
+            ->assertJsonCount(1, 'data.schedules');
+    }
+
+    public function test_authenticated_student_can_download_the_official_spring_2026_routine_pdf(): void
+    {
+        $studentUser = User::factory()->create(['role' => 'student']);
+        Sanctum::actingAs($studentUser);
+
+        $this->get('/api/campus-services/official-routine-pdf')
+            ->assertOk()
+            ->assertDownload('CSE_Spring_2026_Class_Routine.pdf')
+            ->assertHeader('content-type', 'application/pdf');
     }
 
     public function test_admin_manages_routines_and_conflicts_are_rejected(): void

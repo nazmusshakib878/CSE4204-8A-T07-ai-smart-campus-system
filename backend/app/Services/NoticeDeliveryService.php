@@ -23,7 +23,9 @@ class NoticeDeliveryService {
  }
  private function deliverEmail(Notice $notice,$recipients):string {
   if(!config('notice_delivery.email_enabled'))return 'disabled';
-  $targets=$recipients->pluck('email')->filter()->unique();if($targets->isEmpty())return 'no_recipients';$sent=0;
+  // The seeded student11@gmail.com through student85@gmail.com range is
+  // synthetic demo data. Never send email to those addresses.
+  $targets=$recipients->pluck('email')->filter(fn($email)=>!preg_match('/^student[1-8][1-5]@gmail\\.com$/i',$email))->unique();if($targets->isEmpty())return 'no_recipients';$sent=0;
   foreach($targets as $email){try{Mail::raw($notice->description,fn($message)=>$message->to($email)->subject($notice->title));$sent++;}catch(\Throwable $e){Log::warning('Notice email delivery failed',['notice_id'=>$notice->id,'error'=>$e->getMessage()]);}}
   return $sent===$targets->count()?'sent':($sent?'partial':'failed');
  }

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Layout from '../components/Layout';
 import RoutineWorkspace from '../components/RoutineWorkspace';
 import AcademicCalendar from '../components/AcademicCalendar';
+import FallRegistrationReference from '../components/FallRegistrationReference';
 import { useAuth } from '../auth/auth-context';
 import { EmptyState, LoadingState, StatusAlert } from '../components/Feedback';
 import {
@@ -72,7 +73,7 @@ function CampusServicesPage() {
   };
 
   const tabs = useMemo(() => [
-    ['routines', 'Routines'], ['calendar', 'Academic Calendar'], ['fees', 'Fees'],
+    ['routines', 'Routines'], ['calendar', 'Academic Calendar'], ['registration-reference', 'Fall 2026 Reference'], ['fees', 'Fees'],
     ['library', 'Library'], ['helpdesk', 'Helpdesk'], ...(isStudent ? [] : [['staff', 'Faculty Operations']]),
   ], [isStudent]);
 
@@ -87,6 +88,8 @@ function CampusServicesPage() {
     {tab === 'routines' && <RoutineWorkspace user={user} data={data} academic={academic} reload={load} setFeedback={setFeedback} />}
 
     {tab === 'calendar' && <AcademicCalendar user={user} data={data} reload={load} setFeedback={setFeedback} />}
+
+    {tab === 'registration-reference' && <FallRegistrationReference />}
 
     {tab === 'fees' && <div className="row g-4">{isAdmin && <div className="col-xl-4"><section className="faculty-panel"><h4>Update Student Fee</h4><Field label="University ID"><select className="form-select" value={forms.fee.student_id} onChange={(e) => setField('fee', 'student_id', e.target.value)}><option value="">Select by University ID</option>{academic.students.map((s) => <option key={s.id} value={s.id}>{s.student_number} — {s.name} ({s.email})</option>)}</select></Field>{[['amount_due', 'Amount due'], ['amount_paid', 'Amount paid']].map(([key, label]) => <Field key={key} label={label}><input type="number" min="0" className="form-control" value={forms.fee[key]} onChange={(e) => setField('fee', key, Number(e.target.value))} /></Field>)}<Field label="Due date"><input type="date" className="form-control" value={forms.fee.due_date} onChange={(e) => setField('fee', 'due_date', e.target.value)} /></Field><button className="btn btn-primary w-100" onClick={() => submit('fee', 'fees')}>Save Fee Status</button></section></div>}<div className={isAdmin ? 'col-xl-8' : 'col-12'}><section className="faculty-panel"><h4>{isStudent ? 'My Fee Status' : 'Student Fee Records'}</h4>{list(data?.fees, 'No fee records', (item) => <article className="service-record" key={item.id}><div><strong>{item.student_number ? `${item.student_number} — ${item.student_name}` : `${item.semester} ${item.year}`}</strong><span className={`badge ms-2 ${item.status === 'paid' ? 'text-bg-success' : item.status === 'partial' ? 'text-bg-warning' : 'text-bg-danger'}`}>{item.status}</span></div><span>Due: ৳{item.amount_due} | Paid: ৳{item.amount_paid} | Balance: ৳{Number(item.amount_due) - Number(item.amount_paid)}</span></article>)}</section></div></div>}
 

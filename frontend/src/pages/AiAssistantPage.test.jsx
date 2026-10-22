@@ -11,7 +11,7 @@ vi.mock('../auth/auth-context', () => ({
 }));
 
 vi.mock('../components/Layout', () => ({ default: ({ children }) => <div>{children}</div> }));
-vi.mock('../components/Feedback', () => ({ StatusAlert: ({ message, actionLabel, onAction }) => <div>{message}{actionLabel && <button type="button" onClick={onAction}>{actionLabel}</button>}</div> }));
+vi.mock('../components/Feedback', () => ({ StatusAlert: ({ message, actionLabel, onAction }) => <div><span>{message}</span>{actionLabel && <button type="button" onClick={onAction}>{actionLabel}</button>}</div> }));
 vi.mock('../services/api', () => ({
   askAiAssistant: vi.fn(),
   getAiConversation: vi.fn(),

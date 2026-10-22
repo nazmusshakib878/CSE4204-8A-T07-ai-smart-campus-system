@@ -222,9 +222,9 @@ export const getTasks = async () => {
   }
 };
 
-export const getRecommendations = async () => {
+export const getRecommendations = async (config = {}) => {
   try {
-    return await api.get('/recommendations');
+    return await api.get('/recommendations', config);
   } catch (error) {
     throw createApiError(error);
   }
@@ -440,5 +440,18 @@ export const openStudentTranscript = async () => { try { const popup = window.op
 export const downloadAttendanceReport = async () => {
   try { const response = await api.get('/student/attendance-export', { responseType: 'blob' }); const url = URL.createObjectURL(response.data); const link = document.createElement('a'); link.href = url; link.download = 'attendance-report.csv'; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url); }
   catch (error) { throw createApiError(error); }
+};
+export const downloadOfficialRoutinePdf = async () => {
+  try {
+    const response = await api.get('/campus-services/official-routine-pdf', { responseType: 'blob' });
+    const url = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'CSE_Spring_2026_Class_Routine.pdf';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  } catch (error) { throw createApiError(error); }
 };
 export default api;

@@ -36,4 +36,11 @@ Thumbs.db
 /.chrome-pdf-profile/
 /chrome-pdf-profile/
 
+# Local package caches and database recovery artifacts. These can contain
+# machine-specific files or copied production-like data and must never be
+# committed with application source.
+**/.npm-cache/
+/database/recovery-backups/
+/database/recovery-validation/
+
 /database/backups/

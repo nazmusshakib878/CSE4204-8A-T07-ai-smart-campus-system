@@ -24,9 +24,21 @@ class CampusOperationsController extends Controller
         $exams = DB::table('exam_routines')->join('courses', 'courses.id', '=', 'exam_routines.course_id')
             ->when($courseIds !== null, fn ($q) => $q->whereIn('course_id', $courseIds))
             ->select('exam_routines.*', 'courses.course_code', 'courses.title as course_title')->orderBy('exam_date')->get();
-        $schedules = DB::table('course_schedules')->join('courses', 'courses.id', '=', 'course_schedules.course_id')
-            ->when($courseIds !== null, fn ($q) => $q->whereIn('course_id', $courseIds))
-            ->select('course_schedules.*', 'courses.course_code', 'courses.title as course_title')->orderBy('day_of_week')->orderBy('starts_at')->get();
+        $scheduleQuery = fn () => DB::table('course_schedules')->join('courses', 'courses.id', '=', 'course_schedules.course_id')
+            ->select('course_schedules.*', 'courses.course_code', 'courses.title as course_title')
+            ->orderBy('day_of_week')->orderBy('starts_at');
+        $schedules = $courseIds === null
+            ? $scheduleQuery()->get()
+            : $scheduleQuery()->whereIn('course_schedules.course_id', $courseIds)->get();
+
+        // A new or legacy student may not yet have a course-enrollment row. In
+        // that case, expose only the published official timetable so the
+        // routines screen is useful without exposing arbitrary private records.
+        if ($user->role === 'student' && $schedules->isEmpty()) {
+            $schedules = $scheduleQuery()
+                ->where('course_schedules.source_reference', 'like', 'Spring_2026_A_Sections_Official_Routine.csv%')
+                ->get();
+        }
         $events = DB::table('academic_events')->when($user->role !== 'admin', fn ($q) => $q->where(fn ($audience) => $audience->where('audience', 'all')->orWhere('audience', $user->role)))->orderBy('starts_on')->get();
         $fees = $studentId ? DB::table('fee_records')->where('student_id', $studentId)->orderByDesc('year')->get()
             : ($user->role === 'admin' ? DB::table('fee_records')->join('students', 'students.id', '=', 'fee_records.student_id')->join('users', 'users.id', '=', 'students.user_id')->select('fee_records.*', 'users.name as student_name', 'students.student_number')->orderByDesc('year')->get() : collect());
@@ -44,6 +56,16 @@ class CampusOperationsController extends Controller
             ->select('library_loans.*', 'library_books.title as book_title', 'users.name as borrower_name')->orderByDesc('id')->get();
 
         return response()->json(['status' => true, 'data' => compact('exams', 'schedules', 'events', 'fees', 'tickets', 'leaves', 'reschedules', 'books', 'loans')]);
+    }
+
+    public function downloadOfficialRoutine(): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    {
+        $path = base_path('../CSE_Spring_2026_Class_Routine.pdf');
+        abort_unless(is_file($path), 404, 'The official Spring 2026 routine PDF is not available.');
+
+        return response()->download($path, 'CSE_Spring_2026_Class_Routine.pdf', [
+            'Content-Type' => 'application/pdf',
+        ]);
     }
 
     public function storeSchedule(Request $request): JsonResponse

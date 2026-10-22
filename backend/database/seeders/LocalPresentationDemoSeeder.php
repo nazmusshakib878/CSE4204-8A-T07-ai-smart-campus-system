@@ -24,9 +24,11 @@ class LocalPresentationDemoSeeder extends Seeder
     public function run(): void
     {
         DB::transaction(function (): void {
-            // The online demo must not add the unrelated baseline sample data to production.
+            // The online demo must not add unrelated baseline sample data to production,
+            // but it needs the idempotent CSE catalog before creating enrollment and result data.
+            $this->call(CseCourseCatalogSeeder::class);
             if (! app()->environment('production')) {
-                $this->call([CampusDemoSeeder::class, CseCourseCatalogSeeder::class]);
+                $this->call(CampusDemoSeeder::class);
             }
             $password = Hash::make($this->demoPassword());
             // Do not use the separate risk-monitoring sample course as part of the academic routine.
@@ -59,7 +61,10 @@ class LocalPresentationDemoSeeder extends Seeder
                 }
                 foreach (range(1, 5) as $slot) {
                     $number = sprintf('CSE-SPR26-S%d-%02d', $semester, $slot);
-                    $user = User::updateOrCreate(['email' => strtolower($number).'@example.edu'], [
+                    // These addresses are deliberately synthetic. Password-reset and notice
+                    // delivery code treats this exact range as non-deliverable demo accounts.
+                    $email = sprintf('student%d%d@gmail.com', $semester, $slot);
+                    $user = User::updateOrCreate(['email' => $email], [
                         'name' => sprintf('Spring 2026 Student S%d-%02d', $semester, $slot), 'phone' => sprintf('01726%05d', $semester * 10 + $slot),
                         'password' => $password, 'role' => 'student', 'department' => self::DEPARTMENT,
                         'student_id' => $number, 'faculty_id' => null, 'admin_id' => null, 'approval_status' => 'approved',

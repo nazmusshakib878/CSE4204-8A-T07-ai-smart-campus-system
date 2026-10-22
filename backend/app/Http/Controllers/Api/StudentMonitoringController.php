@@ -65,6 +65,7 @@ class StudentMonitoringController extends Controller
         ]);
         $record = $this->formatStudent($student);
 
+        $source = 'openai';
         try {
             $analysis = $analyzer->analyze([
                 'student_reference' => $record['id'],
@@ -79,10 +80,18 @@ class StudentMonitoringController extends Controller
             ]);
         } catch (RuntimeException $exception) {
             $missingConfiguration = str_contains($exception->getMessage(), 'OPENAI_API_KEY');
-            return response()->json([
-                'status' => false,
-                'message' => $missingConfiguration ? 'OpenAI is not configured for this environment.' : 'AI analysis is temporarily unavailable. Please try again.',
-            ], $missingConfiguration ? 503 : 502);
+            if ($missingConfiguration) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'OpenAI is not configured for this environment.',
+                ], 503);
+            }
+
+            // Keep the monitoring workflow usable when the provider is rate-limited,
+            // out of credit, or temporarily unavailable. The calculation uses only
+            // the verified indicators already loaded for this student.
+            $analysis = $this->baselineAnalysis($record);
+            $source = 'baseline';
         }
 
         $alert = RiskAlert::create([
@@ -93,14 +102,16 @@ class StudentMonitoringController extends Controller
             'prediction' => $analysis['prediction'],
             'advice' => $analysis['advice'],
             'reasons' => $analysis['reasons'],
-            'source' => 'openai',
+            'source' => $source,
             'model' => $analysis['model'],
             'analyzed_at' => now(),
         ]);
 
         return response()->json([
             'status' => true,
-            'message' => 'AI risk analysis completed successfully.',
+            'message' => $source === 'openai'
+                ? 'AI risk analysis completed successfully.'
+                : 'Risk analysis completed using verified baseline indicators because the AI provider is unavailable.',
             'data' => [
                 'id' => $alert->id,
                 'risk_score' => $alert->risk_score,
@@ -230,6 +241,30 @@ class StudentMonitoringController extends Controller
         if ($reasons === []) $reasons[] = 'Academic indicators are currently within the expected range';
 
         return compact('score', 'level', 'reasons');
+    }
+
+    private function baselineAnalysis(array $record): array
+    {
+        $risk = [
+            'score' => $record['baseline_risk_score'],
+            'level' => $record['priority'],
+            'reasons' => $record['baseline_reasons'],
+        ];
+
+        $needsSupport = $risk['level'] !== 'low';
+
+        return [
+            'risk_score' => $risk['score'],
+            'risk_level' => $risk['level'],
+            'prediction' => $needsSupport
+                ? 'The verified academic indicators suggest that additional support may be helpful.'
+                : 'The verified academic indicators are currently on track.',
+            'reasons' => $risk['reasons'],
+            'advice' => $needsSupport
+                ? 'Review attendance and recent course performance with the student, then agree on a practical improvement plan.'
+                : 'Continue monitoring attendance and course performance regularly.',
+            'model' => 'deterministic-baseline-v1',
+        ];
     }
 
     private function chartData($students): array

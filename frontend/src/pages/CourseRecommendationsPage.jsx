@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Layout from '../components/Layout';
 import { useAuth } from '../auth/auth-context';
 import { EmptyState, LoadingState, StatusAlert } from '../components/Feedback';
@@ -38,13 +38,25 @@ function CourseRecommendationsPage() {
   const [feedback, setFeedback] = useState(null);
   const [addingCourseId, setAddingCourseId] = useState('');
   const [addedCourses, setAddedCourses] = useState([]);
+  const recommendationRequest = useRef(null);
 
   const fetchRecommendations = useCallback(async () => {
+    recommendationRequest.current?.controller.abort();
+    const request = {
+      id: Symbol('recommendations'),
+      controller: new AbortController(),
+    };
+    recommendationRequest.current = request;
     setLoading(true);
     setError('');
+    // A prior response belongs to an older account state or retry. Do not keep
+    // displaying it after the current request has failed or been replaced.
+    setRecommendations([]);
+    setRecommendationMeta({ source: '', model: null, message: null });
 
     try {
-      const response = await getRecommendations();
+      const response = await getRecommendations({ signal: request.controller.signal });
+      if (recommendationRequest.current?.id !== request.id) return;
       setRecommendations(response.data.data || []);
       setRecommendationMeta({
         source: response.data.source || '',
@@ -52,14 +64,16 @@ function CourseRecommendationsPage() {
         message: response.data.message || null,
       });
     } catch (requestError) {
+      if (recommendationRequest.current?.id !== request.id) return;
       setError(requestError.message || 'Course recommendations could not be loaded.');
     } finally {
-      setLoading(false);
+      if (recommendationRequest.current?.id === request.id) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     fetchRecommendations();
+    return () => recommendationRequest.current?.controller.abort();
   }, [fetchRecommendations]);
 
   const courses = useMemo(() => {

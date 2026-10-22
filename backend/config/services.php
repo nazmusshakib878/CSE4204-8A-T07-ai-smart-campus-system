@@ -18,6 +18,11 @@ return [
         'api_key' => env('GEMINI_API_KEY'),
         'model' => env('GEMINI_MODEL', 'gemini-3.5-flash-lite'),
         'timeout' => env('GEMINI_TIMEOUT', 20),
+        // Course recommendations always have a deterministic, database-backed
+        // fallback. Keep their provider wait bounded below the browser API
+        // deadline so a slow provider never turns an available fallback into a
+        // client-side timeout.
+        'recommendation_timeout' => env('GEMINI_RECOMMENDATION_TIMEOUT', 8),
     ],
 
     'openai' => [

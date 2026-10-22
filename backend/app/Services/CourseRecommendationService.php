@@ -17,6 +17,7 @@ class CourseRecommendationService
 
     public function forStudent(User $user): array
     {
+        $startedAt = microtime(true);
         $student = $user->studentProfile;
         if (! $student) {
             return $this->result([], 'rule_based', null, 'Student profile is unavailable.');
@@ -68,6 +69,8 @@ class CourseRecommendationService
             Log::info('AI course recommendations fell back to deterministic ranking', [
                 'user_id' => $user->id,
                 'reason' => $exception->getMessage(),
+                'duration_ms' => (int) round((microtime(true) - $startedAt) * 1000),
+                'candidate_count' => $candidates->count(),
             ]);
 
             return $this->result($candidates, 'rule_based', $department);

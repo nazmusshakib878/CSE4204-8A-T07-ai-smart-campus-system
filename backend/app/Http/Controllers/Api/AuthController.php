@@ -202,7 +202,10 @@ class AuthController extends Controller
             ]
         );
 
-        PasswordBroker::sendResetLink(['email' => $validatedData['email']]);
+        // Demo student addresses are synthetic and must never trigger outbound mail.
+        if (! $this->isRestrictedDemoEmail($validatedData['email'])) {
+            PasswordBroker::sendResetLink(['email' => $validatedData['email']]);
+        }
 
         return response()->json([
             'status' => true,
@@ -466,5 +469,10 @@ class AuthController extends Controller
             'status' => true,
             'message' => 'User logged out successfully.',
         ]);
+    }
+
+    private function isRestrictedDemoEmail(string $email): bool
+    {
+        return (bool) preg_match('/^student[1-8][1-5]@gmail\\.com$/i', $email);
     }
 }

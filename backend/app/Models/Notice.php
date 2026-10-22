@@ -23,6 +23,7 @@ class Notice extends Model
         'target_department',
         'target_role',
         'target_semester',
+        'target_section',
         'recipient_name',
         'recipient_reference',
         'attachment_path',

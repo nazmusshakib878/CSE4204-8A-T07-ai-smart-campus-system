@@ -15,6 +15,12 @@ class FacultyRiskDemoSeederTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        putenv('DEMO_ACCOUNT_PASSWORD='.bin2hex(random_bytes(24)));
+    }
+
     public function test_seeder_is_idempotent_and_risk_alerts_are_calculated_from_database_records(): void
     {
         $facultyUser = User::factory()->create([

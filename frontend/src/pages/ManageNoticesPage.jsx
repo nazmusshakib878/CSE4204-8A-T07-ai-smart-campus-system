@@ -12,6 +12,7 @@ const emptyForm = {
   target_department: '',
   target_role: 'All',
   target_semester: '',
+  target_section: '',
   attachment: null,
   expires_at: '',
 };
@@ -21,7 +22,7 @@ const deliveryLabel = (status) => ({ sent: 'Sent', partial: 'Partially sent', fa
 const normalizeNotice = (notice) => ({
   ...notice,
   date: (notice.publish_date || notice.created_at || '').slice(0, 10),
-  tags: [notice.category || 'Academic', notice.audience || 'All', notice.target_department, notice.target_role, notice.target_semester]
+  tags: [notice.category || 'Academic', notice.audience || 'All', notice.target_department, notice.target_role, notice.target_semester, notice.target_section]
     .filter(Boolean),
 });
 
@@ -81,6 +82,7 @@ function ManageNoticesPage() {
       target_department: isAdmin ? form.target_department : (user?.department || form.target_department),
       target_role: isAdmin ? form.target_role : 'Students',
       target_semester: form.target_semester.trim(),
+      target_section: form.target_section.trim(),
       expires_at: form.expires_at,
     };
 
@@ -88,6 +90,7 @@ function ManageNoticesPage() {
       payload.target_department = '';
       payload.target_role = payload.audience === 'Students' ? 'Students' : payload.audience === 'Faculty' ? 'Faculty' : 'All';
       payload.target_semester = '';
+      payload.target_section = '';
     }
 
     const requestPayload = new FormData();
@@ -135,6 +138,7 @@ function ManageNoticesPage() {
       title: notice.title || '', description: notice.description || '', category: notice.category || 'Academic',
       audience: notice.audience || 'All', target_department: notice.target_department || '',
       target_role: notice.target_role || 'All', target_semester: notice.target_semester || '',
+      target_section: notice.target_section || '',
       expires_at: notice.expires_at ? notice.expires_at.slice(0, 16) : '', attachment: null,
     });
     setShowForm(true);
@@ -274,6 +278,10 @@ function ManageNoticesPage() {
                       onChange={handleChange}
                       placeholder="Optional, e.g. 8"
                     />
+                  </div>
+                  <div className="col-md-6 col-lg-4">
+                    <label className="form-label fw-semibold" htmlFor="notice-section">Section</label>
+                    <input id="notice-section" name="target_section" className="form-control" value={form.target_section} onChange={handleChange} placeholder="Optional, e.g. 8A" />
                   </div>
                 </>
               )}

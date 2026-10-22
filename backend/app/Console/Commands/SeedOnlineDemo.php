@@ -11,7 +11,7 @@ class SeedOnlineDemo extends Command
 
     public function handle(): int
     {
-        if (app()->environment('production') && env('ONLINE_DEMO_SEED_ENABLED') !== 'true') {
+        if (app()->environment('production') && ! filter_var(env('ONLINE_DEMO_SEED_ENABLED', false), FILTER_VALIDATE_BOOLEAN)) {
             $this->error('Online demo seeding is disabled. Set ONLINE_DEMO_SEED_ENABLED=true only for the one approved run.');
             return self::FAILURE;
         }
